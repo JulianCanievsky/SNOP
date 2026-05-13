@@ -1,0 +1,102 @@
+.turno-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.turno-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.turno-card__fecha {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.turno-card__estado {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.turno-card__horario-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.turno-card__horario {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.turno-card__reloj {
+  font-size: 14px;
+}
+
+.turno-card__horas {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.turno-card__tipo {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.turno-card__nivel {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  align-self: flex-start;
+}
+
+.turno-card__profesor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.turno-card__btn-cancelar {
+  background: transparent;
+  border: 1.5px solid #ef4444;
+  color: #ef4444;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.2s;
+}
+
+.turno-card__btn-cancelar:hover {
+  background: #fee2e2;
+}
+
+.turno-card__info-msg {
+  font-size: 12px;
+  color: #2563eb;
+  margin: 0;
+}
+
+.turno-card__vacio-msg {
+  font-size: 13px;
+  color: #2563eb;
+  margin: 4px 0 0;
+}
