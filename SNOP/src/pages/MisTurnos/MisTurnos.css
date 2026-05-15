@@ -1,119 +1,61 @@
-/* Contenedor general: simula pantalla de celular */
 .mis-turnos {
-  max-width: 390px;
+
   min-height: 100vh;
-  margin: 0 auto;
+
   background: #f1f5f9;
-  display: flex;
-  flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  position: relative;
-  padding-bottom: 70px;
 }
 
-/* Header azul */
-.mis-turnos__header {
+.header {
+
   background: #2563eb;
-  padding: 28px 18px 18px;
-  color: #fff;
+
+  color: white;
+
+  padding: 24px 16px;
 }
 
-.mis-turnos__titulo {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 0 0 2px;
+.header h1 {
+
+  margin: 0 0 20px;
 }
 
-.mis-turnos__subtitulo {
-  font-size: 13px;
-  opacity: 0.85;
-  margin: 0 0 16px;
-}
+.dias {
 
-/* Selector de días */
-.mis-turnos__dias {
   display: flex;
+
   justify-content: space-between;
-  gap: 4px;
 }
 
-.mis-turnos__dia-btn {
-  flex: 1;
+.dia {
+
+  width: 44px;
+  height: 60px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(255,255,255,0.15);
+
   display: flex;
+
   flex-direction: column;
+
   align-items: center;
-  background: rgba(255,255,255,0.15);
-  border: none;
-  border-radius: 10px;
-  color: #fff;
-  padding: 6px 0;
-  cursor: pointer;
-  transition: background 0.2s;
-  font-size: 13px;
+
+  justify-content: center;
 }
 
-.mis-turnos__dia-btn--activo {
-  background: rgba(255,255,255,0.35);
-  font-weight: 700;
+.dia span {
+
+  font-size: 12px;
 }
 
-.mis-turnos__dia-btn:hover {
-  background: rgba(255,255,255,0.25);
+.dia strong {
+
+  font-size: 18px;
 }
 
-.mis-turnos__dia-letra {
-  font-size: 11px;
-  opacity: 0.85;
-}
+.contenido {
 
-.mis-turnos__dia-num {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-/* Lista de cards */
-.mis-turnos__lista {
-  padding: 16px 14px;
-  flex: 1;
-}
-
-/* Estado vacío */
-.mis-turnos__vacio {
-  text-align: center;
-  color: #94a3b8;
-  margin-top: 40px;
-  font-size: 14px;
-}
-
-/* Navbar inferior */
-.mis-turnos__navbar {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 390px;
-  background: #fff;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-around;
-  padding: 8px 0 10px;
-  z-index: 100;
-}
-
-.navbar__item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  background: none;
-  border: none;
-  font-size: 11px;
-  color: #94a3b8;
-  cursor: pointer;
-}
-
-.navbar__item--activo {
-  color: #2563eb;
-  font-weight: 600;
+  padding: 16px;
 }

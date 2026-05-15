@@ -1,7 +1,8 @@
-import React from "react";
-import MisTurnos from "./pages/MisTurnos/MisTurnos.jsx";
+import MisTurnos
+from "./pages/MisTurnos/MisTurnos";
 
 function App() {
+
   return <MisTurnos />;
 }
 
