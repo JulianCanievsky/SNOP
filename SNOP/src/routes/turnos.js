@@ -1,39 +1,19 @@
-const express = require('express');
-const router  = express.Router();
+import express from "express";
 
-const { autenticar, requireRole } = require('../middlewares/autenticar');
-const turnosController = require('../controllers/turnosController');
+import {
+  obtenerTurnos,
+  cancelarTurnoController
+} from "../controllers/turnosController.js";
 
-/**
- * Rutas de Mis Turnos — Socio (Pantalla 5)
- *
- * GET  /socios/:socioId/turnos          → lista de turnos (próximos + pasados)
- * GET  /socios/:socioId/turnos/semana   → turnos agrupados por día de semana
- * DELETE /turnos/:turnoId              → cancelar inscripción al turno
- */
+const router = express.Router();
 
-// El orden importa: /semana debe ir antes de /:turnoId si fueran params del mismo nivel
-// Aquí están en distintos prefijos, no hay conflicto.
+// GET turnos
+router.get("/:socioId", obtenerTurnos);
 
-router.get(
-  '/socios/:socioId/turnos',
-  autenticar,
-  requireRole('socio', 'admin'),
-  turnosController.listarTurnos
-);
-
-router.get(
-  '/socios/:socioId/turnos/semana',
-  autenticar,
-  requireRole('socio', 'admin'),
-  turnosController.listarTurnosPorSemana
-);
-
+// DELETE cancelar
 router.delete(
-  '/turnos/:turnoId',
-  autenticar,
-  requireRole('socio'),
-  turnosController.cancelarTurno
+  "/:turnoId/socio/:socioId",
+  cancelarTurnoController
 );
 
-module.exports = router;
+export default router;

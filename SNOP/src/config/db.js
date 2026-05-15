@@ -1,15 +1,11 @@
-const { Pool } = require('pg');
+import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
 
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'snop',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
-});
+dotenv.config();
 
-pool.on('error', (err) => {
-  console.error('Error inesperado en el pool de PostgreSQL:', err);
-});
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
-module.exports = pool;
+export default supabase;    
