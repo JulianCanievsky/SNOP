@@ -99,13 +99,15 @@ const DetalleJuegoLibre = ({
         </div>
 
         <div className="detalle-acciones">
-          <button className="btn-confirmar" onClick={onConfirmar}>
-            Confirmar inscripción
-          </button>
-          <button className="btn-cancelar-inscripcion" onClick={() => onCancelar(evento.id)}>
-            Cancelar
-          </button>
-        </div>
+  {evento.ya_inscripto
+    ? <button className="btn-cancelar-inscripcion" onClick={() => onCancelar(evento.id)}>
+        Cancelar inscripción
+      </button>
+    : <button className="btn-confirmar" onClick={onConfirmar}>
+        Confirmar inscripción
+      </button>
+  }
+</div>
       </div>
     </div>
   );

@@ -49,8 +49,10 @@ const BarraCapacidad = ({ inscriptos, capacidad }) => {
   );
 };
 
-const TarjetaEvento = ({ evento, onAnotarme }) => {
+const TarjetaEvento = ({ evento, onAnotarme, onCancelar }) => {
   const completo = evento.estado === 'completo';
+  const yaInscripto = evento.ya_inscripto;
+
   return (
     <div className={`tarjeta-evento ${completo ? 'tarjeta-completa' : ''}`}>
       <div className="tarjeta-header">
@@ -74,19 +76,20 @@ const TarjetaEvento = ({ evento, onAnotarme }) => {
 
       <div className="tarjeta-footer">
         <div className="participantes-lista">
-          {evento.participantes.slice(0, 6).map((p, i) => (
+          {(evento.participantes || []).slice(0, 6).map((p, i) => (
             <AvatarParticipante key={i} participante={p} />
           ))}
         </div>
-        {completo
-          ? <button className="btn-lleno" disabled>Lleno</button>
-          : <button className="btn-anotarme" onClick={() => onAnotarme(evento)}>Anotarme</button>
+        {yaInscripto
+          ? <button className="btn-cancelar-inscripcion" onClick={() => onCancelar(evento)}>Cancelar</button>
+          : completo
+            ? <button className="btn-lleno" disabled>Lleno</button>
+            : <button className="btn-anotarme" onClick={() => onAnotarme(evento)}>Anotarme</button>
         }
       </div>
     </div>
   );
 };
-
 const EstadoVacio = () => (
   <div className="estado-vacio">
     <div className="estado-vacio-icono">🏓</div>
@@ -189,15 +192,16 @@ const JuegoLibre = () => {
           </div>
         )}
 
-        {!cargando && !error && eventos.length === 0 && <EstadoVacio />}
-
-        {!cargando && !error && eventos.map(evento => (
-          <TarjetaEvento
-            key={evento.id}
-            evento={evento}
-            onAnotarme={handleAnotarme}
-          />
-        ))}
+      {!cargando && !error && eventos.map(evento => (
+  <TarjetaEvento
+    key={evento.id}
+    evento={evento}
+    onAnotarme={handleAnotarme}
+    onCancelar={(evento) => {
+      setEventoSeleccionado(evento);
+    }}
+  />
+))}
       </div>
     </div>
   );

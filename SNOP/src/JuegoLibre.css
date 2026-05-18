@@ -215,11 +215,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .participantes-lista {
   display: flex;
-  gap: -6px;
+  flex-shrink: 0;
 }
 
 .avatar-participante {
@@ -253,6 +254,7 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.15s ease, transform 0.1s ease;
 }
 
@@ -273,6 +275,24 @@
   font-size: 14px;
   font-weight: 700;
   cursor: not-allowed;
+  white-space: nowrap;
+}
+
+.btn-cancelar-tarjeta {
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--snop-azul);
+  border: 2px solid var(--snop-azul);
+  border-radius: var(--radio-sm);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.btn-cancelar-tarjeta:hover {
+  background: var(--snop-azul-light);
 }
 
 /* ============ ESTADOS ============ */
