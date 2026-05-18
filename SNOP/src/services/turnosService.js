@@ -4,36 +4,32 @@ import supabase from "../config/db.js";
 export async function getTurnosBySocio(socioId) {
 
   const { data, error } = await supabase
-    .from("SOCIO_TURNO")
+    .from("socio_turno")
     .select(`
       id,
       estado,
       fecha_inscripcion,
 
-      TURNOS (
+      turnos (
         id,
         fecha_inicio,
         fecha_fin,
         duracion_min,
 
-        TIPO_TURNO (
+        tipo_turno (
           nombre
         ),
 
-        SEDES (
+        sedes (
           nombre,
           direccion
         ),
 
-        MESAS (
+        mesas (
           numero
         ),
 
-        USERS (
-          nombre
-        ),
-
-        NIVELES (
+        users (
           nombre
         )
       )
@@ -44,6 +40,10 @@ export async function getTurnosBySocio(socioId) {
     });
 
   if (error) {
+
+    console.error("ERROR OBTENER TURNOS:");
+    console.error(error);
+
     throw error;
   }
 
@@ -57,7 +57,7 @@ export async function cancelarTurno(
 ) {
 
   const { data, error } = await supabase
-    .from("SOCIO_TURNO")
+    .from("socio_turno")
     .update({
       estado: false
     })
