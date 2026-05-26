@@ -10,5 +10,5 @@ export async function getTurnos() {
     `${API_URL}/${SOCIO_ID}`
   );
 
-  return response.data.data;
+  return response.data;
 }
