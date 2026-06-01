@@ -1,9 +1,12 @@
-import MisTurnos
-from "./pages/MisTurnos/MisTurnos";
+import MisTurnos from "./pages/MisTurnos/MisTurnos";
+import { BrowserRouter } from "react-router-dom";
 
 function App() {
-
-  return <MisTurnos />;
+  return (
+    <BrowserRouter>
+      <MisTurnos />
+    </BrowserRouter>
+  );
 }
 
 export default App;
