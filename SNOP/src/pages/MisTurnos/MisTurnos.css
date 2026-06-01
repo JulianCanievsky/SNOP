@@ -59,3 +59,19 @@
 
   padding: 16px;
 }
+.dia {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dia:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.15);
+}
+
+.dia.activa {
+  background: white;
+  color: #2563eb;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}

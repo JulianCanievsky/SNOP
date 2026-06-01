@@ -1,13 +1,70 @@
-import axios from "axios";
+import supabase from "../config/db.js";
 
-const API_URL = "http://localhost:3001/api/turnos";
+// Obtener turnos de un socio
+export async function getTurnosBySocio(socioId) {
 
-const SOCIO_ID = 999;
+  const { data, error } = await supabase
+    .from("socio_turno")
+    .select(`
+      id,
+      estado,
+      fecha_inscripcion,
 
-export async function getTurnos() {
+      turnos (
+        id,
+        fecha_inicio,
+        fecha_fin,
+        duracion_min,
 
-  const response = await axios.get(
-    `${API_URL}/${SOCIO_ID}`
-  );
+        tipo_turno (
+          nombre
+        ),
 
-  return response.data;
+        sedes (
+          nombre,
+          direccion
+        ),
+
+        mesas (
+          numero
+        ),
+
+        users (
+          nombre
+        )
+      )
+    `)
+    .eq("user_id", socioId)
+    .order("fecha_inscripcion", {
+      ascending: true
+    });
+
+  if (error) {
+    console.error(error);
+    throw error;
+  }
+
+  return data;
+}
+
+// Cancelar turno
+export async function cancelarTurno(
+  turnoId,
+  socioId
+) {
+
+  const { data, error } = await supabase
+    .from("socio_turno")
+    .update({
+      estado: false
+    })
+    .eq("turno_id", turnoId)
+    .eq("user_id", socioId)
+    .select();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}

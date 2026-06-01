@@ -10,7 +10,7 @@ from "../../components/TurnoCard/TurnoCard";
 
 import {
   getTurnos
-} from "../../services/turnosService";
+} from "../../services/turnosApi";
 
 function MisTurnos() {
 
@@ -19,6 +19,9 @@ function MisTurnos() {
 
   const [loading, setLoading] =
     useState(true);
+
+  const [diaSeleccionado, setDiaSeleccionado] =
+    useState(0);
 
   useEffect(() => {
 
@@ -45,7 +48,6 @@ function MisTurnos() {
 
   }, []);
 
-  // DIAS REALES DINÁMICOS
   const dias =
     Array.from({ length: 7 }, (_, i) => {
 
@@ -56,7 +58,7 @@ function MisTurnos() {
       );
 
       return {
-
+        fecha,
         letra:
           fecha
             .toLocaleDateString(
@@ -73,6 +75,27 @@ function MisTurnos() {
       };
     });
 
+  const fechaSeleccionada =
+    dias[diaSeleccionado].fecha;
+
+  const turnosFiltrados =
+    turnos.filter((turno) => {
+
+      const fechaTurno =
+        new Date(
+          turno.turnos.fecha_inicio
+        );
+
+      return (
+        fechaTurno.getDate() ===
+          fechaSeleccionada.getDate() &&
+        fechaTurno.getMonth() ===
+          fechaSeleccionada.getMonth() &&
+        fechaTurno.getFullYear() ===
+          fechaSeleccionada.getFullYear()
+      );
+    });
+
   return (
 
     <div className="mis-turnos">
@@ -87,7 +110,14 @@ function MisTurnos() {
 
             <div
               key={index}
-              className="dia"
+              className={
+                index === diaSeleccionado
+                  ? "dia activa"
+                  : "dia"
+              }
+              onClick={() =>
+                setDiaSeleccionado(index)
+              }
             >
 
               <span>
@@ -111,15 +141,22 @@ function MisTurnos() {
 
           <p>Cargando...</p>
 
-        ) : (
+        ) : turnosFiltrados.length > 0 ? (
 
-          turnos.map((turno) => (
+          turnosFiltrados.map((turno) => (
 
             <TurnoCard
               key={turno.id}
               turno={turno}
             />
           ))
+
+        ) : (
+
+          <p className="sin-turnos">
+            No tenés turnos para este día.
+          </p>
+
         )}
 
       </main>
