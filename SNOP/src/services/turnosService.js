@@ -11,4 +11,3 @@ export async function getTurnos() {
   );
 
   return response.data;
-}
