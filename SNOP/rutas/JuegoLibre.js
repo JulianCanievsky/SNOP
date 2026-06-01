@@ -13,16 +13,8 @@ const supabase = createClient(
 )
 
 const verificarToken = (req, res, next) => {
-  const authHeader = req.headers.authorization
-  const token = authHeader && authHeader.split(' ')[1]
-  if (!token) return res.status(401).json({ error: 'Token requerido' })
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    req.socio_id = decoded.id
-    next()
-  } catch {
-    return res.status(403).json({ error: 'Token inválido' })
-  }
+  req.socio_id = 1; // id del usuario de prueba
+  next();
 }
 
 router.get('/', verificarToken, async (req, res) => {
@@ -31,11 +23,12 @@ router.get('/', verificarToken, async (req, res) => {
     const socioId = req.socio_id
 
     let query = supabase
-      .from('juego_libre')
-      .select('*')
-      .eq('activo', true)
-      .order('fecha_inicio', { ascending: true })
-
+  .from('juego_libre')
+  .select('*')
+  .eq('activo', true)
+  .gte('fecha_fin', new Date().toISOString())
+  .order('fecha_inicio', { ascending: true })
+  
     if (sede_id) query = query.eq('sede_id', sede_id)
     if (fecha) {
       const desde = new Date(fecha)

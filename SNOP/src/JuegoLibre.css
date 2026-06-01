@@ -578,3 +578,14 @@
 .btn-cancelar-inscripcion:hover {
   background: var(--snop-azul-light);
 }
+
+.detalle-container {
+  min-height: 100px;
+  width: 100%;
+  background: #f5f5f5;
+}
+
+.detalle-contenido {
+  min-height: calc(100vh 
+  - 100px);
+}
