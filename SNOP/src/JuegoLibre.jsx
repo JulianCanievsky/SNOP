@@ -98,6 +98,7 @@ const EstadoVacio = () => (
   </div>
 );
 
+
 const JuegoLibre = () => {
   const { eventos, cargando, error, cargarEventos, inscribirse, cancelarInscripcion } = useJuegoLibre();
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
@@ -201,10 +202,35 @@ const JuegoLibre = () => {
       setEventoSeleccionado(evento);
     }}
   />
+  
 ))}
+
       </div>
+      <footer class="bottom-nav">
+  <a href="/inicio" class="nav-item">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Inicio</span>
+  </a>
+
+  <a href="/turnos" class="nav-item">
+    <span class="nav-icon">📅</span>
+    <span class="nav-label">Turnos</span>
+  </a>
+
+  <a href="/juego-libre" class="nav-item active">
+    <span class="nav-icon">🎾</span>
+    <span class="nav-label">Juego libre</span>
+  </a>
+
+  <a href="/perfil" class="nav-item">
+    <span class="nav-icon">👤</span>
+    <span class="nav-label">Perfil</span>
+  </a>
+</footer>
     </div>
   );
+  
 };
+
 
 export default JuegoLibre;

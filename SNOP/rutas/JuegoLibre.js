@@ -13,7 +13,7 @@ const supabase = createClient(
 )
 
 const verificarToken = (req, res, next) => {
-  req.socio_id = 6; 
+  req.socio_id = 11; 
   next();
 }
 

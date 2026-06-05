@@ -27,7 +27,8 @@
   min-height: 100vh;
   background: var(--snop-gris-bg);
   font-family: 'Inter', -apple-system, sans-serif;
-  max-width: 430px;
+  width: 100%;
+  
   margin: 0 auto;
 }
 
@@ -364,7 +365,8 @@
   flex-direction: column;
   min-height: 100vh;
   background: var(--snop-gris-bg);
-  max-width: 430px;
+  width: 100%;
+  
   margin: 0 auto;
 }
 
@@ -588,4 +590,96 @@
 .detalle-contenido {
   min-height: calc(100vh 
   - 100px);
+}
+/* Desktop */
+@media (min-width: 769px) {
+
+  .jl-contenido {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 20px;
+  }
+
+  .jl-header {
+    padding: 32px;
+  }
+
+  .jl-titulo {
+    font-size: 36px;
+  }
+
+  .jl-filtros {
+    padding: 20px 32px;
+  }
+}
+
+/* Celulares */
+@media (max-width: 768px) {
+
+  .juego-libre-container,
+  .detalle-container {
+    max-width: 100%;
+  }
+
+  .jl-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtro-grupo {
+    flex-direction: column;
+  }
+
+  .btn-filtrar {
+    width: 100%;
+  }
+}
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  height: 70px;
+  background: white;
+
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -2px 8px rgba(0,0,0,.05);
+
+  z-index: 999;
+}
+
+.nav-item {
+  flex: 1;
+  text-decoration: none;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 500;
+
+  transition: all .2s;
+}
+
+.nav-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.nav-item.active {
+  color: #2563eb;
+}
+
+.nav-item:hover {
+  color: #2563eb;
 }
