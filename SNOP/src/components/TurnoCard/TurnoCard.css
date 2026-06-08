@@ -1,4 +1,6 @@
 /* ── CARD ── */
+*{
+  font-family: 'Inter', -apple-system, sans-serif;}
 .turno-card {
   background: white;
   border-radius: 20px;
