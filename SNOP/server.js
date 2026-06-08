@@ -4,6 +4,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
 import juegoLibreRoutes from './rutas/JuegoLibre.js'
+import turnos from './rutas/turnos.js'
 
 dotenv.config()
 
@@ -15,7 +16,7 @@ app.post('/auth/login-dev', async (req, res) => {
 app.use(cors())
 app.use(express.json())
 
-app.use('/juego-libre', juegoLibreRoutes)
+app.use('/mis-turnos', turnos)
 
 const PORT = process.env.PORT || 3000
 
