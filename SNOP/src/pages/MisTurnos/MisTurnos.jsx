@@ -38,13 +38,17 @@ function MisTurnos() {
   const fechaSeleccionada = dias[diaSeleccionado].fecha;
 
   const turnosFiltrados = turnos.filter((turno) => {
-    const fechaTurno = new Date(turno.turnos.fecha_inicio);
-    return (
-      fechaTurno.getDate() === fechaSeleccionada.getDate() &&
-      fechaTurno.getMonth() === fechaSeleccionada.getMonth() &&
-      fechaTurno.getFullYear() === fechaSeleccionada.getFullYear()
-    );
-  });
+  const fechaTurno = turno.turnos.fecha_inicio.slice(0, 10);
+
+  const year = fechaSeleccionada.getFullYear();
+  const month = String(fechaSeleccionada.getMonth() + 1).padStart(2, "0");
+  const day = String(fechaSeleccionada.getDate()).padStart(2, "0");
+  const fechaComp = `${year}-${month}-${day}`;
+
+  console.log("fechaTurno:", fechaTurno, "| fechaComp:", fechaComp);
+
+  return fechaTurno === fechaComp;
+});
 
   const navItems = [
     { label: "Inicio", icon: "🏠", path: "/" },
