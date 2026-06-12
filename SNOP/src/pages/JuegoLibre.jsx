@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useJuegoLibre } from './useJuegoLibre';
+import { useJuegoLibre } from '../useJuegoLibre';
 import DetalleJuegoLibre from './DetalleJuegoLibre';
 import './JuegoLibre.css';
 
