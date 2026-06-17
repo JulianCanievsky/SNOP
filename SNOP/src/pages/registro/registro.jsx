@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import './registro.css'
 
@@ -28,7 +28,6 @@ export default function Registro() {
 
     const { nombre, email, password, confirmPassword } = form
 
-    // Validaciones básicas
     if (!nombre.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError('Completá todos los campos')
       return
@@ -44,38 +43,24 @@ export default function Registro() {
 
     setLoading(true)
     try {
-      // Verificar que el email no esté en uso
-      const { data: existe } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email.trim().toLowerCase())
-        .maybeSingle()
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          data: { nombre: nombre.trim() }, // va a raw_user_meta_data → trigger lo copia a public.users
+        },
+      })
 
-      if (existe) {
-        throw new Error('Ya existe una cuenta con ese correo electrónico')
+      if (signUpError) {
+        // Supabase devuelve este mensaje cuando el email ya existe
+        if (signUpError.message.includes('already registered')) {
+          throw new Error('Ya existe una cuenta con ese correo electrónico')
+        }
+        throw new Error(signUpError.message)
       }
 
-      // Insertar nuevo usuario como socio (tipo_usuario_id = 1)
-      // club_id = 1 por defecto (ajustar si el club tiene múltiples clubs)
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert({
-          nombre: nombre.trim(),
-          email: email.trim().toLowerCase(),
-          password: password,          // ⚠️ Se guarda igual que el resto de la BD
-          tipo_usuario_id: 1,          // socio
-          club_id: 1,
-          activo: true,
-          cuota_al_dia: false,
-          created_at: new Date().toISOString(),
-        })
-
-      if (insertError) throw new Error('Error al crear la cuenta. Intentá nuevamente.')
-
-      setSuccess('¡Cuenta creada! El entrenador te asignará tu clave de prueba. Ya podés iniciar sesión.')
+      setSuccess('¡Cuenta creada! El entrenador te asignará tu nivel. Ya podés iniciar sesión.')
       setForm({ nombre: '', email: '', password: '', confirmPassword: '' })
-
-      // Redirigir al login tras 2 segundos
       setTimeout(() => navigate('/login'), 2500)
 
     } catch (err) {
@@ -85,22 +70,20 @@ export default function Registro() {
     }
   }
 
+  // JSX sin cambios — se mantiene igual que el original
   return (
     <div className="registro-container">
-      {/* Header */}
       <div className="registro-header">
         <button className="btn-volver" onClick={() => navigate('/')}>
           ‹ volver
         </button>
       </div>
 
-      {/* Hero */}
       <div className="registro-hero">
         <h2>Crear cuenta</h2>
         <p>Tu nivel será asignado por el entrenador</p>
       </div>
 
-      {/* Card */}
       <div className="registro-card">
         <form onSubmit={handleSubmit}>
           {error   && <div className="error-box">{error}</div>}
@@ -108,58 +91,30 @@ export default function Registro() {
 
           <div className="form-group">
             <label htmlFor="nombre">Nombre completo</label>
-            <input
-              id="nombre"
-              name="nombre"
-              type="text"
-              className="form-input"
-              placeholder="Nombre y apellido"
-              value={form.nombre}
-              onChange={handleChange}
-              autoComplete="name"
-            />
+            <input id="nombre" name="nombre" type="text" className="form-input"
+              placeholder="Nombre y apellido" value={form.nombre}
+              onChange={handleChange} autoComplete="name" />
           </div>
 
           <div className="form-group">
             <label htmlFor="email">Correo electrónico</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              className="form-input"
-              placeholder="tu@email.com"
-              value={form.email}
-              onChange={handleChange}
-              autoComplete="email"
-            />
+            <input id="email" name="email" type="email" className="form-input"
+              placeholder="tu@email.com" value={form.email}
+              onChange={handleChange} autoComplete="email" />
           </div>
 
           <div className="form-group">
             <label htmlFor="password">Contraseña</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              className="form-input"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-              autoComplete="new-password"
-            />
+            <input id="password" name="password" type="password" className="form-input"
+              placeholder="••••••••" value={form.password}
+              onChange={handleChange} autoComplete="new-password" />
           </div>
 
           <div className="form-group">
             <label htmlFor="confirmPassword">Confirmar contraseña</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              className="form-input"
-              placeholder="••••••••"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              autoComplete="new-password"
-            />
+            <input id="confirmPassword" name="confirmPassword" type="password" className="form-input"
+              placeholder="••••••••" value={form.confirmPassword}
+              onChange={handleChange} autoComplete="new-password" />
           </div>
 
           <div className="info-box">
