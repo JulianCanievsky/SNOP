@@ -1,9 +1,9 @@
-import './JuegoLibre.css';
+import './JuegoLibre.css'
 
 const AvatarParticipanteGrande = ({ participante }) => {
   const iniciales = participante.nombre
     ? participante.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-    : '?';
+    : '?'
   return (
     <div className="avatar-grande-wrapper" title={participante.nombre}>
       <div className="avatar-grande">
@@ -13,8 +13,8 @@ const AvatarParticipanteGrande = ({ participante }) => {
       </div>
       <span className="avatar-nombre">{participante.nombre?.split(' ')[0]}</span>
     </div>
-  );
-};
+  )
+}
 
 const DetalleJuegoLibre = ({
   evento,
@@ -24,15 +24,15 @@ const DetalleJuegoLibre = ({
   onConfirmar,
   onCancelar,
 }) => {
-  const duracion = calcularDuracion(evento.fecha_inicio, evento.fecha_fin);
-  const horario = formatearHora(evento.fecha_inicio, evento.fecha_fin);
+  const duracion = calcularDuracion(evento.fecha_inicio, evento.fecha_fin)
+  const horario = formatearHora(evento.fecha_inicio, evento.fecha_fin)
 
   const fechaFormateada = new Date(evento.fecha_inicio).toLocaleDateString('es-AR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-  });
-  const fechaCapitalizada = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+  })
+  const fechaCapitalizada = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1)
 
   return (
     <div className="detalle-container">
@@ -99,18 +99,18 @@ const DetalleJuegoLibre = ({
         </div>
 
         <div className="detalle-acciones">
-  {evento.ya_inscripto
-    ? <button className="btn-cancelar-inscripcion" onClick={() => onCancelar(evento.id)}>
-        Cancelar inscripción
-      </button>
-    : <button className="btn-confirmar" onClick={onConfirmar}>
-        Confirmar inscripción
-      </button>
-  }
-</div>
+          {evento.ya_inscripto
+            ? <button className="btn-cancelar-inscripcion" onClick={() => onCancelar(evento.id)}>
+                Cancelar inscripción
+              </button>
+            : <button className="btn-confirmar" onClick={onConfirmar}>
+                Confirmar inscripción
+              </button>
+          }
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DetalleJuegoLibre;
+export default DetalleJuegoLibre

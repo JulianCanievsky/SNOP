@@ -5,6 +5,7 @@ import Splash   from './pages/Splash/Splash'
 import Login    from './pages/login/login'
 import Registro from './pages/registro/registro'
 import MisTurnos from './pages/MisTurnos/MisTurnos'
+import JuegoLibre from './pages/JuegoLibre/JuegoLibre'
 
 // Rutas protegidas: redirige al login si no hay sesión
 function RutaProtegida({ children, rolesPermitidos }) {
@@ -42,6 +43,15 @@ function AppRoutes() {
         element={
           <RutaProtegida rolesPermitidos={[1]}>
             <MisTurnos />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/juego-libre"
+        element={
+          <RutaProtegida rolesPermitidos={[1]}>
+            <JuegoLibre />
           </RutaProtegida>
         }
       />

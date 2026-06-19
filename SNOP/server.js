@@ -16,6 +16,7 @@ app.post('/auth/login-dev', async (req, res) => {
 app.use(cors())
 app.use(express.json())
 
+app.use('/juego-libre', juegoLibreRoutes)
 app.use('/mis-turnos', turnos)
 
 const PORT = process.env.PORT || 3000

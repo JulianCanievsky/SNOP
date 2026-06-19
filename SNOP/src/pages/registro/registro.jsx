@@ -80,6 +80,7 @@ export default function Registro() {
       </div>
 
       <div className="registro-hero">
+        <img src="/logo.png" alt="SNOP Logo" className="auth-logo" />
         <h2>Crear cuenta</h2>
         <p>Tu nivel será asignado por el entrenador</p>
       </div>

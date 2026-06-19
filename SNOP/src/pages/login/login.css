@@ -37,6 +37,15 @@
   color: #ffffff;
 }
 
+.auth-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .login-hero h2 {
   font-size: 26px;
   font-weight: 700;

@@ -1,42 +1,41 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useJuegoLibre } from './useJuegoLibre';
-import DetalleJuegoLibre from './DetalleJuegoLibre';
-import './JuegoLibre.css';
+import { useState } from 'react'
+import { useJuegoLibre } from './useJuegoLibre'
+import DetalleJuegoLibre from './DetalleJuegoLibre'
+import './JuegoLibre.css'
 
 const formatearFecha = (fechaISO) => {
-  const fecha = new Date(fechaISO);
-  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-  return `${dias[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]}`;
-};
+  const fecha = new Date(fechaISO)
+  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+  return `${dias[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]}`
+}
 
 const formatearHora = (inicio, fin) => {
-  const h = (d) => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  return `${h(inicio)} — ${h(fin)} hs`;
-};
+  const h = (d) => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  return `${h(inicio)} — ${h(fin)} hs`
+}
 
 const calcularDuracion = (inicio, fin) => {
-  const minutos = Math.round((new Date(fin) - new Date(inicio)) / 60000);
-  return `${minutos} minutos`;
-};
+  const minutos = Math.round((new Date(fin) - new Date(inicio)) / 60000)
+  return `${minutos} minutos`
+}
 
 const AvatarParticipante = ({ participante }) => {
   const iniciales = participante.nombre
     ? participante.nombre.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-    : '?';
+    : '?'
   return (
     <div className="avatar-participante" title={participante.nombre}>
       {participante.foto_url
         ? <img src={participante.foto_url} alt={participante.nombre} />
         : <span>{iniciales}</span>}
     </div>
-  );
-};
+  )
+}
 
 const BarraCapacidad = ({ inscriptos, capacidad }) => {
-  const porcentaje = Math.min((inscriptos / capacidad) * 100, 100);
-  const completo = inscriptos >= capacidad;
+  const porcentaje = Math.min((inscriptos / capacidad) * 100, 100)
+  const completo = inscriptos >= capacidad
   return (
     <div className="barra-capacidad-wrapper">
       <div className="barra-capacidad">
@@ -46,12 +45,12 @@ const BarraCapacidad = ({ inscriptos, capacidad }) => {
         />
       </div>
     </div>
-  );
-};
+  )
+}
 
 const TarjetaEvento = ({ evento, onAnotarme, onCancelar }) => {
-  const completo = evento.estado === 'completo';
-  const yaInscripto = evento.ya_inscripto;
+  const completo = evento.estado === 'completo'
+  const yaInscripto = evento.ya_inscripto
 
   return (
     <div className={`tarjeta-evento ${completo ? 'tarjeta-completa' : ''}`}>
@@ -88,50 +87,42 @@ const TarjetaEvento = ({ evento, onAnotarme, onCancelar }) => {
         }
       </div>
     </div>
-  );
-};
-const EstadoVacio = () => (
-  <div className="estado-vacio">
-    <div className="estado-vacio-icono">🏓</div>
-    <p className="estado-vacio-titulo">Sin espacios disponibles</p>
-    <p className="estado-vacio-subtitulo">No hay eventos de juego libre próximos</p>
-  </div>
-);
-
+  )
+}
 
 const JuegoLibre = () => {
-  const { eventos, cargando, error, cargarEventos, inscribirse, cancelarInscripcion } = useJuegoLibre();
-  const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
-  const [filtroSede, setFiltroSede] = useState('');
-  const [filtroFecha, setFiltroFecha] = useState('');
+  const { eventos, cargando, error, cargarEventos, inscribirse, cancelarInscripcion } = useJuegoLibre()
+  const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
+  const [filtroSede, setFiltroSede] = useState('')
+  const [filtroFecha, setFiltroFecha] = useState('')
 
   const handleAnotarme = (evento) => {
-    setEventoSeleccionado(evento);
-  };
+    setEventoSeleccionado(evento)
+  }
 
   const handleConfirmar = async () => {
     try {
-      await inscribirse(eventoSeleccionado.id);
-      setEventoSeleccionado(null);
-      await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha });
+      await inscribirse(eventoSeleccionado.id)
+      setEventoSeleccionado(null)
+      await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha })
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al inscribirse');
+      alert(err.response?.data?.error || 'Error al inscribirse')
     }
-  };
+  }
 
   const handleCancelarDesdeDetalle = async (eventoId) => {
     try {
-      await cancelarInscripcion(eventoId);
-      setEventoSeleccionado(null);
-      await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha });
+      await cancelarInscripcion(eventoId)
+      setEventoSeleccionado(null)
+      await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha })
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al cancelar');
+      alert(err.response?.data?.error || 'Error al cancelar')
     }
-  };
+  }
 
   const handleFiltrar = () => {
-    cargarEventos({ sede_id: filtroSede, fecha: filtroFecha });
-  };
+    cargarEventos({ sede_id: filtroSede, fecha: filtroFecha })
+  }
 
   if (eventoSeleccionado) {
     return (
@@ -143,7 +134,7 @@ const JuegoLibre = () => {
         onConfirmar={handleConfirmar}
         onCancelar={handleCancelarDesdeDetalle}
       />
-    );
+    )
   }
 
   return (
@@ -193,44 +184,17 @@ const JuegoLibre = () => {
           </div>
         )}
 
-      {!cargando && !error && eventos.map(evento => (
-  <TarjetaEvento
-    key={evento.id}
-    evento={evento}
-    onAnotarme={handleAnotarme}
-    onCancelar={(evento) => {
-      setEventoSeleccionado(evento);
-    }}
-  />
-  
-))}
-
+        {!cargando && !error && eventos.map(evento => (
+          <TarjetaEvento
+            key={evento.id}
+            evento={evento}
+            onAnotarme={handleAnotarme}
+            onCancelar={(ev) => setEventoSeleccionado(ev)}
+          />
+        ))}
       </div>
-      <footer class="bottom-nav">
-  <a href="/inicio" class="nav-item">
-    <span class="nav-icon">🏠</span>
-    <span class="nav-label">Inicio</span>
-  </a>
-
-  <a href="/turnos" class="nav-item">
-    <span class="nav-icon">📅</span>
-    <span class="nav-label">Turnos</span>
-  </a>
-
-  <a href="/juego-libre" class="nav-item active">
-    <span class="nav-icon">🎾</span>
-    <span class="nav-label">Juego libre</span>
-  </a>
-
-  <a href="/perfil" class="nav-item">
-    <span class="nav-icon">👤</span>
-    <span class="nav-label">Perfil</span>
-  </a>
-</footer>
     </div>
-  );
-  
-};
+  )
+}
 
-
-export default JuegoLibre;
+export default JuegoLibre
