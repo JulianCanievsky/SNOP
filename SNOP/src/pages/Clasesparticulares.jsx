@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useClasesParticulares } from '../hooks/useClasesParticulares';
-import ConfirmarClase from './ConfirmarClase';
+import { useClasesParticulares } from "../hooks/useClasesParticulares";
+import ConfirmarClase from "../components/TurnoCard/ConfirmarClase";
 import './ClasesParticulares.css';
 
 const formatearDiaHora = (fechaISO) => {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const obtenerToken = () => localStorage.getItem('snop_token');
 
 export const useClasesParticulares = () => {
@@ -23,6 +23,11 @@ export const useClasesParticulares = () => {
       setCargando(false);
     }
   }, []);
+  const obtenerToken = () => {
+  const token = localStorage.getItem('snop_token');
+  console.log('TOKEN:', token);
+  return token;
+};
 
   useEffect(() => {
     cargarEntrenadores();

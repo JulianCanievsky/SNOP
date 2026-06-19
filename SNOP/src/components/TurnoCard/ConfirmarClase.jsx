@@ -1,4 +1,4 @@
-import './ClasesParticulares.css';
+import "../../pages/ClasesParticulares.css";
 
 const formatearFechaCompleta = (fechaISO) => {
   const fecha = new Date(fechaISO);

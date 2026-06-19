@@ -1,7 +1,7 @@
 const express = require('express');
-const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
+const router = express.Router();
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -258,5 +258,4 @@ router.get('/mis-solicitudes', verificarToken, async (req, res) => {
     res.status(500).json({ error: 'Error al obtener solicitudes' });
   }
 });
-
-module.exports = router;
+export default router;
