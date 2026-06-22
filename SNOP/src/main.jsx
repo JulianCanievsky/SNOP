@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 
 import './index.css'
 import ClasesParticulares from './pages/Clasesparticulares.jsx'
+import Perfil from './pages/Perfil.jsx'
 
 const token = localStorage.getItem('snop_token')
 
@@ -30,6 +31,6 @@ if (!token) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ClasesParticulares />
+    <Perfil />
   </StrictMode>
 )
