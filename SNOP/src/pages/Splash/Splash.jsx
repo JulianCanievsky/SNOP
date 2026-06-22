@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import './Splash.css'
-import logo from '/icons.svg'
 
 export default function Splash() {
   const navigate = useNavigate()
@@ -8,7 +7,7 @@ export default function Splash() {
   return (
     <div className="splash-container">
       <div className="splash-top">
-        <img src={logo} alt="SNOP Logo" className="splash-logo" />
+        <img src="/LogoSnop.png" alt="SNOP Logo" className="splash-logo" />
         <h1 className="splash-title">SNOP</h1>
         <p className="splash-subtitle">"Todo tu club en un solo lugar"</p>
       </div>

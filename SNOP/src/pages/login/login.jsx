@@ -61,7 +61,6 @@ export default function Login() {
 
       {/* Hero */}
       <div className="login-hero">
-        <img src="/logo.png" alt="SNOP Logo" className="auth-logo" />
         <h2>{rol.titulo}</h2>
         <p>{rol.subtitulo}</p>
       </div>
