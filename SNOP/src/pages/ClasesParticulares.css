@@ -522,3 +522,23 @@
     padding: 32px 48px;
   }
 }
+
+.filtro-fecha {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filtro-fecha label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.filtro-fecha input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
