@@ -5,6 +5,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const useClasesParticulares = () => {
   const [entrenadores, setEntrenadores] = useState([]);
+  const [solicitudes, setSolicitudes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,9 +27,22 @@ export const useClasesParticulares = () => {
     }
   }, []);
 
+  const obtenerSolicitudes = useCallback(async () => {
+    try {
+      const { data } = await axios.get(
+        `${API_BASE}/clases-particulares/mis-solicitudes`
+      );
+
+      setSolicitudes(data.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   useEffect(() => {
     cargarEntrenadores();
-  }, [cargarEntrenadores]);
+    obtenerSolicitudes();
+  }, [cargarEntrenadores, obtenerSolicitudes]);
 
   const obtenerEntrenador = async (entrenadorId) => {
     const { data } = await axios.get(
@@ -52,15 +66,20 @@ export const useClasesParticulares = () => {
       }
     );
 
+    // Recargar solicitudes luego de reservar
+    await obtenerSolicitudes();
+
     return data;
   };
 
-  return {
-    entrenadores,
-    cargando,
-    error,
-    cargarEntrenadores,
-    obtenerEntrenador,
-    enviarSolicitud,
-  };
+ return {
+  entrenadores,
+  solicitudes,
+  cargando,
+  error,
+  cargarEntrenadores,
+  obtenerEntrenador,
+  enviarSolicitud,
+  obtenerSolicitudes,
+};
 };

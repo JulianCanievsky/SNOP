@@ -60,11 +60,24 @@ const ChipTurno = ({ turno, seleccionado, onClick }) => (
   </button>
 );
 
-const TarjetaEntrenador = ({ entrenador, onReservar }) => {
+const TarjetaEntrenador = ({
+  entrenador,
+  solicitudes,
+  onReservar
+}) => {
+
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null);
+
+  const yaReservado =
+    turnoSeleccionado &&
+    (solicitudes || []).some(
+      s => s.turnos?.id === turnoSeleccionado.id
+    );
 
   const handleReservar = () => {
     if (!turnoSeleccionado) return;
+    if (yaReservado) return;
+
     onReservar(entrenador, turnoSeleccionado);
   };
 
@@ -105,12 +118,12 @@ const TarjetaEntrenador = ({ entrenador, onReservar }) => {
       </div>
 
       <button
-        className="btn-reservar"
-        onClick={handleReservar}
-        disabled={!turnoSeleccionado}
-      >
-        Reservar clase
-      </button>
+  className="btn-reservar"
+  onClick={handleReservar}
+  disabled={!turnoSeleccionado || yaReservado}
+>
+  {yaReservado ? "Ya solicitado" : "Reservar clase"}
+</button>
     </div>
   );
 };
@@ -118,10 +131,12 @@ const TarjetaEntrenador = ({ entrenador, onReservar }) => {
 const ClasesParticulares = () => {
   const {
     entrenadores,
+    solicitudes,
     cargando,
     error,
     cargarEntrenadores,
-    enviarSolicitud
+    enviarSolicitud,
+    obtenerSolicitudes
   } = useClasesParticulares();
 
   const [reserva, setReserva] = useState(null);
@@ -149,6 +164,7 @@ const ClasesParticulares = () => {
       setReserva(null);
 
       await cargarEntrenadores();
+await obtenerSolicitudes();
     } catch (err) {
       alert(
         err.response?.data?.error ||
@@ -264,12 +280,54 @@ const ClasesParticulares = () => {
         {!cargando &&
           !error &&
           entrenadoresFiltrados.map(entrenador => (
-            <TarjetaEntrenador
-              key={entrenador.id}
-              entrenador={entrenador}
-              onReservar={handleReservar}
-            />
+        <TarjetaEntrenador
+  key={entrenador.id}
+  entrenador={entrenador}
+  solicitudes={solicitudes}
+  onReservar={handleReservar}
+/>
+
           ))}
+          {solicitudes.length > 0 && (
+  <>
+   <p className="seccion-label">
+  MIS SOLICITUDES
+</p>
+
+<div className="mis-solicitudes">
+  {solicitudes.map((s) => (
+    <div key={s.id} className="solicitud-card">
+
+      <div className="solicitud-fecha">
+        {new Date(s.turnos.fecha_inicio).toLocaleDateString("es-AR")}
+      </div>
+
+      <div className="solicitud-hora">
+        {new Date(s.turnos.fecha_inicio).toLocaleTimeString("es-AR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </div>
+
+      <div
+        className={`estado-solicitud ${
+          s.estado ? "confirmado" : "pendiente"
+        }`}
+      >
+        <span className="estado-icono">
+          {s.estado ? "✅" : "⏳"}
+        </span>
+
+        <span>
+          {s.estado ? "Confirmado" : "Pendiente"}
+        </span>
+      </div>
+
+    </div>
+  ))}
+</div>
+  </>
+)}
       </div>
     </div>
   );

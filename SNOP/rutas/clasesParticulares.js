@@ -146,78 +146,108 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
 // =========================
 // POST SOLICITAR
 // =========================
+// =========================
+// POST SOLICITAR
+// =========================
 router.post('/solicitar', async (req, res) => {
-  const socio_id = 1;
 
+  const socio_id = 7;
   const { turno_id } = req.body;
 
   try {
 
-    const { data: existe } = await supabase
+    // Verifica si ya solicitó ese turno
+    const { data: existe, error: errorExiste } = await supabase
       .from('socio_turno')
       .select('id')
-      .eq('turno_id', turno_id)
       .eq('user_id', socio_id)
+      .eq('turno_id', turno_id)
       .maybeSingle();
+
+    if (errorExiste) throw errorExiste;
 
     if (existe) {
       return res.status(409).json({
-        error: 'Ya estás inscripto a este turno'
+        error: 'Ya solicitaste este turno.'
       });
     }
 
+    // Inserta la solicitud como pendiente
     const { data, error } = await supabase
       .from('socio_turno')
-      .insert({
-        turno_id,
-        user_id: socio_id,
-        estado: true,
-        fecha_inscripcion: new Date().toISOString()
-      })
+     .insert({
+  turno_id,
+  user_id: socio_id,
+  estado: false,
+  fecha_inscripcion: new Date().toISOString()
+})
       .select();
 
-    if (error) {
-      console.error(error);
-      return res.status(500).json(error);
-    }
+    if (error) throw error;
 
     res.status(201).json({
-      mensaje: 'Clase reservada correctamente',
+      mensaje: 'Solicitud enviada correctamente.',
       data
     });
 
   } catch (error) {
     console.error(error);
-    res.status(500).json(error);
+
+    res.status(500).json({
+      error: 'Error al enviar la solicitud.'
+    });
   }
+
 });
+
+// =========================
+// MIS SOLICITUDES
+// =========================
 // =========================
 // MIS SOLICITUDES
 // =========================
 router.get('/mis-solicitudes', async (req, res) => {
 
-  const socio_id = 1;
+  try {
 
-  const { data, error } = await supabase
-    .from('socio_turno')
-    .select(`
+    const socio_id = 7;
+
+   const { data, error } = await supabase
+  .from('socio_turno')
+  .select(`
+    id,
+    turno_id,
+    estado,
+    fecha_inscripcion,
+    turnos!inner(
       id,
-      estado,
-      fecha_inscripcion,
-      turnos (
-        id,
-        fecha_inicio,
-        fecha_fin
+      fecha_inicio,
+      fecha_fin,
+      duracion_min,
+      tipo_turno_id,
+      users(
+        nombre
       )
-    `)
-    .eq('user_id', socio_id);
+    )
+  `)
+  .eq('user_id', socio_id)
+  .eq('turnos.tipo_turno_id', 2) // SOLO clases particulares
+  .order('fecha_inscripcion', { ascending: false });
+    if (error) throw error;
 
-  if (error) {
-    return res.status(500).json(error);
+    res.json({
+      data
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'Error al obtener las solicitudes.'
+    });
+
   }
 
-  res.json({ data });
-
-});;
-
+});
 export default router;
