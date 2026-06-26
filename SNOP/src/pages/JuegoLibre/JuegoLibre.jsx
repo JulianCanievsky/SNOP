@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useJuegoLibre } from './useJuegoLibre'
 import DetalleJuegoLibre from './DetalleJuegoLibre'
+import BottomNav from '../../components/BottomNav/BottomNav'
 import './JuegoLibre.css'
 
 const formatearFecha = (fechaISO) => {
@@ -193,6 +194,7 @@ const JuegoLibre = () => {
           />
         ))}
       </div>
+      <BottomNav />
     </div>
   )
 }

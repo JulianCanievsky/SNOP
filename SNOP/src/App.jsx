@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
-import Splash   from './pages/Splash/Splash'
-import Login    from './pages/login/login'
-import Registro from './pages/registro/registro'
+import Splash    from './pages/Splash/Splash'
+import Login     from './pages/login/login'
+import Registro  from './pages/registro/registro'
+import Inicio    from './pages/Inicio/Inicio'
 import MisTurnos from './pages/MisTurnos/MisTurnos'
 import JuegoLibre from './pages/JuegoLibre/JuegoLibre'
 
@@ -30,7 +31,7 @@ function AppRoutes() {
       {/* Pantalla inicial */}
       <Route
         path="/"
-        element={user ? <Navigate to="/mis-turnos" replace /> : <Splash />}
+        element={user ? <Navigate to="/inicio" replace /> : <Splash />}
       />
 
       {/* Auth */}
@@ -38,6 +39,15 @@ function AppRoutes() {
       <Route path="/registro" element={<Registro />} />
 
       {/* Socios (tipo_usuario_id = 1) */}
+      <Route
+        path="/inicio"
+        element={
+          <RutaProtegida rolesPermitidos={[1]}>
+            <Inicio />
+          </RutaProtegida>
+        }
+      />
+
       <Route
         path="/mis-turnos"
         element={

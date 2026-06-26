@@ -43,24 +43,50 @@ export default function Registro() {
 
     setLoading(true)
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
-          data: { nombre: nombre.trim() }, // va a raw_user_meta_data → trigger lo copia a public.users
+          data: { nombre: nombre.trim() },
         },
       })
 
       if (signUpError) {
-        // Supabase devuelve este mensaje cuando el email ya existe
-        if (signUpError.message.includes('already registered')) {
+        if (
+          signUpError.message.includes('already registered') ||
+          signUpError.message.includes('User already registered')
+        ) {
           throw new Error('Ya existe una cuenta con ese correo electrónico')
         }
         throw new Error(signUpError.message)
       }
 
+      // Insertar el usuario en public.users manualmente
+      const authUser = signUpData?.user
+      if (authUser) {
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            auth_id: authUser.id,           // UUID de Supabase Auth
+            nombre: nombre.trim(),
+            email: email.trim().toLowerCase(),
+            password: '—',                  // placeholder: la auth real la maneja Supabase Auth
+            tipo_usuario_id: 1,             // socio por defecto
+            activo: true,
+            cuota_al_dia: true,
+            fecha_alta: new Date().toISOString(),
+          })
+
+        if (insertError && insertError.code !== '23505' && insertError.status !== 409) {
+          console.error('Error al crear perfil:', insertError.message)
+          throw new Error('Cuenta creada pero hubo un error al guardar el perfil. Contactá al administrador.')
+        }
+      }
+
       setSuccess('¡Cuenta creada! El entrenador te asignará tu nivel. Ya podés iniciar sesión.')
       setForm({ nombre: '', email: '', password: '', confirmPassword: '' })
+      // Cerrar la sesión que Supabase abre automáticamente al registrar
+      await supabase.auth.signOut()
       setTimeout(() => navigate('/login'), 2500)
 
     } catch (err) {

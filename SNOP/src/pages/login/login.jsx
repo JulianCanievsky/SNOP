@@ -41,7 +41,7 @@ export default function Login() {
       } else if (userData.tipo_usuario_id === 2) {
         navigate('/entrenador')
       } else {
-        navigate('/mis-turnos')
+        navigate('/inicio')
       }
     } catch (err) {
       setError(err.message)

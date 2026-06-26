@@ -7,6 +7,11 @@
   padding: 18px;
   margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border: 2px solid #e2e8f0;
+}
+
+.turno-card:first-child {
+  border-color: #2563eb;
 }
 
 .turno-header {
