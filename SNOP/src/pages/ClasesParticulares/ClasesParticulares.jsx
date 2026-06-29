@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useClasesParticulares } from '../../hooks/useClasesParticulares'
 import ConfirmarClase from '../../components/TurnoCard/ConfirmarClase'
+import BottomNav from '../../components/BottomNav/BottomNav'
 import './ClasesParticulares.css'
 
 const formatearDiaHora = (fechaISO) => {
@@ -252,6 +253,7 @@ const ClasesParticulares = () => {
           </>
         )}
       </div>
+      <BottomNav />
     </div>
   )
 }

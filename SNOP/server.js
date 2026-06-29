@@ -5,9 +5,10 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import jwt from 'jsonwebtoken'
 
-import juegoLibreRoutes       from './rutas/JuegoLibre.js'
-import turnosRoutes           from './rutas/turnos.js'
+import juegoLibreRoutes         from './rutas/JuegoLibre.js'
+import turnosRoutes             from './rutas/turnos.js'
 import clasesParticularesRoutes from './rutas/clasesParticulares.js'
+import perfilRouter             from './rutas/perfil.js'
 
 dotenv.config()
 
@@ -21,10 +22,11 @@ app.post('/auth/login-dev', async (_req, res) => {
   res.json({ token })
 })
 
-app.use('/juego-libre',              juegoLibreRoutes)
-app.use('/api/juego-libre',          juegoLibreRoutes)
-app.use('/api/turnos',               turnosRoutes)
-app.use('/api/clases-particulares',  clasesParticularesRoutes)
+app.use('/juego-libre',             juegoLibreRoutes)
+app.use('/api/juego-libre',         juegoLibreRoutes)
+app.use('/api/turnos',              turnosRoutes)
+app.use('/api/clases-particulares', clasesParticularesRoutes)
+app.use('/api/perfil',              perfilRouter)
 
 const PORT = process.env.PORT || 3000
 

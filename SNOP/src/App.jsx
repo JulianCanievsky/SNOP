@@ -1,22 +1,21 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
-import Splash            from './pages/Splash/Splash'
-import Login             from './pages/login/login'
-import Registro          from './pages/registro/registro'
-import Inicio            from './pages/Inicio/Inicio'
-import MisTurnos         from './pages/MisTurnos/MisTurnos'
-import JuegoLibre        from './pages/JuegoLibre/JuegoLibre'
+import Splash             from './pages/Splash/Splash'
+import Login              from './pages/login/login'
+import Registro           from './pages/registro/registro'
+import Inicio             from './pages/Inicio/Inicio'
+import MisTurnos          from './pages/MisTurnos/MisTurnos'
+import JuegoLibre         from './pages/JuegoLibre/JuegoLibre'
 import ClasesParticulares from './pages/ClasesParticulares/ClasesParticulares'
+import Perfil             from './pages/Perfil/Perfil'
 
 // Rutas protegidas: redirige al login si no hay sesión
 function RutaProtegida({ children, rolesPermitidos }) {
   const { user, loading } = useAuth()
 
   if (loading) return null
-
   if (!user) return <Navigate to="/login" replace />
-
   if (rolesPermitidos && !rolesPermitidos.includes(user.tipo_usuario_id)) {
     return <Navigate to="/login" replace />
   }
@@ -48,7 +47,6 @@ function AppRoutes() {
           </RutaProtegida>
         }
       />
-
       <Route
         path="/mis-turnos"
         element={
@@ -57,7 +55,6 @@ function AppRoutes() {
           </RutaProtegida>
         }
       />
-
       <Route
         path="/juego-libre"
         element={
@@ -66,12 +63,19 @@ function AppRoutes() {
           </RutaProtegida>
         }
       />
-
       <Route
         path="/clases-particulares"
         element={
           <RutaProtegida rolesPermitidos={[1]}>
             <ClasesParticulares />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/perfil"
+        element={
+          <RutaProtegida rolesPermitidos={[1]}>
+            <Perfil />
           </RutaProtegida>
         }
       />

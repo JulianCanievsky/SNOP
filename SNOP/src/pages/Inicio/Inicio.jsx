@@ -32,10 +32,10 @@ export default function Inicio() {
   }, [user])
 
   const accesos = [
-    { label: 'Mis turnos', sub: 'Ver horario', emoji: '📅', path: '/mis-turnos' },
-    { label: 'Juego libre', sub: 'Anotarme', emoji: '🏓', path: '/juego-libre' },
-    { label: 'Clases', sub: 'Con entrenador', emoji: '👥', path: '/clases' },
-    { label: 'Materiales', sub: 'Del club', emoji: '✅', path: '/materiales' },
+    { label: 'Mis turnos',  sub: 'Ver horario',     emoji: '📅', path: '/mis-turnos' },
+    { label: 'Juego libre', sub: 'Anotarme',         emoji: '🏓', path: '/juego-libre' },
+    { label: 'Clases',      sub: 'Con entrenador',   emoji: '👥', path: '/clases-particulares' },
+    { label: 'Mi perfil',   sub: 'Cuenta y turnos',  emoji: '👤', path: '/perfil' },
   ]
 
   const novedades = [
