@@ -201,6 +201,42 @@ router.post('/solicitar', async (req, res) => {
 });
 
 // =========================
+// DELETE LIBERAR TURNO
+// =========================
+
+router.delete('/liberar/:id', async (req, res) => {
+
+  const socio_id = 7;
+  const { id } = req.params;
+
+  try {
+
+    const { error } = await supabase
+      .from('socio_turno')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', socio_id);
+
+    if (error) throw error;
+
+    res.json({
+      mensaje: 'Solicitud cancelada.'
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: 'No se pudo liberar el turno.'
+    });
+
+  }
+  
+
+});
+
+// =========================
 // MIS SOLICITUDES
 // =========================
 // =========================

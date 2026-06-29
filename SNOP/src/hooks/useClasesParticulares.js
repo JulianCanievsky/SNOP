@@ -66,20 +66,33 @@ export const useClasesParticulares = () => {
       }
     );
 
-    // Recargar solicitudes luego de reservar
     await obtenerSolicitudes();
+    await cargarEntrenadores();
 
     return data;
   };
 
- return {
-  entrenadores,
-  solicitudes,
-  cargando,
-  error,
-  cargarEntrenadores,
-  obtenerEntrenador,
-  enviarSolicitud,
-  obtenerSolicitudes,
-};
+  // ==========================
+  // LIBERAR SOLICITUD
+  // ==========================
+  const liberarSolicitud = async (solicitudId) => {
+    await axios.delete(
+      `${API_BASE}/clases-particulares/liberar/${solicitudId}`
+    );
+
+    await obtenerSolicitudes();
+    await cargarEntrenadores();
+  };
+
+  return {
+    entrenadores,
+    solicitudes,
+    cargando,
+    error,
+    cargarEntrenadores,
+    obtenerEntrenador,
+    enviarSolicitud,
+    obtenerSolicitudes,
+    liberarSolicitud,
+  };
 };

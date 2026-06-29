@@ -50,13 +50,18 @@ const Estrellas = ({ rating }) => {
   );
 };
 
-const ChipTurno = ({ turno, seleccionado, onClick }) => (
+const ChipTurno = ({ turno, seleccionado, onClick, reservado }) => (
   <button
-    className={`chip-turno ${seleccionado ? 'chip-seleccionado' : ''}`}
+    className={`chip-turno ${
+      seleccionado ? "chip-seleccionado" : ""
+    } ${reservado ? "chip-reservado" : "chip-disponible"}`}
     onClick={() => onClick(turno)}
   >
-    {formatearDiaHora(turno.fecha_inicio)}
-    <span className="chip-duracion">{turno.duracion_min} Min</span>
+    <span>{formatearDiaHora(turno.fecha_inicio)}</span>
+
+    <span className="chip-duracion">
+      {turno.duracion_min} Min
+    </span>
   </button>
 );
 
@@ -105,16 +110,35 @@ const TarjetaEntrenador = ({
       <div className="turnos-seccion">
         <p className="turnos-label">Horarios disponibles:</p>
 
-        <div className="turnos-chips">
-          {entrenador.turnos_disponibles.slice(0, 4).map(turno => (
-            <ChipTurno
-              key={turno.id}
-              turno={turno}
-              seleccionado={turnoSeleccionado?.id === turno.id}
-              onClick={setTurnoSeleccionado}
-            />
-          ))}
-        </div>
+    {entrenador.turnos_disponibles.slice(0,4).map(turno => {
+
+    const solicitado = solicitudes.some(
+        s => s.turnos.id === turno.id
+    );
+
+    return (
+        <button
+            key={turno.id}
+            className={`chip-turno ${
+                solicitado
+                    ? "chip-solicitado"
+                    : "chip-disponible"
+            } ${
+                turnoSeleccionado?.id === turno.id
+                    ? "chip-seleccionado"
+                    : ""
+            }`}
+            onClick={() => setTurnoSeleccionado(turno)}
+        >
+            {formatearDiaHora(turno.fecha_inicio)}
+
+            <span className="chip-duracion">
+                {turno.duracion_min} Min
+            </span>
+        </button>
+    );
+
+})}
       </div>
 
       <button
@@ -136,7 +160,8 @@ const ClasesParticulares = () => {
     error,
     cargarEntrenadores,
     enviarSolicitud,
-    obtenerSolicitudes
+    obtenerSolicitudes,
+    liberarSolicitud
   } = useClasesParticulares();
 
   const [reserva, setReserva] = useState(null);
@@ -236,6 +261,17 @@ await obtenerSolicitudes();
             onChange={(e) => setFechaFiltro(e.target.value)}
           />
         </div>
+        <div className="leyenda-turnos">
+  <div className="leyenda-item">
+    <span className="leyenda-color disponible"></span>
+    <span>Disponible</span>
+  </div>
+
+  <div className="leyenda-item">
+    <span className="leyenda-color solicitado"></span>
+    <span>Ya solicitado</span>
+  </div>
+</div>
 
         <p className="seccion-label">
           ENTRENADORES DISPONIBLES
@@ -322,6 +358,19 @@ await obtenerSolicitudes();
           {s.estado ? "Confirmado" : "Pendiente"}
         </span>
       </div>
+      <button
+    className="btn-liberar"
+    onClick={async () => {
+
+        await liberarSolicitud(s.id);
+
+        await cargarEntrenadores();
+        await obtenerSolicitudes();
+
+    }}
+>
+    Liberar turno
+</button>
 
     </div>
   ))}
