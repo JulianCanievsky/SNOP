@@ -12,9 +12,37 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 )
 
-const verificarToken = (req, res, next) => {
-  req.socio_id = 11; 
-  next();
+const verificarToken = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '')
+
+    if (!token) {
+      return res.status(401).json({ error: 'Token requerido' })
+    }
+
+    const { data, error } = await supabase.auth.getUser(token)
+
+    if (error || !data.user) {
+      return res.status(401).json({ error: 'Token inválido' })
+    }
+
+    const { data: usuario, error: errorUsuario } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', data.user.email)
+      .single()
+
+    if (errorUsuario || !usuario) {
+      return res.status(401).json({ error: 'Usuario no encontrado' })
+    }
+
+    req.socio_id = usuario.id
+
+    next()
+  } catch (err) {
+    console.error('ERROR TOKEN:', err)
+    return res.status(401).json({ error: 'No autorizado' })
+  }
 }
 
 router.get('/', verificarToken, async (req, res) => {

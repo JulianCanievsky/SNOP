@@ -170,4 +170,25 @@
   text-align: center;
   color: #6b7280;
   font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-reintentar {
+  border: none;
+  background: #2f6fe4;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sin-turnos-perfil {
+  color: #9ca3af;
+  justify-content: center;
+  font-size: 14px;
 }

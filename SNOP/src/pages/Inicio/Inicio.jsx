@@ -6,8 +6,8 @@ import BottomNav from '../../components/BottomNav/BottomNav'
 import './Inicio.css'
 
 export default function Inicio() {
-  const { user, logout } = useAuth()
-  const [proximoTurno, setProximoTurno] = useState(null)
+  const { user } = useAuth()
+  const [proximosTurnos, setProximosTurnos] = useState([])
   const navigate = useNavigate()
 
   const hora = new Date().getHours()
@@ -15,20 +15,30 @@ export default function Inicio() {
   const nombre = user?.nombre?.split(' ')[0] || 'Socio'
 
   useEffect(() => {
-    async function fetchProximoTurno() {
+    async function fetchProximosTurnos() {
       if (!user?.id) return
-      const hoy = new Date().toISOString()
-      const { data } = await supabase
+
+      // Inicio del día de hoy en ISO para capturar turnos de hoy aunque sean más tarde
+      const hoy = new Date()
+      hoy.setHours(0, 0, 0, 0)
+      const desdehoy = hoy.toISOString()
+
+      const { data, error } = await supabase
         .from('socio_turno')
         .select('id, estado, turnos(id, fecha_inicio, fecha_fin)')
         .eq('user_id', user.id)
-        .eq('estado', true)
-        .gte('turnos.fecha_inicio', hoy)
-        .order('turnos(fecha_inicio)', { ascending: true })
-        .limit(1)
-      if (data?.length) setProximoTurno(data[0])
+
+      if (error) { console.error(error); return }
+      if (!data) return
+
+      const futuros = data
+        .filter(t => t.turnos && t.turnos.fecha_inicio >= desdehoy)
+        .sort((a, b) => new Date(a.turnos.fecha_inicio) - new Date(b.turnos.fecha_inicio))
+        .slice(0, 2)
+
+      setProximosTurnos(futuros)
     }
-    fetchProximoTurno()
+    fetchProximosTurnos()
   }, [user])
 
   const accesos = [
@@ -42,14 +52,15 @@ export default function Inicio() {
     { titulo: 'Bienvenido al Club', sub: 'Tu cuenta fue creada correctamente' },
   ]
 
-  function formatTurno(turno) {
-    if (!turno?.turnos) return null
-    const inicio = new Date(turno.turnos.fecha_inicio)
-    const fin = new Date(turno.turnos.fecha_fin)
-    const fecha = inicio.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
-    const hi = inicio.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
-    const hf = fin.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
-    return `${fecha.charAt(0).toUpperCase() + fecha.slice(1)}, ${hi} — ${hf}`
+  function formatFecha(fechaISO) {
+    const d = new Date(fechaISO)
+    const fecha = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+    return fecha.charAt(0).toUpperCase() + fecha.slice(1)
+  }
+
+  function formatHora(inicio, fin) {
+    const h = (d) => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+    return `${h(inicio)} — ${h(fin)} hs`
   }
 
   return (
@@ -61,25 +72,36 @@ export default function Inicio() {
             <p className="saludo-sub">{saludo},</p>
             <h1 className="saludo-nombre">{nombre}</h1>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button className="btn-campana" aria-label="Notificaciones">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-            </button>
-          </div>
+          <button className="btn-campana" aria-label="Notificaciones">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </button>
         </div>
 
-        {proximoTurno ? (
-          <div className="proximo-turno" onClick={() => navigate('/mis-turnos')}>
-            <span className="proximo-turno-texto">{formatTurno(proximoTurno)}</span>
-            <span className="badge-confirmado">Confirmado</span>
-          </div>
-        ) : (
-          <div className="proximo-turno sin-turno">
-            <span className="proximo-turno-texto">Sin próximos turnos</span>
-          </div>
-        )}
+        {/* BLOQUE PRÓXIMOS TURNOS */}
+        <div className="proximos-turnos-bloque">
+          {proximosTurnos.length === 0 ? (
+            <div className="proximo-turno sin-turno">
+              <span className="proximo-turno-texto">Sin próximos turnos</span>
+            </div>
+          ) : (
+            proximosTurnos.map((t, i) => (
+              <div
+                key={t.id}
+                className={`proximo-turno ${i === 0 ? 'turno-principal' : 'turno-siguiente'}`}
+                onClick={() => navigate('/mis-turnos')}
+              >
+                <div className="proximo-turno-info">
+                  <span className="proximo-turno-label">{i === 0 ? 'Próximo turno' : 'Siguiente'}</span>
+                  <span className="proximo-turno-fecha">{formatFecha(t.turnos.fecha_inicio)}</span>
+                  <span className="proximo-turno-hora">{formatHora(t.turnos.fecha_inicio, t.turnos.fecha_fin)}</span>
+                </div>
+                <span className="badge-confirmado">Confirmado</span>
+              </div>
+            ))
+          )}
+        </div>
       </header>
 
       {/* ACCESOS RÁPIDOS */}

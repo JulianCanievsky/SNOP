@@ -1,16 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
-import express from 'express';
+import { createClient } from '@supabase/supabase-js'
+import express from 'express'
+import autenticar from '../src/middlewares/autenticar.js'
 
-const router = express.Router();
+const router = express.Router()
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
-);
+)
 
-// =========================
 // GET ENTRENADORES
-// =========================
 router.get('/entrenadores', async (req, res) => {
   try {
     const { data: entrenadores, error } = await supabase
@@ -25,9 +24,14 @@ router.get('/entrenadores', async (req, res) => {
         tipo_usuario ( nombre )
       `)
       .eq('activo', true)
-      .eq('tipo_usuario_id', 2); // SOLO ENTRENADORES
+      .eq('tipo_usuario_id', 2)
 
-    if (error) throw error;
+    if (error) throw error
+
+    // Inicio del día de hoy para no excluir turnos de hoy que aún no pasaron
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    const desdeHoy = hoy.toISOString()
 
     const entrenadoresConTurnos = await Promise.all(
       entrenadores.map(async (entrenador) => {
@@ -45,11 +49,10 @@ router.get('/entrenadores', async (req, res) => {
             tipo_turno_id
           `)
           .eq('user_id', entrenador.id)
-          .order('fecha_inicio', { ascending: true });
+          .gte('fecha_inicio', desdeHoy)       // solo turnos de hoy en adelante
+          .order('fecha_inicio', { ascending: true })
 
-        if (errorTurnos) {
-          console.log(errorTurnos);
-        }
+        if (errorTurnos) console.log(errorTurnos)
 
         return {
           ...entrenador,
@@ -63,20 +66,19 @@ router.get('/entrenadores', async (req, res) => {
             sede: t.sedes?.nombre,
             sede_id: t.sede_id,
           })),
-        };
+        }
       })
-    );
+    )
 
-    res.json({
-      data: entrenadoresConTurnos,
-    });
+    // Filtra entrenadores que tengan al menos un turno disponible
+    const conTurnos = entrenadoresConTurnos.filter(e => e.turnos_disponibles.length > 0)
+
+    res.json({ data: conTurnos })
   } catch (error) {
-    console.error('ERROR GET /entrenadores', error);
-    res.status(500).json({
-      error: 'Error al obtener entrenadores',
-    });
+    console.error('ERROR GET /entrenadores', error)
+    res.status(500).json({ error: 'Error al obtener entrenadores' })
   }
-});
+})
 
 // =========================
 // GET ENTRENADOR
@@ -106,6 +108,9 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
       });
     }
 
+    const hoyDet = new Date()
+    hoyDet.setHours(0, 0, 0, 0)
+
     const { data: turnos } = await supabase
       .from('turnos')
       .select(`
@@ -118,7 +123,8 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
         sedes ( nombre )
       `)
       .eq('user_id', entrenadorId)
-      .order('fecha_inicio', { ascending: true });
+      .gte('fecha_inicio', hoyDet.toISOString())
+      .order('fecha_inicio', { ascending: true })
 
     res.json({
       data: {
@@ -143,16 +149,10 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
   }
 });
 
-// =========================
 // POST SOLICITAR
-// =========================
-// =========================
-// POST SOLICITAR
-// =========================
-router.post('/solicitar', async (req, res) => {
-
-  const socio_id = 7;
-  const { turno_id } = req.body;
+router.post('/solicitar', autenticar, async (req, res) => {
+  const socio_id = req.userId
+  const { turno_id } = req.body
 
   try {
 
@@ -200,14 +200,10 @@ router.post('/solicitar', async (req, res) => {
 
 });
 
-// =========================
 // DELETE LIBERAR TURNO
-// =========================
-
-router.delete('/liberar/:id', async (req, res) => {
-
-  const socio_id = 7;
-  const { id } = req.params;
+router.delete('/liberar/:id', autenticar, async (req, res) => {
+  const socio_id = req.userId
+  const { id } = req.params
 
   try {
 
@@ -236,17 +232,10 @@ router.delete('/liberar/:id', async (req, res) => {
 
 });
 
-// =========================
 // MIS SOLICITUDES
-// =========================
-// =========================
-// MIS SOLICITUDES
-// =========================
-router.get('/mis-solicitudes', async (req, res) => {
-
+router.get('/mis-solicitudes', autenticar, async (req, res) => {
   try {
-
-    const socio_id = 7;
+    const socio_id = req.userId
 
    const { data, error } = await supabase
   .from('socio_turno')

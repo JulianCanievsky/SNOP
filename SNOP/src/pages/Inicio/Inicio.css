@@ -52,7 +52,13 @@
   height: 22px;
 }
 
-/* ── PRÓXIMO TURNO ── */
+/* ── PRÓXIMOS TURNOS ── */
+.proximos-turnos-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .proximo-turno {
   background: white;
   border-radius: 14px;
@@ -62,17 +68,65 @@
   align-items: center;
   cursor: pointer;
   gap: 8px;
+  transition: opacity 0.15s;
+}
+
+.proximo-turno:hover {
+  opacity: 0.92;
 }
 
 .proximo-turno.sin-turno {
   cursor: default;
 }
 
+.proximo-turno.turno-siguiente {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.proximo-turno-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.proximo-turno-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.turno-siguiente .proximo-turno-label {
+  color: #b0bec5;
+}
+
+.proximo-turno-fecha {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-transform: capitalize;
+}
+
+.turno-siguiente .proximo-turno-fecha {
+  font-size: 13px;
+  color: #374151;
+}
+
+.proximo-turno-hora {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.turno-siguiente .proximo-turno-hora {
+  font-size: 12px;
+}
+
+/* texto plano cuando no hay turnos */
 .proximo-turno-texto {
   font-size: 14px;
   font-weight: 500;
-  color: #1a1a1a;
-  text-transform: capitalize;
+  color: #94a3b8;
 }
 
 .badge-confirmado {
@@ -83,6 +137,7 @@
   padding: 4px 12px;
   border-radius: 999px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ── SECCIONES ── */
