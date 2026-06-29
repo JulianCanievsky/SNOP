@@ -9,15 +9,16 @@ import turnos from './rutas/turnos.js'
 dotenv.config()
 
 const app = express()
+app.use(cors())
+app.use(express.json())
+
 app.post('/auth/login-dev', async (req, res) => {
   const token = jwt.sign({ id: 1 }, process.env.JWT_SECRET)
   res.json({ token })
 })
-app.use(cors())
-app.use(express.json())
 
 app.use('/juego-libre', juegoLibreRoutes)
-app.use('/mis-turnos', turnos)
+app.use('/api/turnos', turnos)
 
 const PORT = process.env.PORT || 3000
 
