@@ -1,0 +1,219 @@
+.inicio {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding-bottom: 80px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* ── HEADER ── */
+.inicio-header {
+  background: #2563eb;
+  color: white;
+  padding: 28px 20px 24px;
+  border-radius: 0 0 24px 24px;
+}
+
+.inicio-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.saludo-sub {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.saludo-nombre {
+  margin: 2px 0 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.btn-campana {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.btn-campana svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ── PRÓXIMO TURNO ── */
+.proximo-turno {
+  background: white;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.proximo-turno.sin-turno {
+  cursor: default;
+}
+
+.proximo-turno-texto {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  text-transform: capitalize;
+}
+
+.badge-confirmado {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ── SECCIONES ── */
+.seccion {
+  padding: 20px 16px 0;
+}
+
+.seccion-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+  margin: 0 0 12px;
+}
+
+/* ── GRID ACCESOS ── */
+.grid-accesos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.acceso-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.acceso-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+
+.acceso-emoji {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.acceso-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.acceso-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ── NOVEDADES ── */
+.novedades-lista {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.novedad-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.novedad-item:last-child {
+  border-bottom: none;
+}
+
+.novedad-titulo {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.novedad-sub {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+  padding: 0 8px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 12px;
+  color: #94a3b8;
+  border: none;
+  background: none;
+  transition: background 0.15s;
+}
+
+.nav-item:hover {
+  background: #f1f5f9;
+}
+
+.nav-item.activo {
+  color: #2563eb;
+}
+
+.nav-item svg {
+  width: 24px;
+  height: 24px;
+}
+
+.nav-item span {
+  font-size: 11px;
+  font-weight: 500;
+}

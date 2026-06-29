@@ -3,6 +3,7 @@ import "./MisTurnos.css";
 import TurnoCard from "../../components/TurnoCard/TurnoCard";
 import { getTurnos } from "../../services/turnosApi";
 import { useNavigate, useLocation } from "react-router-dom";
+import BottomNav from "../../components/BottomNav/BottomNav";
 
 function MisTurnos() {
   const [turnos, setTurnos] = useState([]);
@@ -45,17 +46,8 @@ function MisTurnos() {
   const day = String(fechaSeleccionada.getDate()).padStart(2, "0");
   const fechaComp = `${year}-${month}-${day}`;
 
-  console.log("fechaTurno:", fechaTurno, "| fechaComp:", fechaComp);
-
   return fechaTurno === fechaComp;
 });
-
-  const navItems = [
-    { label: "Inicio", icon: "🏠", path: "/" },
-    { label: "Turnos", icon: "📅", path: "/mis-turnos" },
-    { label: "Juego libre", icon: "🎾", path: "/juego-libre" },
-    { label: "Perfil", icon: "👤", path: "/perfil" },
-  ];
 
   return (
     <div className="mis-turnos">
@@ -91,19 +83,7 @@ function MisTurnos() {
         </p>
       </main>
 
-      {/* MENÚ INFERIOR */}
-      <nav className="bottom-nav">
-        {navItems.map((item) => (
-          <button
-            key={item.path}
-            className={`nav-item ${location.pathname === item.path ? "nav-activo" : ""}`}
-            onClick={() => navigate(item.path)}
-          >
-            <span className="nav-icon">{item.icon}</span>
-            <span className="nav-label">{item.label}</span>
-          </button>
-        ))}
-      </nav>
+      <BottomNav />
     </div>
   );
 }

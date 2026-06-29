@@ -1,0 +1,100 @@
+/* ===== Splash Screen ===== */
+.splash-container {
+  min-height: 100svh;
+  width: 100%;
+  background: linear-gradient(160deg, #1a6fd4 0%, #1256b0 60%, #0d3f8a 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 60px 32px 48px;
+  box-sizing: border-box;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+.splash-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+  justify-content: center;
+}
+
+.splash-logo {
+  width: 160px;
+  height: 160px;
+  border-radius: 36px;
+  object-fit: cover;
+  filter: drop-shadow(0 12px 32px rgba(0,0,0,0.35));
+}
+
+.splash-title {
+  font-size: 48px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 2px;
+  margin: 0;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+
+.splash-subtitle {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.75);
+  margin: -12px 0 0;
+  font-style: italic;
+  letter-spacing: 0.3px;
+}
+
+.splash-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.btn-splash-primary {
+  background: #ffffff;
+  color: #1256b0;
+  border: none;
+  border-radius: 28px;
+  padding: 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  letter-spacing: 0.2px;
+}
+
+.btn-splash-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.btn-splash-primary:active {
+  transform: translateY(0);
+}
+
+.btn-splash-secondary {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 28px;
+  padding: 14px 0;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  backdrop-filter: blur(4px);
+}
+
+.btn-splash-secondary:hover {
+  background: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.btn-splash-secondary:active {
+  transform: translateY(0);
+}

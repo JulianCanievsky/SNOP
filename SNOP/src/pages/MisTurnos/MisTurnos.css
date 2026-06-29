@@ -1,17 +1,22 @@
 .mis-turnos {
   min-height: 100vh;
   background: #f1f5f9;
-  padding-bottom: 72px; /* espacio para el nav */
+  padding-bottom: 80px;
 }
 
+/* ── HEADER ── */
 .header {
   background: #2563eb;
   color: white;
-  padding: 24px 16px;
+  padding: 24px 16px 20px;
+  border-radius: 0 0 20px 20px;
 }
 
 .header h1 {
-  margin: 0 0 4px;
+  margin: 0 0 2px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .subtitulo {
@@ -20,89 +25,115 @@
   opacity: 0.85;
 }
 
+/* ── DÍAS ── */
 .dias {
   display: flex;
   justify-content: space-between;
+  gap: 4px;
 }
 
 .dia {
-  width: 44px;
+  flex: 1;
   height: 60px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.15);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.18);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  color: white;
 }
 
-.dia span { font-size: 12px; }
-.dia strong { font-size: 18px; }
+.dia span {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.dia strong {
+  font-size: 17px;
+  font-weight: 700;
+}
 
 .dia:hover {
-  transform: translateY(-2px);
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .dia.activa {
   background: white;
   color: #2563eb;
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* ── CONTENIDO ── */
 .contenido {
   padding: 16px;
 }
 
+/* ── SIN TURNOS ── */
 .sin-turnos {
   text-align: center;
-  color: #888;
-  margin-top: 40px;
+  color: #94a3b8;
+  margin-top: 48px;
+  font-size: 15px;
 }
 
+/* ── AVISO FIJO ── */
 .aviso-fijo {
   color: #2563eb;
   font-size: 13px;
-  margin-top: 8px;
+  margin-top: 12px;
+  text-align: left;
 }
 
-/* ── MENÚ INFERIOR ── */
+/* ── NAVBAR INFERIOR ── */
 .bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
+  height: 72px;
   background: white;
   border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-around;
   align-items: center;
   z-index: 100;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+  padding: 0 8px;
 }
 
 .nav-item {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: none;
-  border: none;
+  gap: 3px;
   cursor: pointer;
-  padding: 8px 0;
-  color: #9ca3af;
-  transition: color 0.2s;
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: background 0.15s;
+  color: #94a3b8;
+  text-decoration: none;
+  border: none;
+  background: none;
 }
 
-.nav-item.nav-activo {
+.nav-item:hover {
+  background: #f1f5f9;
+}
+
+.nav-item.activo {
   color: #2563eb;
 }
 
-.nav-icon { font-size: 20px; }
-.nav-label { font-size: 11px; font-weight: 500; }
+.nav-item svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.8;
+}
+
+.nav-item span {
+  font-size: 11px;
+  font-weight: 500;
+}
