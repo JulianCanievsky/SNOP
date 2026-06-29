@@ -1,0 +1,655 @@
+/* =============================================
+   CLASES PARTICULARES - SNOP
+   Paleta violeta para diferenciar de Juego Libre
+============================================= */
+
+:root {
+  --viola: #6B4EE6;
+  --viola-dark: #5538cc;
+  --viola-light: #F0ECFF;
+  --viola-mid: #8B6FF0;
+  --snop-gris-bg: #F9FAFB;
+  --snop-gris-borde: #E5E7EB;
+  --snop-texto: #111827;
+  --snop-texto-muted: #6B7280;
+  --snop-blanco: #ffffff;
+  --snop-verde: #057a55;
+  --snop-verde-bg: #F3FAF7;
+  --radio: 14px;
+  --radio-sm: 8px;
+  --radio-pill: 99px;
+}
+
+/* ============ LAYOUT ============ */
+
+.clases-container,
+.confirmar-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--snop-gris-bg);
+  font-family: 'Inter', -apple-system, sans-serif;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============ HEADER ============ */
+
+.clases-header {
+  background: var(--viola);
+  padding: 28px 28px 36px;
+  color: var(--snop-blanco);
+}
+
+.clases-titulo {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--snop-blanco);
+}
+
+.clases-subtitulo {
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.82;
+  color: var(--snop-blanco);
+}
+
+/* ============ BODY ============ */
+
+.clases-body {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+.seccion-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--snop-texto-muted);
+  margin: 0 0 2px;
+}
+
+/* ============ TARJETA ENTRENADOR ============ */
+
+.tarjeta-entrenador {
+  background: var(--snop-blanco);
+  border-radius: var(--radio);
+  padding: 18px;
+  border: 1px solid var(--snop-gris-borde);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: box-shadow 0.15s;
+}
+
+.tarjeta-entrenador:hover {
+  box-shadow: 0 4px 16px rgba(107,78,230,0.1);
+}
+
+.entrenador-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.avatar-entrenador {
+  border-radius: 50%;
+  background: var(--viola-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--viola);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-md {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
+
+.avatar-lg {
+  width: 72px;
+  height: 72px;
+  font-size: 22px;
+}
+
+.avatar-entrenador img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.entrenador-nombre {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--snop-texto);
+  margin: 0 0 4px;
+}
+
+.entrenador-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--snop-texto-muted);
+}
+
+.estrellas {
+  font-size: 13px;
+  color: var(--snop-texto-muted);
+}
+
+/* ============ CHIPS TURNOS ============ */
+
+.turnos-seccion {
+  margin-bottom: 14px;
+}
+
+.turnos-label {
+  font-size: 12px;
+  color: var(--snop-texto-muted);
+  margin: 0 0 8px;
+  font-weight: 500;
+}
+
+.turnos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 12px;
+  row-gap: 10px;
+}
+
+.chip-turno {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 150px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--viola-light);
+  border-radius: var(--radio-pill);
+  background: var(--viola-light);
+  color: var(--viola);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  margin-top: 5px;
+}
+
+.chip-turno:hover {
+  border-color: var(--viola);
+}
+
+.chip-seleccionado {
+  color: black !important;
+}
+
+.chip-seleccionado .chip-duracion {
+  color: black !important;
+  opacity: .9;
+}
+
+.chip-duracion {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .9;
+}
+
+.chip-grande {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+/* ============ CHIPS ESTADO ============ */
+
+.chip-disponible {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: white;
+}
+
+.chip-disponible:hover { background: #16a34a; }
+
+.chip-solicitado {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+.chip-solicitado:hover { background: #1d4ed8; }
+
+.chip-turno.chip-seleccionado.disponible {
+  background: #2BB673;
+  color: white;
+}
+
+.chip-turno.chip-seleccionado.solicitado {
+  background: #2563EB;
+  color: white;
+}
+
+/* ============ BOTÓN RESERVAR ============ */
+
+.btn-reservar {
+  width: 100%;
+  padding: 13px;
+  background: var(--viola);
+  color: var(--snop-blanco);
+  border: none;
+  border-radius: var(--radio-sm);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+}
+
+.btn-reservar:hover:not(:disabled) { background: var(--viola-dark); }
+.btn-reservar:active:not(:disabled) { transform: scale(0.98); }
+.btn-reservar:disabled {
+  background: #d9d9d9;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+/* ============ ESTADOS ============ */
+
+.estado-carga {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  color: var(--snop-texto-muted);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--snop-gris-borde);
+  border-top-color: var(--viola);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.estado-error {
+  text-align: center;
+  padding: 32px;
+  color: #dc2626;
+}
+
+.btn-reintentar {
+  margin-top: 12px;
+  padding: 8px 20px;
+  background: var(--viola);
+  color: var(--snop-blanco);
+  border: none;
+  border-radius: var(--radio-sm);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.estado-vacio {
+  text-align: center;
+  padding: 64px 20px;
+}
+
+.estado-vacio-icono { font-size: 48px; margin-bottom: 12px; }
+.estado-vacio-titulo { font-size: 16px; font-weight: 700; color: var(--snop-texto); margin: 0 0 6px; }
+.estado-vacio-sub { font-size: 14px; color: var(--snop-texto-muted); margin: 0; }
+
+.alerta-exito {
+  background: var(--snop-verde-bg);
+  border: 1px solid #A7F3D0;
+  border-radius: var(--radio-sm);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--snop-verde);
+}
+
+/* ============ FILTRO FECHA ============ */
+
+.filtro-fecha {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filtro-fecha label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.filtro-fecha input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+/* ============ LEYENDA ============ */
+
+.leyenda-turnos {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.leyenda-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.leyenda-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.leyenda-color.disponible { background: #22c55e; }
+.leyenda-color.solicitado { background: #2563eb; }
+
+/* ============ MIS SOLICITUDES ============ */
+
+.mis-solicitudes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.solicitud-card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+.solicitud-fecha {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.solicitud-hora {
+  color: #6b7280;
+  margin: 4px 0 12px;
+}
+
+.estado-solicitud {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.estado-solicitud.pendiente {
+  background: #FFF8E1;
+  color: #C77700;
+  border: 1px solid #FFD166;
+}
+
+.estado-solicitud.confirmado {
+  background: #EAFBF2;
+  color: #15803D;
+  border: 1px solid #86EFAC;
+}
+
+/* ============ BOTÓN LIBERAR ============ */
+
+.btn-liberar {
+  width: 100%;
+  margin-top: 12px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: .2s;
+}
+
+.btn-liberar:hover { background: #dc2626; }
+
+/* ============ CONFIRMAR CLASE ============ */
+
+.confirmar-header {
+  background: var(--viola);
+  padding: 18px 24px 28px;
+  color: var(--snop-blanco);
+}
+
+.btn-volver-confirmar {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 0 12px;
+  display: block;
+  font-weight: 500;
+}
+
+.btn-volver-confirmar:hover { color: var(--snop-blanco); }
+
+.confirmar-nombre {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: var(--snop-blanco);
+}
+
+.confirmar-subtitulo {
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.82;
+  color: var(--snop-blanco);
+}
+
+.confirmar-body {
+  padding: 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.confirmar-perfil-card {
+  background: var(--snop-blanco);
+  border-radius: var(--radio);
+  padding: 24px;
+  border: 1px solid var(--snop-gris-borde);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.confirmar-avatar-grande {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--viola-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--viola);
+  overflow: hidden;
+}
+
+.confirmar-avatar-grande img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.confirmar-nombre-grande {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--snop-texto);
+  margin: 0;
+}
+
+.confirmar-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--snop-texto-muted);
+}
+
+.confirmar-clases { color: var(--snop-texto-muted); }
+
+.elegir-horario-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.turnos-chips-confirmar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.turno-resumen-card {
+  background: var(--snop-blanco);
+  border-radius: var(--radio);
+  padding: 16px 18px;
+  border: 1px solid var(--snop-gris-borde);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.turno-resumen-titulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--snop-texto-muted);
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.turno-resumen-detalle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--snop-texto);
+  margin: 0;
+}
+
+.turno-resumen-tipo {
+  font-size: 13px;
+  color: var(--snop-texto-muted);
+  margin: 0;
+}
+
+.turno-resumen-pago {
+  font-size: 13px;
+  color: var(--snop-texto-muted);
+  margin: 4px 0 0;
+  font-style: italic;
+}
+
+.confirmar-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 28px;
+}
+
+.btn-enviar-solicitud {
+  width: 100%;
+  padding: 15px;
+  background: var(--viola);
+  color: var(--snop-blanco);
+  border: none;
+  border-radius: var(--radio);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+}
+
+.btn-enviar-solicitud:hover:not(:disabled) { background: var(--viola-dark); }
+.btn-enviar-solicitud:active:not(:disabled) { transform: scale(0.98); }
+.btn-enviar-solicitud:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-cancelar-clase {
+  width: 100%;
+  padding: 15px;
+  background: transparent;
+  color: var(--viola);
+  border: 2px solid var(--viola);
+  border-radius: var(--radio);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-cancelar-clase:hover { background: var(--viola-light); }
+
+/* ============ RESPONSIVE ============ */
+
+@media (min-width: 768px) {
+  .clases-header,
+  .confirmar-header { padding: 32px 40px 40px; }
+
+  .clases-body,
+  .confirmar-body { padding: 28px 40px; }
+
+  .clases-titulo { font-size: 32px; }
+
+  .entrenadores-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .confirmar-perfil-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+  }
+
+  .confirmar-acciones { flex-direction: row; }
+  .btn-enviar-solicitud,
+  .btn-cancelar-clase { flex: 1; }
+}
+
+@media (min-width: 1024px) {
+  .clases-container,
+  .confirmar-container { max-width: 1100px; }
+
+  .clases-body { padding: 32px 48px; }
+}

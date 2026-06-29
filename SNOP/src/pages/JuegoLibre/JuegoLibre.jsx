@@ -97,9 +97,7 @@ const JuegoLibre = () => {
   const [filtroSede, setFiltroSede] = useState('')
   const [filtroFecha, setFiltroFecha] = useState('')
 
-  const handleAnotarme = (evento) => {
-    setEventoSeleccionado(evento)
-  }
+  const handleAnotarme = (evento) => setEventoSeleccionado(evento)
 
   const handleConfirmar = async () => {
     try {

@@ -1,12 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
-import Splash    from './pages/Splash/Splash'
-import Login     from './pages/login/login'
-import Registro  from './pages/registro/registro'
-import Inicio    from './pages/Inicio/Inicio'
-import MisTurnos from './pages/MisTurnos/MisTurnos'
-import JuegoLibre from './pages/JuegoLibre/JuegoLibre'
+import Splash            from './pages/Splash/Splash'
+import Login             from './pages/login/login'
+import Registro          from './pages/registro/registro'
+import Inicio            from './pages/Inicio/Inicio'
+import MisTurnos         from './pages/MisTurnos/MisTurnos'
+import JuegoLibre        from './pages/JuegoLibre/JuegoLibre'
+import ClasesParticulares from './pages/ClasesParticulares/ClasesParticulares'
 
 // Rutas protegidas: redirige al login si no hay sesión
 function RutaProtegida({ children, rolesPermitidos }) {
@@ -62,6 +63,15 @@ function AppRoutes() {
         element={
           <RutaProtegida rolesPermitidos={[1]}>
             <JuegoLibre />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/clases-particulares"
+        element={
+          <RutaProtegida rolesPermitidos={[1]}>
+            <ClasesParticulares />
           </RutaProtegida>
         }
       />
