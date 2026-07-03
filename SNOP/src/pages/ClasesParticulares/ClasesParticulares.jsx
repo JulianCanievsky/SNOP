@@ -64,8 +64,8 @@ const TarjetaEntrenador = ({ entrenador, solicitudes, onReservar }) => {
               className={`chip-turno ${solicitado ? 'chip-solicitado' : 'chip-disponible'} ${turnoSeleccionado?.id === turno.id ? 'chip-seleccionado' : ''}`}
               onClick={() => setTurnoSeleccionado(turno)}
             >
-              {formatearDiaHora(turno.fecha_inicio)}
-              <span className="chip-duracion">{turno.duracion_min} Min</span>
+              <span>{formatearDiaHora(turno.fecha_inicio)}</span>
+              <span className="chip-duracion">{turno.duracion_min} min · {turno.sede || 'Sin sede'}</span>
             </button>
           )
         })}
@@ -225,13 +225,16 @@ const ClasesParticulares = () => {
               {solicitudes.map(s => (
                 <div key={s.id} className="solicitud-card">
                   <div className="solicitud-fecha">
-                    {new Date(s.turnos.fecha_inicio).toLocaleDateString('es-AR')}
+                    {new Date(s.turnos.fecha_inicio).toLocaleDateString('es-AR', {
+                      weekday: 'long', day: '2-digit', month: '2-digit'
+                    })}
                   </div>
                   <div className="solicitud-hora">
                     {new Date(s.turnos.fecha_inicio).toLocaleTimeString('es-AR', {
                       hour: '2-digit',
                       minute: '2-digit',
-                    })}
+                    })} hs · {s.turnos.duracion_min} min
+                    {s.turnos.users?.nombre && ` · ${s.turnos.users.nombre}`}
                   </div>
                   <div className={`estado-solicitud ${s.estado ? 'confirmado' : 'pendiente'}`}>
                     <span className="estado-icono">{s.estado ? '✅' : '⏳'}</span>

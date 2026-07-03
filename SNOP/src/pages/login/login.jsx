@@ -44,7 +44,7 @@ export default function Login() {
         navigate('/inicio')
       }
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.error || err.message || 'Error al iniciar sesión')
     } finally {
       setLoading(false)
     }

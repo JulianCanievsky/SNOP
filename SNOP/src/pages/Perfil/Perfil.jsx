@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { usePerfil } from '../../hooks/usePerfil'
+import TurnoCard from '../../components/TurnoCard/TurnoCard'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import './Perfil.css'
 
@@ -86,45 +87,17 @@ const Perfil = () => {
       {turnosActivos.length === 0 ? (
         <div className="turno-card sin-turnos-perfil">No tenés turnos activos.</div>
       ) : (
-        turnosActivos.map(inscripcion => {
-          const turno = inscripcion.turnos
-          const fecha = new Date(turno.fecha_inicio)
-          return (
-            <div key={turno.id} className="turno-card">
-              <div>
-                <strong>
-                  {fecha.toLocaleDateString('es-AR', {
-                    weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
-                  })}
-                </strong>
-                <p>{fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</p>
-              </div>
-              <span className="estado-activo">Próximo</span>
-            </div>
-          )
-        })
+        turnosActivos.map(inscripcion => (
+          <TurnoCard key={inscripcion.turno_id ?? inscripcion.turnos?.id} turno={inscripcion} />
+        ))
       )}
 
       {mostrarHistorial && (
         <>
           <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Historial</h4>
-          {turnosPasados.map(inscripcion => {
-            const turno = inscripcion.turnos
-            const fecha = new Date(turno.fecha_inicio)
-            return (
-              <div key={`h-${turno.id}`} className="turno-card">
-                <div>
-                  <strong>
-                    {fecha.toLocaleDateString('es-AR', {
-                      weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
-                    })}
-                  </strong>
-                  <p>{fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</p>
-                </div>
-                <span className="deuda">Finalizado</span>
-              </div>
-            )
-          })}
+          {turnosPasados.map(inscripcion => (
+            <TurnoCard key={`h-${inscripcion.turno_id ?? inscripcion.turnos?.id}`} turno={inscripcion} />
+          ))}
         </>
       )}
 

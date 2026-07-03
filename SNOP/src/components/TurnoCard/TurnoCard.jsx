@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./TurnoCard.css";
-import { cancelarTurno, reconfirmarTurno } from "../../services/turnosApi";
+import { cancelarTurno } from "../../services/turnosApi";
 
 function TurnoCard({ turno }) {
   const datosTurno = turno.turnos;
@@ -35,16 +35,6 @@ function TurnoCard({ turno }) {
     }
   }
 
-  async function handleReconfirmar() {
-    try {
-      await reconfirmarTurno(datosTurno.id);
-      setEstado(true);
-    } catch (error) {
-      console.error(error);
-      alert("No se pudo reconfirmar el turno");
-    }
-  }
-
   return (
     <>
       <div className="turno-card">
@@ -75,9 +65,9 @@ function TurnoCard({ turno }) {
             Cancelar turno
           </button>
         ) : (
-          <button className="reconfirmar-btn" onClick={handleReconfirmar}>
-            Reconfirmar turno
-          </button>
+          <div className="turno-cancelado-aviso">
+            Turno cancelado
+          </div>
         )}
       </div>
 

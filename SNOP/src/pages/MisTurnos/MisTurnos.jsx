@@ -29,10 +29,16 @@ function MisTurnos() {
   const dias = Array.from({ length: 7 }, (_, i) => {
     const fecha = new Date();
     fecha.setDate(fecha.getDate() + i);
+    const year  = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, "0");
+    const day   = String(fecha.getDate()).padStart(2, "0");
+    const fechaStr = `${year}-${month}-${day}`;
+    const tieneTurno = turnos.some(t => t.turnos.fecha_inicio.slice(0, 10) === fechaStr);
     return {
       fecha,
       letra: fecha.toLocaleDateString("es-AR", { weekday: "short" }).charAt(0).toUpperCase(),
       numero: fecha.getDate(),
+      tieneTurno,
     };
   });
 
@@ -63,6 +69,7 @@ function MisTurnos() {
             >
               <span>{dia.letra}</span>
               <strong>{dia.numero}</strong>
+              {dia.tieneTurno && <span className="dia-punto" />}
             </div>
           ))}
         </div>

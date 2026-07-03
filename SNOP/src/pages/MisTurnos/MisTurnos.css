@@ -57,6 +57,19 @@
   font-weight: 700;
 }
 
+.dia-punto {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.dia.activa .dia-punto {
+  background: #2563eb;
+}
+
 .dia:hover {
   background: rgba(255, 255, 255, 0.28);
 }
