@@ -1,100 +1,48 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import axios from 'axios'
 
 const AuthContext = createContext(null)
 
-async function fetchUserProfile(email) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, nombre, email, tipo_usuario_id, club_id, activo, cuota_al_dia, foto_url')
-    .eq('email', email.trim().toLowerCase())
-    .single()
-
-  if (error || !data) {
-    throw new Error('No se encontró el perfil del usuario')
-  }
-
-  return data
-}
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
+  const [user, setUser]     = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // Al arrancar, restaurar sesión desde localStorage
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user?.email) {
-        try {
-          const profile = await fetchUserProfile(session.user.email)
-          if (profile.activo) {
-            setUser(profile)
-            localStorage.setItem('snop_user', JSON.stringify(profile))
-            localStorage.setItem('snop_token', session.access_token)
-          }
-        } catch {
-          await supabase.auth.signOut()
-        }
-      }
-      setLoading(false)
-    })
+    const storedUser  = localStorage.getItem('snop_user')
+    const storedToken = localStorage.getItem('snop_token')
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user?.email) {
-        try {
-          const profile = await fetchUserProfile(session.user.email)
-          setUser(profile)
-          localStorage.setItem('snop_user', JSON.stringify(profile))
-          localStorage.setItem('snop_token', session.access_token)
-        } catch {
-          setUser(null)
-          localStorage.removeItem('snop_user')
-          localStorage.removeItem('snop_token')
-        }
-      } else {
-        setUser(null)
+    if (storedUser && storedToken) {
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch {
         localStorage.removeItem('snop_user')
         localStorage.removeItem('snop_token')
       }
-    })
-
-    return () => subscription.unsubscribe()
+    }
+    setLoading(false)
   }, [])
 
+  // login — llama al endpoint propio /api/auth/login
   async function login(email, password, tipoUsuarioId) {
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data: res } = await axios.post(`${API_BASE}/auth/login`, {
       email: email.trim().toLowerCase(),
       password,
+      tipo_usuario_id: tipoUsuarioId,
     })
 
-    if (authError) {
-      throw new Error('Correo o contraseña incorrectos')
-    }
+    const { data: perfil, token } = res
 
-    const data = await fetchUserProfile(email)
+    localStorage.setItem('snop_user',  JSON.stringify(perfil))
+    localStorage.setItem('snop_token', token)
+    setUser(perfil)
 
-    if (!data.activo) {
-      await supabase.auth.signOut()
-      throw new Error('Tu cuenta está desactivada. Contactá al club.')
-    }
-
-    if (data.tipo_usuario_id !== tipoUsuarioId) {
-      await supabase.auth.signOut()
-      const roles = { 1: 'Socio', 2: 'Entrenador', 3: 'Administrador' }
-      throw new Error(`Este correo no corresponde al rol ${roles[tipoUsuarioId]}`)
-    }
-
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      localStorage.setItem('snop_token', session.access_token)
-    }
-
-    setUser(data)
-    localStorage.setItem('snop_user', JSON.stringify(data))
-    return data
+    return perfil
   }
 
-  async function logout() {
-    await supabase.auth.signOut()
+  function logout() {
     setUser(null)
     localStorage.removeItem('snop_user')
     localStorage.removeItem('snop_token')

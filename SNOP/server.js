@@ -3,12 +3,13 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import jwt from 'jsonwebtoken'
 
 import juegoLibreRoutes         from './rutas/JuegoLibre.js'
 import turnosRoutes             from './rutas/turnos.js'
 import clasesParticularesRoutes from './rutas/clasesParticulares.js'
 import perfilRouter             from './rutas/perfil.js'
+import entrenadorRouter         from './rutas/entrenador.js'
+import authRouter               from './rutas/auth.js'
 
 dotenv.config()
 
@@ -17,16 +18,13 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-app.post('/auth/login-dev', async (_req, res) => {
-  const token = jwt.sign({ id: 1 }, process.env.JWT_SECRET)
-  res.json({ token })
-})
-
+app.use('/api/auth',              authRouter)
 app.use('/juego-libre',             juegoLibreRoutes)
 app.use('/api/juego-libre',         juegoLibreRoutes)
 app.use('/api/turnos',              turnosRoutes)
 app.use('/api/clases-particulares', clasesParticularesRoutes)
 app.use('/api/perfil',              perfilRouter)
+app.use('/api/entrenador',          entrenadorRouter)
 
 const PORT = process.env.PORT || 3000
 

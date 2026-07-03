@@ -89,17 +89,31 @@ const Perfil = () => {
         turnosActivos.map(inscripcion => {
           const turno = inscripcion.turnos
           const fecha = new Date(turno.fecha_inicio)
+          const horaInicio = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+          const horaFin    = turno.fecha_fin
+            ? new Date(turno.fecha_fin).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+            : null
+          const fechaTexto = fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
           return (
-            <div key={turno.id} className="turno-card">
-              <div>
-                <strong>
-                  {fecha.toLocaleDateString('es-AR', {
-                    weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
-                  })}
-                </strong>
-                <p>{fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</p>
+            <div key={turno.id} className="turno-card-perfil">
+              <div className="turno-card-perfil-header">
+                <h3 className="turno-card-perfil-fecha">{fechaTexto}</h3>
+                <span className="estado-activo">Próximo</span>
               </div>
-              <span className="estado-activo">Próximo</span>
+              <div className="turno-card-perfil-horario">
+                <span className="turno-card-perfil-icono">⏰</span>
+                <div>
+                  <strong>{horaInicio}{horaFin ? ` — ${horaFin} hs` : ' hs'}</strong>
+                  {turno.duracion_min && <p>{turno.duracion_min} min</p>}
+                </div>
+              </div>
+              {(turno.sedes?.nombre || turno.mesas?.numero || turno.users?.nombre) && (
+                <div className="turno-card-perfil-info">
+                  {turno.users?.nombre  && <span>👨‍🏫 {turno.users.nombre}</span>}
+                  {turno.sedes?.nombre  && <span>📍 {turno.sedes.nombre}</span>}
+                  {turno.mesas?.numero  && <span>🏓 Mesa {turno.mesas.numero}</span>}
+                </div>
+              )}
             </div>
           )
         })
@@ -111,17 +125,31 @@ const Perfil = () => {
           {turnosPasados.map(inscripcion => {
             const turno = inscripcion.turnos
             const fecha = new Date(turno.fecha_inicio)
+            const horaInicio = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+            const horaFin    = turno.fecha_fin
+              ? new Date(turno.fecha_fin).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+              : null
+            const fechaTexto = fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
             return (
-              <div key={`h-${turno.id}`} className="turno-card">
-                <div>
-                  <strong>
-                    {fecha.toLocaleDateString('es-AR', {
-                      weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
-                    })}
-                  </strong>
-                  <p>{fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</p>
+              <div key={`h-${turno.id}`} className="turno-card-perfil turno-card-perfil-pasado">
+                <div className="turno-card-perfil-header">
+                  <h3 className="turno-card-perfil-fecha">{fechaTexto}</h3>
+                  <span className="deuda">Finalizado</span>
                 </div>
-                <span className="deuda">Finalizado</span>
+                <div className="turno-card-perfil-horario">
+                  <span className="turno-card-perfil-icono">⏰</span>
+                  <div>
+                    <strong>{horaInicio}{horaFin ? ` — ${horaFin} hs` : ' hs'}</strong>
+                    {turno.duracion_min && <p>{turno.duracion_min} min</p>}
+                  </div>
+                </div>
+                {(turno.sedes?.nombre || turno.mesas?.numero || turno.users?.nombre) && (
+                  <div className="turno-card-perfil-info">
+                    {turno.users?.nombre  && <span>👨‍🏫 {turno.users.nombre}</span>}
+                    {turno.sedes?.nombre  && <span>📍 {turno.sedes.nombre}</span>}
+                    {turno.mesas?.numero  && <span>🏓 Mesa {turno.mesas.numero}</span>}
+                  </div>
+                )}
               </div>
             )
           })}

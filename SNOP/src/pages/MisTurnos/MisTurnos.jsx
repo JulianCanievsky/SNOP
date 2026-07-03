@@ -29,25 +29,27 @@ function MisTurnos() {
   const dias = Array.from({ length: 7 }, (_, i) => {
     const fecha = new Date();
     fecha.setDate(fecha.getDate() + i);
+    const year  = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, "0");
+    const day   = String(fecha.getDate()).padStart(2, "0");
     return {
       fecha,
       letra: fecha.toLocaleDateString("es-AR", { weekday: "short" }).charAt(0).toUpperCase(),
       numero: fecha.getDate(),
+      iso: `${year}-${month}-${day}`,
     };
   });
 
+  // Conjunto de fechas ISO que tienen al menos un turno
+  const fechasConTurno = new Set(
+    turnos.map((t) => t.turnos?.fecha_inicio?.slice(0, 10)).filter(Boolean)
+  );
+
   const fechaSeleccionada = dias[diaSeleccionado].fecha;
 
-  const turnosFiltrados = turnos.filter((turno) => {
-  const fechaTurno = turno.turnos.fecha_inicio.slice(0, 10);
-
-  const year = fechaSeleccionada.getFullYear();
-  const month = String(fechaSeleccionada.getMonth() + 1).padStart(2, "0");
-  const day = String(fechaSeleccionada.getDate()).padStart(2, "0");
-  const fechaComp = `${year}-${month}-${day}`;
-
-  return fechaTurno === fechaComp;
-});
+  const turnosFiltrados = turnos.filter(
+    (turno) => turno.turnos?.fecha_inicio?.slice(0, 10) === dias[diaSeleccionado].iso
+  );
 
   return (
     <div className="mis-turnos">
@@ -63,6 +65,9 @@ function MisTurnos() {
             >
               <span>{dia.letra}</span>
               <strong>{dia.numero}</strong>
+              {fechasConTurno.has(dia.iso) && (
+                <span className={`dia-punto ${index === diaSeleccionado ? "dia-punto-activo" : ""}`} />
+              )}
             </div>
           ))}
         </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./TurnoCard.css";
-import { cancelarTurno, reconfirmarTurno } from "../../services/turnosApi";
+import { cancelarTurno } from "../../services/turnosApi";
 
 function TurnoCard({ turno }) {
   const datosTurno = turno.turnos;
@@ -35,16 +35,6 @@ function TurnoCard({ turno }) {
     }
   }
 
-  async function handleReconfirmar() {
-    try {
-      await reconfirmarTurno(datosTurno.id);
-      setEstado(true);
-    } catch (error) {
-      console.error(error);
-      alert("No se pudo reconfirmar el turno");
-    }
-  }
-
   return (
     <>
       <div className="turno-card">
@@ -70,13 +60,9 @@ function TurnoCard({ turno }) {
           Mesa {datosTurno.mesas?.numero}
         </div>
 
-        {estado ? (
+        {estado && (
           <button className="cancelar-btn" onClick={() => setMostrarModal(true)}>
             Cancelar turno
-          </button>
-        ) : (
-          <button className="reconfirmar-btn" onClick={handleReconfirmar}>
-            Reconfirmar turno
           </button>
         )}
       </div>

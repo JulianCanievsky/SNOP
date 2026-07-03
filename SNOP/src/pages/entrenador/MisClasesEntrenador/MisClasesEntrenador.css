@@ -1,0 +1,168 @@
+/* ── Layout ─────────────────────────────────────────────────── */
+.mis-clases-e {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding-bottom: 88px;
+  font-family: inherit;
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.mis-clases-e-header {
+  background: #2563eb;
+  padding: 24px 20px 0;
+  color: white;
+}
+
+.mis-clases-e-header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 2px;
+}
+
+.mis-clases-e-header .subtitulo {
+  font-size: 14px;
+  opacity: 0.85;
+  margin: 0 0 20px;
+}
+
+/* ── Selector de días ─────────────────────────────────────────── */
+.dias-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scrollbar-width: none;
+}
+.dias-scroll::-webkit-scrollbar { display: none; }
+
+.dia-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border-radius: 12px;
+  padding: 8px 10px;
+  min-width: 44px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.dia-btn span { font-size: 11px; font-weight: 500; opacity: 0.9; }
+.dia-btn strong { font-size: 16px; font-weight: 700; }
+
+.dia-btn.activo {
+  background: #f97316;
+  color: white;
+}
+
+/* ── Contenido ───────────────────────────────────────────────── */
+.mis-clases-e-contenido {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Clase card ──────────────────────────────────────────────── */
+.clase-card {
+  background: white;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.clase-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.clase-tipo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.badge-estado {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.badge-confirmado { background: #dcfce7; color: #16a34a; }
+.badge-pendiente  { background: #fef3c7; color: #d97706; }
+.badge-cancelado  { background: #fee2e2; color: #dc2626; }
+
+.clase-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.clase-fila svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.clase-horario {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  flex: 1;
+}
+
+.badge-nivel {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.nivel-azul       { background: #dbeafe; color: #2563eb; }
+.nivel-rojo       { background: #fee2e2; color: #dc2626; }
+.nivel-intermedio { background: #fef3c7; color: #d97706; }
+.nivel-default    { background: #f1f5f9; color: #475569; }
+
+.clase-sub {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.clase-detalle {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.btn-cancelar-clase {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-cancelar-clase:hover { background: #fecaca; }
+
+/* ── Sin clases ──────────────────────────────────────────────── */
+.sin-clases {
+  background: white;
+  border-radius: 14px;
+  padding: 32px 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}

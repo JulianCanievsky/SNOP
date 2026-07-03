@@ -252,6 +252,9 @@ router.get('/mis-solicitudes', autenticar, async (req, res) => {
       tipo_turno_id,
       users(
         nombre
+      ),
+      sedes(
+        nombre
       )
     )
   `)

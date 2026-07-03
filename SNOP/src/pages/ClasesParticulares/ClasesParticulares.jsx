@@ -8,7 +8,7 @@ const formatearDiaHora = (fechaISO) => {
   const fecha = new Date(fechaISO)
   const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
   const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-  return `${dias[fecha.getDay()]} ${fecha.getDate()} - ${hora}`
+  return `${dias[fecha.getDay()]} ${fecha.getDate()} · ${hora}`
 }
 
 const AvatarEntrenador = ({ nombre, foto_url, tamanio = 'md' }) => {
@@ -65,6 +65,7 @@ const TarjetaEntrenador = ({ entrenador, solicitudes, onReservar }) => {
               onClick={() => setTurnoSeleccionado(turno)}
             >
               {formatearDiaHora(turno.fecha_inicio)}
+              {turno.sede && <span className="chip-sede">📍 {turno.sede}</span>}
               <span className="chip-duracion">{turno.duracion_min} Min</span>
             </button>
           )
@@ -225,14 +226,26 @@ const ClasesParticulares = () => {
               {solicitudes.map(s => (
                 <div key={s.id} className="solicitud-card">
                   <div className="solicitud-fecha">
-                    {new Date(s.turnos.fecha_inicio).toLocaleDateString('es-AR')}
+                    {new Date(s.turnos.fecha_inicio).toLocaleDateString('es-AR', {
+                      weekday: 'long', day: 'numeric', month: 'long'
+                    })}
                   </div>
                   <div className="solicitud-hora">
                     {new Date(s.turnos.fecha_inicio).toLocaleTimeString('es-AR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
+                      hour: '2-digit', minute: '2-digit',
                     })}
+                    {s.turnos.fecha_fin && (
+                      <> — {new Date(s.turnos.fecha_fin).toLocaleTimeString('es-AR', {
+                        hour: '2-digit', minute: '2-digit',
+                      })} hs</>
+                    )}
                   </div>
+                  {(s.turnos.users?.nombre || s.turnos.sedes?.nombre) && (
+                    <div className="solicitud-detalle">
+                      {s.turnos.users?.nombre  && <span>👨‍🏫 {s.turnos.users.nombre}</span>}
+                      {s.turnos.sedes?.nombre  && <span>📍 {s.turnos.sedes.nombre}</span>}
+                    </div>
+                  )}
                   <div className={`estado-solicitud ${s.estado ? 'confirmado' : 'pendiente'}`}>
                     <span className="estado-icono">{s.estado ? '✅' : '⏳'}</span>
                     <span>{s.estado ? 'Confirmado' : 'Pendiente'}</span>

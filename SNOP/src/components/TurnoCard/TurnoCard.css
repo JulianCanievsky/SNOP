@@ -103,8 +103,7 @@
 }
 
 /* ── BOTÓN ACCIÓN ── */
-.cancelar-btn,
-.reconfirmar-btn {
+.cancelar-btn {
   width: 100%;
   padding: 11px;
   border-radius: 10px;
@@ -113,24 +112,12 @@
   font-size: 14px;
   font-weight: 600;
   transition: background 0.2s;
-}
-
-.cancelar-btn {
   background: #fdecec;
   color: #d32f2f;
 }
 
 .cancelar-btn:hover {
   background: #f9d5d5;
-}
-
-.reconfirmar-btn {
-  background: #e8f5e9;
-  color: #2e7d32;
-}
-
-.reconfirmar-btn:hover {
-  background: #c8e6c9;
 }
 
 /* ── MODAL ── */
