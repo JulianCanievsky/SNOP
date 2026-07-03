@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { supabase } from '../../lib/supabase'
+import axios from 'axios'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import './Inicio.css'
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const getToken = () => localStorage.getItem('snop_token')
 
 export default function Inicio() {
   const { user } = useAuth()
@@ -17,26 +20,20 @@ export default function Inicio() {
   useEffect(() => {
     async function fetchProximosTurnos() {
       if (!user?.id) return
-
-      // Inicio del día de hoy en ISO para capturar turnos de hoy aunque sean más tarde
-      const hoy = new Date()
-      hoy.setHours(0, 0, 0, 0)
-      const desdehoy = hoy.toISOString()
-
-      const { data, error } = await supabase
-        .from('socio_turno')
-        .select('id, estado, turnos(id, fecha_inicio, fecha_fin)')
-        .eq('user_id', user.id)
-
-      if (error) { console.error(error); return }
-      if (!data) return
-
-      const futuros = data
-        .filter(t => t.turnos && t.turnos.fecha_inicio >= desdehoy)
-        .sort((a, b) => new Date(a.turnos.fecha_inicio) - new Date(b.turnos.fecha_inicio))
-        .slice(0, 2)
-
-      setProximosTurnos(futuros)
+      try {
+        const { data } = await axios.get(`${API_BASE}/perfil`, {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        })
+        const turnos = data?.data?.turnos ?? []
+        const ahora = new Date()
+        const futuros = turnos
+          .filter(t => t.turnos && new Date(t.turnos.fecha_inicio) >= ahora)
+          .sort((a, b) => new Date(a.turnos.fecha_inicio) - new Date(b.turnos.fecha_inicio))
+          .slice(0, 2)
+        setProximosTurnos(futuros)
+      } catch (err) {
+        console.error(err)
+      }
     }
     fetchProximosTurnos()
   }, [user])
