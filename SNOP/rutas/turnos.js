@@ -1,14 +1,17 @@
-import express from "express";
+import express from 'express'
+import autenticar from '../src/middlewares/autenticar.js'
 import {
   obtenerTurnos,
   cancelarTurnoController,
   reconfirmarTurnoController,
-} from "../src/controllers/turnosController.js";
+} from '../src/controllers/turnosController.js'
 
-const router = express.Router();
+const router = express.Router()
 
-router.get("/:socioId", obtenerTurnos);
-router.delete("/:turnoId/socio/:socioId", cancelarTurnoController);
-router.patch("/:turnoId/socio/:socioId/reconfirmar", reconfirmarTurnoController);
+// Todas las rutas requieren JWT válido.
+// El socioId se lee del token (req.userId) — no de la URL.
+router.get('/',                          autenticar, obtenerTurnos)
+router.delete('/:turnoId',               autenticar, cancelarTurnoController)
+router.patch('/:turnoId/reconfirmar',    autenticar, reconfirmarTurnoController)
 
-export default router;
+export default router

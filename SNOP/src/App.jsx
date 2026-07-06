@@ -9,6 +9,7 @@ import MisTurnos          from './pages/MisTurnos/MisTurnos'
 import JuegoLibre         from './pages/JuegoLibre/JuegoLibre'
 import ClasesParticulares from './pages/ClasesParticulares/ClasesParticulares'
 import Perfil             from './pages/Perfil/Perfil'
+import Comunicados        from './pages/Comunicados/Comunicados'
 
 // Admin
 import AdminInicio        from './pages/Admin/AdminInicio'
@@ -35,14 +36,25 @@ function RutaProtegida({ children, rolesPermitidos }) {
 }
 
 function AppRoutes() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+
+  // Espera a que AuthContext restaure la sesión antes de redirigir
+  if (loading) return null
 
   return (
     <Routes>
-      {/* Pantalla inicial */}
+      {/* Pantalla inicial — redirige según rol */}
       <Route
         path="/"
-        element={user ? <Navigate to="/inicio" replace /> : <Splash />}
+        element={
+          !user
+            ? <Splash />
+            : user.tipo_usuario_id === 3
+              ? <Navigate to="/admin" replace />
+              : user.tipo_usuario_id === 2
+                ? <Navigate to="/entrenador/inicio" replace />
+                : <Navigate to="/inicio" replace />
+        }
       />
 
       {/* Auth */}
@@ -87,6 +99,14 @@ function AppRoutes() {
         element={
           <RutaProtegida rolesPermitidos={[1]}>
             <Perfil />
+          </RutaProtegida>
+        }
+      />
+      <Route
+        path="/comunicados"
+        element={
+          <RutaProtegida rolesPermitidos={[1]}>
+            <Comunicados />
           </RutaProtegida>
         }
       />

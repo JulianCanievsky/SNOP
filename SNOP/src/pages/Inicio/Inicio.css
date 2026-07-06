@@ -33,7 +33,9 @@
   color: #ffffff;
 }
 
+/* ── BOTÓN CAMPANA ── */
 .btn-campana {
+  position: relative;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -45,11 +47,37 @@
   justify-content: center;
   color: #2563eb;
   flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.btn-campana:hover {
+  opacity: 0.88;
 }
 
 .btn-campana svg {
   width: 22px;
   height: 22px;
+}
+
+/* Badge rojo de no leídos sobre la campana */
+.campana-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #2563eb;
+  line-height: 1;
+  pointer-events: none;
 }
 
 /* ── PRÓXIMOS TURNOS ── */
@@ -122,7 +150,6 @@
   font-size: 12px;
 }
 
-/* texto plano cuando no hay turnos */
 .proximo-turno-texto {
   font-size: 14px;
   font-weight: 500;
@@ -145,12 +172,40 @@
   padding: 20px 16px 0;
 }
 
+/* Fila título + "Ver todos" */
+.seccion-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.seccion-header-row .seccion-titulo {
+  margin: 0;
+}
+
 .seccion-titulo {
   font-size: 11px;
   font-weight: 700;
   color: #94a3b8;
   letter-spacing: 0.08em;
   margin: 0 0 12px;
+}
+
+.btn-ver-todos {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.btn-ver-todos:hover {
+  opacity: 0.75;
 }
 
 /* ── GRID ACCESOS ── */
@@ -170,13 +225,13 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .acceso-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .acceso-emoji {
@@ -195,12 +250,12 @@
   color: #94a3b8;
 }
 
-/* ── NOVEDADES ── */
+/* ── COMUNICADOS (lista en Inicio) ── */
 .novedades-lista {
   background: white;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .novedad-item {
@@ -212,17 +267,46 @@
   border-bottom: none;
 }
 
+/* Comunicado no leído: borde izquierdo rojo */
+.novedad-item--nuevo {
+  border-left: 3px solid #ef4444;
+  padding-left: 13px; /* compensar el borde */
+}
+
+.novedad-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
 .novedad-titulo {
-  margin: 0 0 2px;
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
   color: #1a1a1a;
+  flex: 1;
+}
+
+/* Badge "Nuevo" inline */
+.novedad-badge-nuevo {
+  background: #fef2f2;
+  color: #ef4444;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.03em;
 }
 
 .novedad-sub {
   margin: 0;
   font-size: 12px;
   color: #64748b;
+  line-height: 1.4;
 }
 
 /* ── BOTTOM NAV ── */
@@ -253,6 +337,7 @@
   border: none;
   background: none;
   transition: background 0.15s;
+  font-family: inherit;
 }
 
 .nav-item:hover {

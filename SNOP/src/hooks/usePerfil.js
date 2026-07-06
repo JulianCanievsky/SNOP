@@ -8,16 +8,19 @@ const getToken = () => localStorage.getItem('snop_token')
 export const usePerfil = () => {
   const [perfil, setPerfil] = useState(null)
   const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(null)
 
   const cargarPerfil = async () => {
     try {
       setCargando(true)
+      setError(null)
       const { data } = await axios.get(`${API_BASE}/perfil`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       })
       setPerfil(data.data)
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
+      setError(err.response?.data?.error || 'Error al cargar el perfil')
     } finally {
       setCargando(false)
     }
@@ -27,5 +30,5 @@ export const usePerfil = () => {
     cargarPerfil()
   }, [])
 
-  return { perfil, cargando, cargarPerfil }
+  return { perfil, cargando, error, cargarPerfil }
 }

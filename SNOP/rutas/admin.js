@@ -59,6 +59,9 @@ router.get('/stats', async (_req, res) => {
 // ─────────────────────────────────────────────
 // SOCIOS — GET /api/admin/socios
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// SOCIOS — GET /api/admin/socios
+// ─────────────────────────────────────────────
 router.get('/socios', async (req, res) => {
   try {
     const { filtro, buscar } = req.query
@@ -74,11 +77,16 @@ router.get('/socios', async (req, res) => {
     if (buscar)                  query = query.ilike('nombre', `%${buscar}%`)
 
     const { data, error } = await query
-    if (error) throw error
 
+    if (error) {
+      console.error('GET /admin/socios — Supabase error:', JSON.stringify(error))
+      throw error
+    }
+
+    console.log(`GET /admin/socios — filtro=${filtro || 'ninguno'} buscar=${buscar || 'ninguno'} → ${data?.length ?? 0} resultados`)
     res.json({ data: data ?? [] })
   } catch (err) {
-    console.error(err)
+    console.error('GET /admin/socios — catch:', err)
     res.status(500).json({ error: 'Error al obtener socios' })
   }
 })

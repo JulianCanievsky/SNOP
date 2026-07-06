@@ -25,11 +25,11 @@ router.get('/', autenticar, adaptarSocioId, async (req, res) => {
     const socioId = req.socio_id
 
     let query = supabase
-  .from('juego_libre')
-  .select('*')
-  .eq('activo', true)
-  .gte('fecha_fin', new Date().toISOString())
-  .order('fecha_inicio', { ascending: true })
+      .from('juego_libre')
+      .select('*, sedes ( nombre )')
+      .eq('activo', true)
+      .gte('fecha_fin', new Date().toISOString())
+      .order('fecha_inicio', { ascending: true })
 
     if (sede_id) query = query.eq('sede_id', sede_id)
     if (fecha) {
@@ -69,7 +69,7 @@ router.get('/', autenticar, adaptarSocioId, async (req, res) => {
       return {
         ...evento,
         inscriptos: anotados.length,
-        nombre_sede: evento.sede_id === 1 ? 'Palermo' : 'Armenia',
+        nombre_sede: evento.sedes?.nombre ?? `Sede ${evento.sede_id}`,
         estado: anotados.length >= evento.capacidad_maxima ? 'completo' : 'abierto',
         ya_inscripto: yaInscripto,
         participantes: anotados.map(i => {
