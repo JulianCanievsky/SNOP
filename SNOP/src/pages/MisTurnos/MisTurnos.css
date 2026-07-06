@@ -80,6 +80,19 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* ── PUNTO INDICADOR DE TURNO ── */
+.dia-punto {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  margin-top: 1px;
+}
+
+.dia-punto-activo {
+  background: #2563eb;
+}
+
 /* ── CONTENIDO ── */
 .contenido {
   padding: 16px;

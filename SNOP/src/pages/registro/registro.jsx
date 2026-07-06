@@ -51,10 +51,9 @@ export default function Registro() {
         password,
       })
 
-      setSuccess(data.mensaje)
+      setSuccess(data.mensaje || '¡Cuenta creada! El entrenador te asignará tu nivel. Ya podés iniciar sesión.')
       setForm({ nombre: '', email: '', password: '', confirmPassword: '' })
       setTimeout(() => navigate('/login'), 2500)
-
     } catch (err) {
       setError(err.response?.data?.error || 'Error al crear la cuenta')
     } finally {

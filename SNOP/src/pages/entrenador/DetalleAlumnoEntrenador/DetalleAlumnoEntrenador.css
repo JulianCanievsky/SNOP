@@ -1,0 +1,192 @@
+/* ── Layout ─────────────────────────────────────────────────── */
+.detalle-alumno-e {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding-bottom: 88px;
+  font-family: inherit;
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.detalle-alumno-e-header {
+  background: #2563eb;
+  padding: 20px 20px 28px;
+  color: white;
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  opacity: 0.85;
+}
+
+.btn-back svg {
+  width: 16px;
+  height: 16px;
+}
+
+.detalle-alumno-e-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  color: white;
+}
+
+.detalle-alumno-e-header .subtitulo {
+  font-size: 13px;
+  opacity: 0.8;
+  margin: 0;
+}
+
+/* ── Contenido ───────────────────────────────────────────────── */
+.detalle-alumno-e-contenido {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Card de perfil ──────────────────────────────────────────── */
+.alumno-perfil-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.alumno-avatar-grande {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alumno-perfil-card h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.alumno-perfil-card .email {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ── Card de turnos ──────────────────────────────────────────── */
+.turnos-asignados-card {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.card-seccion-titulo {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+
+.turno-asignado-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.turno-asignado-item:last-child { border-bottom: none; }
+
+.turno-asignado-item svg {
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.turno-asignado-texto {
+  font-size: 14px;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* ── Card cambio de nivel ─────────────────────────────────────── */
+.cambiar-nivel-card {
+  background: white;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.nivel-descripcion {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0 0 12px;
+  font-style: italic;
+}
+
+.nivel-opciones {
+  display: flex;
+  gap: 8px;
+}
+
+.nivel-opcion-btn {
+  flex: 1;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  border-radius: 10px;
+  padding: 10px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.nivel-opcion-btn.rojo-sel {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.nivel-opcion-btn.inter-sel {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #d97706;
+}
+
+.nivel-opcion-btn.azul-sel {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #2563eb;
+}
+
+.nivel-opcion-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

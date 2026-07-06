@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-
 const AuthContext = createContext(null)
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 export function AuthProvider({ children }) {
   const [user, setUser]       = useState(null)
@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }, [])
 
-  // ─── login ───────────────────────────────────────────────────────────────
+  // login — llama al endpoint propio /api/auth/login
   async function login(email, password, tipo_usuario_id) {
     const { data } = await axios.post(`${API_BASE}/auth/login`, {
       email: email.trim().toLowerCase(),
@@ -36,13 +36,12 @@ export function AuthProvider({ children }) {
     const { token, user: perfil } = data
 
     localStorage.setItem('snop_token', token)
-    localStorage.setItem('snop_user', JSON.stringify(perfil))
+    localStorage.setItem('snop_user',  JSON.stringify(perfil))
     setUser(perfil)
 
     return perfil
   }
 
-  // ─── logout ──────────────────────────────────────────────────────────────
   function logout() {
     setUser(null)
     localStorage.removeItem('snop_user')

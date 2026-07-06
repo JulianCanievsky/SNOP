@@ -13,9 +13,10 @@ export default function autenticar(req, res, next) {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET)
-    req.userId = payload.id
-    req.userEmail = payload.email
-    req.userTipo = payload.tipo_usuario_id
+    req.userId        = payload.id
+    req.userEmail     = payload.email
+    req.userTipo      = payload.tipo_usuario_id
+    req.tipoUsuarioId = payload.tipo_usuario_id
     next()
   } catch (err) {
     return res.status(401).json({ error: 'Token inválido o expirado' })

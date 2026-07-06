@@ -22,6 +22,15 @@ import GestionNiveles     from './pages/Admin/GestionNiveles'
 import ConfigAdmin        from './pages/Admin/ConfigAdmin'
 import AdminActividades   from './pages/Admin/AdminActividades'
 
+// Entrenador
+import InicioEntrenador        from './pages/entrenador/InicioEntrenador/InicioEntrenador'
+import MisClasesEntrenador     from './pages/entrenador/MisClasesEntrenador/MisClasesEntrenador'
+import MisAlumnosEntrenador    from './pages/entrenador/MisAlumnosEntrenador/MisAlumnosEntrenador'
+import DetalleAlumnoEntrenador from './pages/entrenador/DetalleAlumnoEntrenador/DetalleAlumnoEntrenador'
+import MisHorariosEntrenador   from './pages/entrenador/MisHorariosEntrenador/MisHorariosEntrenador'
+import SolicitudesEntrenador   from './pages/entrenador/SolicitudesEntrenador/SolicitudesEntrenador'
+import PerfilEntrenador        from './pages/entrenador/PerfilEntrenador/PerfilEntrenador'
+
 // Rutas protegidas: redirige al login si no hay sesión
 function RutaProtegida({ children, rolesPermitidos }) {
   const { user, loading } = useAuth()
@@ -62,67 +71,32 @@ function AppRoutes() {
       <Route path="/registro" element={<Registro />} />
 
       {/* Socios (tipo_usuario_id = 1) */}
-      <Route
-        path="/inicio"
-        element={
-          <RutaProtegida rolesPermitidos={[1]}>
-            <Inicio />
-          </RutaProtegida>
-        }
-      />
-      <Route
-        path="/mis-turnos"
-        element={
-          <RutaProtegida rolesPermitidos={[1]}>
-            <MisTurnos />
-          </RutaProtegida>
-        }
-      />
-      <Route
-        path="/juego-libre"
-        element={
-          <RutaProtegida rolesPermitidos={[1]}>
-            <JuegoLibre />
-          </RutaProtegida>
-        }
-      />
-      <Route
-        path="/clases-particulares"
-        element={
-          <RutaProtegida rolesPermitidos={[1]}>
-            <ClasesParticulares />
-          </RutaProtegida>
-        }
-      />
-      <Route
-        path="/perfil"
-        element={
-          <RutaProtegida rolesPermitidos={[1]}>
-            <Perfil />
-          </RutaProtegida>
-        }
-      />
-      <Route
-        path="/comunicados"
-        element={
-          <RutaProtegida rolesPermitidos={[1]}>
-            <Comunicados />
-          </RutaProtegida>
-        }
-      />
+      <Route path="/inicio"             element={<RutaProtegida rolesPermitidos={[1]}><Inicio /></RutaProtegida>} />
+      <Route path="/mis-turnos"         element={<RutaProtegida rolesPermitidos={[1]}><MisTurnos /></RutaProtegida>} />
+      <Route path="/juego-libre"        element={<RutaProtegida rolesPermitidos={[1]}><JuegoLibre /></RutaProtegida>} />
+      <Route path="/clases-particulares" element={<RutaProtegida rolesPermitidos={[1]}><ClasesParticulares /></RutaProtegida>} />
+      <Route path="/perfil"             element={<RutaProtegida rolesPermitidos={[1]}><Perfil /></RutaProtegida>} />
+      <Route path="/comunicados"        element={<RutaProtegida rolesPermitidos={[1]}><Comunicados /></RutaProtegida>} />
 
-      {/* TODO: agregar rutas para entrenador (2) y admin (3) */}
+      {/* Entrenador (tipo_usuario_id = 2) */}
+      <Route path="/entrenador/inicio"          element={<RutaProtegida rolesPermitidos={[2]}><InicioEntrenador /></RutaProtegida>} />
+      <Route path="/entrenador/mis-clases"      element={<RutaProtegida rolesPermitidos={[2]}><MisClasesEntrenador /></RutaProtegida>} />
+      <Route path="/entrenador/mis-alumnos"     element={<RutaProtegida rolesPermitidos={[2]}><MisAlumnosEntrenador /></RutaProtegida>} />
+      <Route path="/entrenador/alumnos/:alumnoId" element={<RutaProtegida rolesPermitidos={[2]}><DetalleAlumnoEntrenador /></RutaProtegida>} />
+      <Route path="/entrenador/mis-horarios"    element={<RutaProtegida rolesPermitidos={[2]}><MisHorariosEntrenador /></RutaProtegida>} />
+      <Route path="/entrenador/solicitudes"     element={<RutaProtegida rolesPermitidos={[2]}><SolicitudesEntrenador /></RutaProtegida>} />
+      <Route path="/entrenador/perfil"          element={<RutaProtegida rolesPermitidos={[2]}><PerfilEntrenador /></RutaProtegida>} />
 
       {/* Admin (tipo_usuario_id = 3) */}
-      <Route path="/admin" element={<RutaProtegida rolesPermitidos={[3]}><AdminInicio /></RutaProtegida>} />
-      <Route path="/admin/socios" element={<RutaProtegida rolesPermitidos={[3]}><GestionSocios /></RutaProtegida>} />
-      <Route path="/admin/socios/nuevo" element={<RutaProtegida rolesPermitidos={[3]}><AgregarSocio /></RutaProtegida>} />
-      <Route path="/admin/socios/:id" element={<RutaProtegida rolesPermitidos={[3]}><DetalleSocio /></RutaProtegida>} />
-      <Route path="/admin/juego-libre" element={<RutaProtegida rolesPermitidos={[3]}><CrearJuegoLibre /></RutaProtegida>} />
-      <Route path="/admin/comunicado" element={<RutaProtegida rolesPermitidos={[3]}><EnviarComunicado /></RutaProtegida>} />
-      <Route path="/admin/niveles" element={<RutaProtegida rolesPermitidos={[3]}><GestionNiveles /></RutaProtegida>} />
-      <Route path="/admin/config" element={<RutaProtegida rolesPermitidos={[3]}><ConfigAdmin /></RutaProtegida>} />
-      <Route path="/admin/actividades" element={<RutaProtegida rolesPermitidos={[3]}><AdminActividades /></RutaProtegida>} />
+      <Route path="/admin"               element={<RutaProtegida rolesPermitidos={[3]}><AdminInicio /></RutaProtegida>} />
+      <Route path="/admin/socios"        element={<RutaProtegida rolesPermitidos={[3]}><GestionSocios /></RutaProtegida>} />
+      <Route path="/admin/socios/nuevo"  element={<RutaProtegida rolesPermitidos={[3]}><AgregarSocio /></RutaProtegida>} />
+      <Route path="/admin/socios/:id"    element={<RutaProtegida rolesPermitidos={[3]}><DetalleSocio /></RutaProtegida>} />
+      <Route path="/admin/juego-libre"   element={<RutaProtegida rolesPermitidos={[3]}><CrearJuegoLibre /></RutaProtegida>} />
+      <Route path="/admin/comunicado"    element={<RutaProtegida rolesPermitidos={[3]}><EnviarComunicado /></RutaProtegida>} />
+      <Route path="/admin/niveles"       element={<RutaProtegida rolesPermitidos={[3]}><GestionNiveles /></RutaProtegida>} />
+      <Route path="/admin/config"        element={<RutaProtegida rolesPermitidos={[3]}><ConfigAdmin /></RutaProtegida>} />
+      <Route path="/admin/actividades"   element={<RutaProtegida rolesPermitidos={[3]}><AdminActividades /></RutaProtegida>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

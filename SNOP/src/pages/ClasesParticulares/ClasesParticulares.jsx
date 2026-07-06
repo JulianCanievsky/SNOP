@@ -8,7 +8,7 @@ const formatearDiaHora = (fechaISO) => {
   const fecha = new Date(fechaISO)
   const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
   const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-  return `${dias[fecha.getDay()]} ${fecha.getDate()} - ${hora}`
+  return `${dias[fecha.getDay()]} ${fecha.getDate()} · ${hora}`
 }
 
 const AvatarEntrenador = ({ nombre, foto_url, tamanio = 'md' }) => {
@@ -65,7 +65,8 @@ const TarjetaEntrenador = ({ entrenador, solicitudes, onReservar }) => {
               onClick={() => setTurnoSeleccionado(turno)}
             >
               <span>{formatearDiaHora(turno.fecha_inicio)}</span>
-              <span className="chip-duracion">{turno.duracion_min} min · {turno.sede || 'Sin sede'}</span>
+              {turno.sede && <span className="chip-sede">📍 {turno.sede}</span>}
+              <span className="chip-duracion">{turno.duracion_min} min</span>
             </button>
           )
         })}
@@ -94,9 +95,9 @@ const ClasesParticulares = () => {
     liberarSolicitud,
   } = useClasesParticulares()
 
-  const [reserva, setReserva] = useState(null)
-  const [enviando, setEnviando] = useState(false)
-  const [exito, setExito] = useState(false)
+  const [reserva,     setReserva]     = useState(null)
+  const [enviando,    setEnviando]    = useState(false)
+  const [exito,       setExito]       = useState(false)
   const [fechaFiltro, setFechaFiltro] = useState('')
 
   const handleReservar = (entrenador, turno) => {
@@ -110,7 +111,7 @@ const ClasesParticulares = () => {
       setEnviando(true)
       await enviarSolicitud({
         entrenador_id: reserva.entrenador.id,
-        turno_id: reserva.turno.id,
+        turno_id:      reserva.turno.id,
       })
       setExito(true)
       setReserva(null)
@@ -128,11 +129,9 @@ const ClasesParticulares = () => {
       ...entrenador,
       turnos_disponibles: entrenador.turnos_disponibles.filter(turno => {
         if (!fechaFiltro) return true
-        const fechaTurno = new Date(turno.fecha_inicio)
-        const año = fechaTurno.getFullYear()
-        const mes = String(fechaTurno.getMonth() + 1).padStart(2, '0')
-        const dia = String(fechaTurno.getDate()).padStart(2, '0')
-        return `${año}-${mes}-${dia}` === fechaFiltro
+        const f = new Date(turno.fecha_inicio)
+        const iso = `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`
+        return iso === fechaFiltro
       }),
     }))
     .filter(e => e.turnos_disponibles.length > 0)
@@ -226,16 +225,26 @@ const ClasesParticulares = () => {
                 <div key={s.id} className="solicitud-card">
                   <div className="solicitud-fecha">
                     {new Date(s.turnos.fecha_inicio).toLocaleDateString('es-AR', {
-                      weekday: 'long', day: '2-digit', month: '2-digit'
+                      weekday: 'long', day: 'numeric', month: 'long',
                     })}
                   </div>
                   <div className="solicitud-hora">
                     {new Date(s.turnos.fecha_inicio).toLocaleTimeString('es-AR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })} hs · {s.turnos.duracion_min} min
-                    {s.turnos.users?.nombre && ` · ${s.turnos.users.nombre}`}
+                      hour: '2-digit', minute: '2-digit',
+                    })}
+                    {s.turnos.fecha_fin && (
+                      <> — {new Date(s.turnos.fecha_fin).toLocaleTimeString('es-AR', {
+                        hour: '2-digit', minute: '2-digit',
+                      })} hs</>
+                    )}
+                    {s.turnos.duracion_min && ` · ${s.turnos.duracion_min} min`}
                   </div>
+                  {(s.turnos.users?.nombre || s.turnos.sedes?.nombre) && (
+                    <div className="solicitud-detalle">
+                      {s.turnos.users?.nombre && <span>👨‍🏫 {s.turnos.users.nombre}</span>}
+                      {s.turnos.sedes?.nombre && <span>📍 {s.turnos.sedes.nombre}</span>}
+                    </div>
+                  )}
                   <div className={`estado-solicitud ${s.estado ? 'confirmado' : 'pendiente'}`}>
                     <span className="estado-icono">{s.estado ? '✅' : '⏳'}</span>
                     <span>{s.estado ? 'Confirmado' : 'Pendiente'}</span>

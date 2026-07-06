@@ -17,6 +17,7 @@
   margin: 0;
   font-size: 22px;
   font-weight: 700;
+  color: white;
 }
 
 .perfil-card {
@@ -88,6 +89,78 @@
   margin: 2px 0 0;
   font-size: 13px;
   color: #6b7280;
+}
+
+/* ── TURNO CARD PERFIL (estilo rico con sede/mesa/entrenador) ── */
+.turno-card-perfil {
+  background: white;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.turno-card-perfil-pasado {
+  opacity: 0.7;
+}
+
+.turno-card-perfil-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.turno-card-perfil-fecha {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.turno-card-perfil-horario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+
+.turno-card-perfil-icono {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.turno-card-perfil-horario strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.turno-card-perfil-horario p {
+  margin: 1px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.turno-card-perfil-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.turno-card-perfil-info span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .estado-activo {

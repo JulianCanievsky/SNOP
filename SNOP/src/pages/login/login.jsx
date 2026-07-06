@@ -39,11 +39,12 @@ export default function Login() {
       if (userData.tipo_usuario_id === 3) {
         navigate('/admin')
       } else if (userData.tipo_usuario_id === 2) {
-        navigate('/entrenador')
+        navigate('/entrenador/inicio')
       } else {
         navigate('/inicio')
       }
     } catch (err) {
+      // axios envuelve el error del backend en err.response.data.error
       setError(err.response?.data?.error || err.message || 'Error al iniciar sesión')
     } finally {
       setLoading(false)

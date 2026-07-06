@@ -4,6 +4,23 @@ import TurnoCard from '../../components/TurnoCard/TurnoCard'
 import { getAgenda, cancelarTurno, cancelarJuegoLibre } from '../../services/turnosApi'
 import BottomNav from '../../components/BottomNav/BottomNav'
 
+// Convierte una fecha ISO (puede ser UTC) a la fecha local del browser en formato YYYY-MM-DD
+function toLocalDateStr(isoString) {
+  const d = new Date(isoString)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// Convierte un objeto Date local a YYYY-MM-DD (para construir el selector de días)
+function toDateStr(fecha) {
+  const y = fecha.getFullYear()
+  const m = String(fecha.getMonth() + 1).padStart(2, '0')
+  const d = String(fecha.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 export default function MisTurnos() {
   const [agenda,          setAgenda]          = useState([])
   const [loading,         setLoading]         = useState(true)
@@ -16,16 +33,15 @@ export default function MisTurnos() {
         const lista = data || []
         setAgenda(lista)
 
-        // Si hoy no tiene eventos, avanzar automáticamente al primer día con evento
+        // Si hoy no tiene eventos, avanzar al primer día con evento (próximos 7 días)
         if (lista.length > 0) {
           const hoyStr = toDateStr(new Date())
-          const tieneHoy = lista.some(e => e.fecha_inicio?.slice(0, 10) === hoyStr)
+          const tieneHoy = lista.some(e => toLocalDateStr(e.fecha_inicio) === hoyStr)
           if (!tieneHoy) {
-            // Buscar el día más próximo con evento dentro de los próximos 7 días
             for (let i = 1; i < 7; i++) {
               const d = new Date()
               d.setDate(d.getDate() + i)
-              if (lista.some(e => e.fecha_inicio?.slice(0, 10) === toDateStr(d))) {
+              if (lista.some(e => toLocalDateStr(e.fecha_inicio) === toDateStr(d))) {
                 setDiaSeleccionado(i)
                 break
               }
@@ -45,20 +61,20 @@ export default function MisTurnos() {
   const dias = Array.from({ length: 7 }, (_, i) => {
     const fecha = new Date()
     fecha.setDate(fecha.getDate() + i)
-    const fechaStr = toDateStr(fecha)
-    const tieneEvento = agenda.some(e => e.fecha_inicio?.slice(0, 10) === fechaStr)
+    const iso = toDateStr(fecha)
     return {
       fecha,
-      letra:  fecha.toLocaleDateString('es-AR', { weekday: 'short' }).charAt(0).toUpperCase(),
-      numero: fecha.getDate(),
-      tieneEvento,
+      letra:       fecha.toLocaleDateString('es-AR', { weekday: 'short' }).charAt(0).toUpperCase(),
+      numero:      fecha.getDate(),
+      iso,
+      tieneEvento: agenda.some(e => toLocalDateStr(e.fecha_inicio) === iso),
     }
   })
 
-  const fechaSeleccionada = toDateStr(dias[diaSeleccionado].fecha)
+  const fechaSeleccionada = dias[diaSeleccionado].iso
 
   const eventosFiltrados = agenda.filter(e =>
-    e.fecha_inicio?.slice(0, 10) === fechaSeleccionada
+    toLocalDateStr(e.fecha_inicio) === fechaSeleccionada
   )
 
   async function onCancelar(evento) {
@@ -66,7 +82,6 @@ export default function MisTurnos() {
       if (evento.tipo === 'juego_libre') {
         await cancelarJuegoLibre(evento.juego_libre_id)
       } else {
-        // turno_id es el id real del turno en la tabla turnos
         await cancelarTurno(evento.turno_id)
       }
       setAgenda(prev => prev.filter(e => e.id !== evento.id))
@@ -90,7 +105,9 @@ export default function MisTurnos() {
             >
               <span>{dia.letra}</span>
               <strong>{dia.numero}</strong>
-              {dia.tieneEvento && <span className="dia-punto" />}
+              {dia.tieneEvento && (
+                <span className={`dia-punto${index === diaSeleccionado ? ' dia-punto-activo' : ''}`} />
+              )}
             </div>
           ))}
         </div>
@@ -118,11 +135,4 @@ export default function MisTurnos() {
       <BottomNav />
     </div>
   )
-}
-
-function toDateStr(fecha) {
-  const y = fecha.getFullYear()
-  const m = String(fecha.getMonth() + 1).padStart(2, '0')
-  const d = String(fecha.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
 }

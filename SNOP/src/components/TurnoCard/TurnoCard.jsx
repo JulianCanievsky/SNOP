@@ -29,14 +29,14 @@ export default function TurnoCard({ evento, onCancelar }) {
 
   const cfg = TIPO_CONFIG[evento.tipo] ?? TIPO_CONFIG.turno_fijo
 
-  const fechaObj    = new Date(evento.fecha_inicio)
-  const fechaTexto  = fechaObj.toLocaleDateString('es-AR', {
+  const fechaObj   = new Date(evento.fecha_inicio)
+  const fechaTexto = fechaObj.toLocaleDateString('es-AR', {
     weekday: 'long', day: 'numeric', month: 'long',
   })
-  const horaInicio  = fechaObj.toLocaleTimeString('es-AR', {
+  const horaInicio = fechaObj.toLocaleTimeString('es-AR', {
     hour: '2-digit', minute: '2-digit', hour12: false,
   })
-  const horaFin     = new Date(evento.fecha_fin).toLocaleTimeString('es-AR', {
+  const horaFin = new Date(evento.fecha_fin).toLocaleTimeString('es-AR', {
     hour: '2-digit', minute: '2-digit', hour12: false,
   })
 
@@ -69,9 +69,7 @@ export default function TurnoCard({ evento, onCancelar }) {
           <div className="icono">{cfg.icono}</div>
           <div className="horario-texto">
             <strong>{horaInicio} — {horaFin} hs</strong>
-            {evento.duracion_min && (
-              <p>{evento.duracion_min} min</p>
-            )}
+            {evento.duracion_min && <p>{evento.duracion_min} min</p>}
           </div>
           <span className={`badge-estado ${evento.estado === 'confirmado' ? 'estado--confirmado' : 'estado--inscripto'}`}>
             {evento.estado === 'confirmado' ? 'Confirmado' : 'Inscripto'}
@@ -80,18 +78,20 @@ export default function TurnoCard({ evento, onCancelar }) {
 
         {/* INFO CONTEXTUAL según tipo */}
         <div className="info">
-          {evento.sede && <span>📍 {evento.sede}</span>}
+          {evento.sede      && <span>📍 {evento.sede}</span>}
           {evento.entrenador && <span>· 👤 {evento.entrenador}</span>}
           {evento.mesa != null && <span>· Mesa {evento.mesa}</span>}
         </div>
 
         {/* ACCIÓN */}
-        <button
-          className="cancelar-btn"
-          onClick={() => setMostrarModal(true)}
-        >
-          Cancelar {evento.tipo === 'juego_libre' ? 'inscripción' : 'turno'}
-        </button>
+        {typeof onCancelar === 'function' && (
+          <button
+            className="cancelar-btn"
+            onClick={() => setMostrarModal(true)}
+          >
+            Cancelar {evento.tipo === 'juego_libre' ? 'inscripción' : 'turno'}
+          </button>
+        )}
       </div>
 
       {/* MODAL CONFIRMAR */}

@@ -33,11 +33,16 @@ router.get('/', autenticar, async (req, res) => {
           id,
           fecha_inicio,
           fecha_fin,
+          duracion_min,
           mesa_id,
-          sede_id
+          sede_id,
+          sedes ( nombre ),
+          mesas ( numero ),
+          users ( nombre )
         )
       `)
       .eq('user_id', usuario_id)
+      .eq('estado', true)   // solo confirmados por el entrenador
 
     if (errorTurnos) throw errorTurnos
 
