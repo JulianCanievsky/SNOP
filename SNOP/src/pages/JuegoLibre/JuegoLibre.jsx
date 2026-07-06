@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useJuegoLibre } from './useJuegoLibre'
 import DetalleJuegoLibre from './DetalleJuegoLibre'
 import BottomNav from '../../components/BottomNav/BottomNav'
+import { getSedesPublicas } from '../../services/adminApi'
+import { useEffect } from 'react'
 import './JuegoLibre.css'
 
 const formatearFecha = (fechaISO) => {
@@ -96,6 +98,11 @@ const JuegoLibre = () => {
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
   const [filtroSede, setFiltroSede] = useState('')
   const [filtroFecha, setFiltroFecha] = useState('')
+  const [sedes, setSedes] = useState([])
+
+  useEffect(() => {
+    getSedesPublicas().then(setSedes).catch(() => setSedes([]))
+  }, [])
 
   const handleAnotarme = (evento) => setEventoSeleccionado(evento)
 
@@ -153,8 +160,9 @@ const JuegoLibre = () => {
             onChange={e => setFiltroSede(e.target.value)}
           >
             <option value="">Todas las sedes</option>
-            <option value="1">Sede Palermo</option>
-            <option value="2">Sede Armenia</option>
+            {sedes.map(s => (
+              <option key={s.id} value={s.id}>{s.nombre}</option>
+            ))}
           </select>
           <input
             type="date"

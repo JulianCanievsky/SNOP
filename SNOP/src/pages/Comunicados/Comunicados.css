@@ -1,0 +1,129 @@
+.comunicados-page {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding-bottom: 90px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* ── HEADER ── */
+.com-header {
+  background: #2563eb;
+  color: white;
+  padding: 20px 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0 0 20px 20px;
+}
+
+.com-btn-back {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.com-btn-back:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.com-btn-back svg {
+  width: 20px;
+  height: 20px;
+}
+
+.com-titulo {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+/* ── LISTA ── */
+.com-lista {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── EMPTY ── */
+.com-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 20px;
+  color: #94a3b8;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.com-empty-icon {
+  font-size: 40px;
+}
+
+/* ── ITEM ── */
+.com-item {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.12s;
+}
+
+.com-item--nuevo {
+  border-left: 3px solid #ef4444;
+}
+
+.com-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.com-item-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.com-badge-nuevo {
+  background: #fef2f2;
+  color: #ef4444;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.com-item-mensaje {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.com-item-fecha {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  text-transform: capitalize;
+}

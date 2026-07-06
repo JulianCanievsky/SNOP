@@ -3,7 +3,7 @@ dotenv.config()
 
 import express from 'express'
 import { createClient } from '@supabase/supabase-js'
-import jwt from 'jsonwebtoken'
+import autenticar from '../src/middlewares/autenticar.js'
 
 const router = express.Router()
 
@@ -12,50 +12,24 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 )
 
-const verificarToken = async (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.replace('Bearer ', '')
-
-    if (!token) {
-      return res.status(401).json({ error: 'Token requerido' })
-    }
-
-    const { data, error } = await supabase.auth.getUser(token)
-
-    if (error || !data.user) {
-      return res.status(401).json({ error: 'Token inválido' })
-    }
-
-    const { data: usuario, error: errorUsuario } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', data.user.email)
-      .single()
-
-    if (errorUsuario || !usuario) {
-      return res.status(401).json({ error: 'Usuario no encontrado' })
-    }
-
-    req.socio_id = usuario.id
-
-    next()
-  } catch (err) {
-    console.error('ERROR TOKEN:', err)
-    return res.status(401).json({ error: 'No autorizado' })
-  }
+// Alias para compatibilidad: el middleware pone req.userId
+// el resto del código usaba req.socio_id
+function adaptarSocioId(req, _res, next) {
+  req.socio_id = req.userId
+  next()
 }
 
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', autenticar, adaptarSocioId, async (req, res) => {
   try {
     const { sede_id, fecha } = req.query
     const socioId = req.socio_id
 
     let query = supabase
-  .from('juego_libre')
-  .select('*')
-  .eq('activo', true)
-  .gte('fecha_fin', new Date().toISOString())
-  .order('fecha_inicio', { ascending: true })
+      .from('juego_libre')
+      .select('*, sedes ( nombre )')
+      .eq('activo', true)
+      .gte('fecha_fin', new Date().toISOString())
+      .order('fecha_inicio', { ascending: true })
 
     if (sede_id) query = query.eq('sede_id', sede_id)
     if (fecha) {
@@ -95,7 +69,7 @@ router.get('/', verificarToken, async (req, res) => {
       return {
         ...evento,
         inscriptos: anotados.length,
-        nombre_sede: evento.sede_id === 1 ? 'Palermo' : 'Armenia',
+        nombre_sede: evento.sedes?.nombre ?? `Sede ${evento.sede_id}`,
         estado: anotados.length >= evento.capacidad_maxima ? 'completo' : 'abierto',
         ya_inscripto: yaInscripto,
         participantes: anotados.map(i => {
@@ -116,7 +90,7 @@ router.get('/', verificarToken, async (req, res) => {
   }
 })
 
-router.post('/:id/inscribir', verificarToken, async (req, res) => {
+router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
   try {
     const eventoId = parseInt(req.params.id)
     const socioId = req.socio_id
@@ -161,7 +135,7 @@ router.post('/:id/inscribir', verificarToken, async (req, res) => {
   }
 })
 
-router.delete('/:id/cancelar', verificarToken, async (req, res) => {
+router.delete('/:id/cancelar', autenticar, adaptarSocioId, async (req, res) => {
   try {
     const eventoId = parseInt(req.params.id)
     const socioId = req.socio_id

@@ -9,6 +9,18 @@ import MisTurnos          from './pages/MisTurnos/MisTurnos'
 import JuegoLibre         from './pages/JuegoLibre/JuegoLibre'
 import ClasesParticulares from './pages/ClasesParticulares/ClasesParticulares'
 import Perfil             from './pages/Perfil/Perfil'
+import Comunicados        from './pages/Comunicados/Comunicados'
+
+// Admin
+import AdminInicio        from './pages/Admin/AdminInicio'
+import GestionSocios      from './pages/Admin/GestionSocios'
+import DetalleSocio       from './pages/Admin/DetalleSocio'
+import AgregarSocio       from './pages/Admin/AgregarSocio'
+import CrearJuegoLibre    from './pages/Admin/CrearJuegoLibre'
+import EnviarComunicado   from './pages/Admin/EnviarComunicado'
+import GestionNiveles     from './pages/Admin/GestionNiveles'
+import ConfigAdmin        from './pages/Admin/ConfigAdmin'
+import AdminActividades   from './pages/Admin/AdminActividades'
 
 // Rutas protegidas: redirige al login si no hay sesión
 function RutaProtegida({ children, rolesPermitidos }) {
@@ -24,14 +36,25 @@ function RutaProtegida({ children, rolesPermitidos }) {
 }
 
 function AppRoutes() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+
+  // Espera a que AuthContext restaure la sesión antes de redirigir
+  if (loading) return null
 
   return (
     <Routes>
-      {/* Pantalla inicial */}
+      {/* Pantalla inicial — redirige según rol */}
       <Route
         path="/"
-        element={user ? <Navigate to="/inicio" replace /> : <Splash />}
+        element={
+          !user
+            ? <Splash />
+            : user.tipo_usuario_id === 3
+              ? <Navigate to="/admin" replace />
+              : user.tipo_usuario_id === 2
+                ? <Navigate to="/entrenador/inicio" replace />
+                : <Navigate to="/inicio" replace />
+        }
       />
 
       {/* Auth */}
@@ -79,8 +102,27 @@ function AppRoutes() {
           </RutaProtegida>
         }
       />
+      <Route
+        path="/comunicados"
+        element={
+          <RutaProtegida rolesPermitidos={[1]}>
+            <Comunicados />
+          </RutaProtegida>
+        }
+      />
 
       {/* TODO: agregar rutas para entrenador (2) y admin (3) */}
+
+      {/* Admin (tipo_usuario_id = 3) */}
+      <Route path="/admin" element={<RutaProtegida rolesPermitidos={[3]}><AdminInicio /></RutaProtegida>} />
+      <Route path="/admin/socios" element={<RutaProtegida rolesPermitidos={[3]}><GestionSocios /></RutaProtegida>} />
+      <Route path="/admin/socios/nuevo" element={<RutaProtegida rolesPermitidos={[3]}><AgregarSocio /></RutaProtegida>} />
+      <Route path="/admin/socios/:id" element={<RutaProtegida rolesPermitidos={[3]}><DetalleSocio /></RutaProtegida>} />
+      <Route path="/admin/juego-libre" element={<RutaProtegida rolesPermitidos={[3]}><CrearJuegoLibre /></RutaProtegida>} />
+      <Route path="/admin/comunicado" element={<RutaProtegida rolesPermitidos={[3]}><EnviarComunicado /></RutaProtegida>} />
+      <Route path="/admin/niveles" element={<RutaProtegida rolesPermitidos={[3]}><GestionNiveles /></RutaProtegida>} />
+      <Route path="/admin/config" element={<RutaProtegida rolesPermitidos={[3]}><ConfigAdmin /></RutaProtegida>} />
+      <Route path="/admin/actividades" element={<RutaProtegida rolesPermitidos={[3]}><AdminActividades /></RutaProtegida>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
