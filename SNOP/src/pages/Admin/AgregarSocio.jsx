@@ -1,35 +1,26 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
-import { crearSocio, getEntrenadores, getSedes } from '../../services/adminApi'
+import { crearSocio, getNiveles } from '../../services/adminApi'
 import './Admin.css'
-
-const NIVELES = [
-  { key: '',            label: '— Sin asignar (clase de prueba) —' },
-  { key: 'Rojo',        label: 'Rojo' },
-  { key: 'Intermedio',  label: 'Intermedio' },
-  { key: 'Azul',        label: 'Azul' },
-]
 
 export default function AgregarSocio() {
   const navigate = useNavigate()
 
   const [form, setForm] = useState({
-    nombre: '',
-    email: '',
+    nombre:   '',
+    email:    '',
     telefono: '',
-    nivel: '',
-    turno_fijo: '',
-    entrenador_asignado_id: '',
+    nivel_id: '',
   })
 
-  const [entrenadores, setEntrenadores] = useState([])
-  const [enviando,  setEnviando]  = useState(false)
-  const [exito,     setExito]     = useState(false)
-  const [error,     setError]     = useState('')
+  const [niveles,  setNiveles]  = useState([])
+  const [enviando, setEnviando] = useState(false)
+  const [exito,    setExito]    = useState(false)
+  const [error,    setError]    = useState('')
 
   useEffect(() => {
-    getEntrenadores().then(setEntrenadores).catch(console.error)
+    getNiveles().then(setNiveles).catch(console.error)
   }, [])
 
   function handleChange(e) {
@@ -48,7 +39,12 @@ export default function AgregarSocio() {
 
     setEnviando(true)
     try {
-      await crearSocio(form)
+      await crearSocio({
+        nombre:   form.nombre.trim(),
+        email:    form.email.trim().toLowerCase(),
+        telefono: form.telefono.trim() || undefined,
+        nivel_id: form.nivel_id ? Number(form.nivel_id) : undefined,
+      })
       setExito(true)
       setTimeout(() => navigate('/admin/socios'), 1800)
     } catch (err) {
@@ -67,50 +63,44 @@ export default function AgregarSocio() {
       </div>
 
       <div className="admin-body">
-        {exito && <div className="alerta-exito">✓ Socio creado. La contraseña por defecto es <strong>snop1234</strong>.</div>}
+        {exito && (
+          <div className="alerta-exito">
+            ✓ Socio creado. La contraseña por defecto es <strong>snop1234</strong>.
+          </div>
+        )}
         {error && <div className="alerta-error">{error}</div>}
 
         <form className="admin-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Nombre y apellido</label>
-            <input name="nombre" className="form-input" placeholder="Nombre y apellido"
-              value={form.nombre} onChange={handleChange} />
+            <input
+              name="nombre" className="form-input" placeholder="Nombre y apellido"
+              value={form.nombre} onChange={handleChange}
+            />
           </div>
 
           <div className="form-group">
             <label>Correo electrónico</label>
-            <input name="email" type="email" className="form-input" placeholder="email del socio"
-              value={form.email} onChange={handleChange} />
+            <input
+              name="email" type="email" className="form-input" placeholder="email del socio"
+              value={form.email} onChange={handleChange}
+            />
           </div>
 
           <div className="form-group">
-            <label>Teléfono</label>
-            <input name="telefono" className="form-input" placeholder="+54 11 ..."
-              value={form.telefono} onChange={handleChange} />
+            <label>Teléfono (opcional)</label>
+            <input
+              name="telefono" className="form-input" placeholder="+54 11 ..."
+              value={form.telefono} onChange={handleChange}
+            />
           </div>
 
           <div className="form-group">
             <label>Nivel inicial</label>
-            <select name="nivel" className="form-select" value={form.nivel} onChange={handleChange}>
-              {NIVELES.map(n => (
-                <option key={n.key} value={n.key}>{n.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>Turno fijo</label>
-            <input name="turno_fijo" className="form-input" placeholder="Ej: Lunes 19:00 — Sede Palermo"
-              value={form.turno_fijo} onChange={handleChange} />
-          </div>
-
-          <div className="form-group">
-            <label>Entrenador asignado</label>
-            <select name="entrenador_asignado_id" className="form-select"
-              value={form.entrenador_asignado_id} onChange={handleChange}>
-              <option value="">— Sin entrenador —</option>
-              {entrenadores.map(e => (
-                <option key={e.id} value={e.id}>{e.nombre}</option>
+            <select name="nivel_id" className="form-select" value={form.nivel_id} onChange={handleChange}>
+              <option value="">— Sin asignar (clase de prueba) —</option>
+              {niveles.map(n => (
+                <option key={n.id} value={n.id}>{n.nombre}</option>
               ))}
             </select>
           </div>

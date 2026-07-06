@@ -23,10 +23,11 @@ export default function EnviarComunicado() {
   }, [])
 
   const opcionesDestinatarios = [
-    { key: 'todos',      label: `Todos los socios`,       conteo: stats?.socios_activos },
-    { key: 'con_deuda',  label: 'Socios con deuda',       conteo: stats?.con_deuda },
-    { key: 'nivel_rojo', label: 'Nivel Rojo',             conteo: null },
-    { key: 'nivel_azul', label: 'Nivel Azul',             conteo: null },
+    { key: 'todos',          label: 'Todos los socios',    conteo: stats?.socios_activos },
+    { key: 'entrenadores',   label: 'Entrenadores',        conteo: stats?.entrenadores },
+    { key: 'con_deuda',      label: 'Socios con deuda',    conteo: stats?.con_deuda },
+    { key: 'nivel_rojo',     label: 'Nivel Rojo',          conteo: null },
+    { key: 'nivel_azul',     label: 'Nivel Azul',          conteo: null },
   ]
 
   async function handleSubmit(e) {
@@ -57,12 +58,24 @@ export default function EnviarComunicado() {
     return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
   }
 
+  const LABELS_DEST = {
+    todos:        'Todos los socios',
+    entrenadores: 'Entrenadores',
+    con_deuda:    'Socios con deuda',
+    nivel_rojo:   'Nivel Rojo',
+    nivel_azul:   'Nivel Azul',
+  }
+
+  function formatDest(key) {
+    return LABELS_DEST[key] ?? key
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-header">
         <button className="btn-volver-admin" onClick={() => navigate('/admin')}>‹ Inicio</button>
         <h1>Enviar comunicado</h1>
-        <p>Notificar a socios</p>
+        <p>Notificar a socios y entrenadores</p>
       </div>
 
       <div className="admin-body">
@@ -122,7 +135,7 @@ export default function EnviarComunicado() {
                   <div className="comunicado-dot" />
                   <div>
                     <p className="comunicado-titulo">{c.titulo}</p>
-                    <p className="comunicado-meta">{c.destinatarios} · {formatFecha(c.fecha)}</p>
+                    <p className="comunicado-meta">{formatDest(c.destinatarios)} · {formatFecha(c.fecha)}</p>
                   </div>
                 </div>
               ))}

@@ -68,7 +68,7 @@ router.get('/socios', async (req, res) => {
 
     let query = supabase
       .from('users')
-      .select('id, nombre, email, telefono, nivel, cuota_al_dia, activo, tipo_usuario_id, turno_fijo, entrenador_asignado_id')
+      .select('id, nombre, email, telefono, nivel_id, cuota_al_dia, activo, tipo_usuario_id, niveles(id, nombre)')
       .eq('tipo_usuario_id', 1)
       .order('nombre', { ascending: true })
 
@@ -83,7 +83,7 @@ router.get('/socios', async (req, res) => {
       throw error
     }
 
-    console.log(`GET /admin/socios — filtro=${filtro || 'ninguno'} buscar=${buscar || 'ninguno'} → ${data?.length ?? 0} resultados`)
+    console.log(`GET /admin/socios → ${data?.length ?? 0} resultados`)
     res.json({ data: data ?? [] })
   } catch (err) {
     console.error('GET /admin/socios — catch:', err)
@@ -98,7 +98,7 @@ router.get('/socios/:id', async (req, res) => {
   try {
     const { data: usuario, error } = await supabase
       .from('users')
-      .select('id, nombre, email, telefono, nivel, cuota_al_dia, activo, tipo_usuario_id, turno_fijo, entrenador_asignado_id, fecha_alta')
+      .select('id, nombre, email, telefono, nivel_id, cuota_al_dia, activo, tipo_usuario_id, fecha_alta, niveles(id, nombre)')
       .eq('id', req.params.id)
       .single()
 
@@ -124,7 +124,7 @@ router.get('/socios/:id', async (req, res) => {
 // ─────────────────────────────────────────────
 router.post('/socios', async (req, res) => {
   try {
-    const { nombre, email, telefono, nivel, turno_fijo, entrenador_asignado_id, password } = req.body
+    const { nombre, email, telefono, nivel_id, password } = req.body
 
     if (!nombre?.trim() || !email?.trim()) {
       return res.status(400).json({ error: 'Nombre y email son requeridos' })
@@ -145,9 +145,7 @@ router.post('/socios', async (req, res) => {
         email: email.trim().toLowerCase(),
         telefono: telefono?.trim() || null,
         password: hash,
-        nivel: nivel || null,
-        turno_fijo: turno_fijo || null,
-        entrenador_asignado_id: entrenador_asignado_id || null,
+        nivel_id: nivel_id || null,
         tipo_usuario_id: 1,
         activo: true,
         cuota_al_dia: true,
@@ -170,7 +168,7 @@ router.post('/socios', async (req, res) => {
 router.patch('/socios/:id', async (req, res) => {
   try {
     const campos = {}
-    const permitidos = ['nombre', 'email', 'telefono', 'nivel', 'cuota_al_dia', 'activo', 'turno_fijo', 'entrenador_asignado_id']
+    const permitidos = ['nombre', 'email', 'telefono', 'nivel_id', 'cuota_al_dia', 'activo']
     for (const k of permitidos) {
       if (req.body[k] !== undefined) campos[k] = req.body[k]
     }
@@ -179,7 +177,7 @@ router.patch('/socios/:id', async (req, res) => {
       .from('users')
       .update(campos)
       .eq('id', req.params.id)
-      .select('id, nombre, email, nivel, cuota_al_dia')
+      .select('id, nombre, email, nivel_id, cuota_al_dia')
       .single()
 
     if (error) throw error
@@ -225,23 +223,39 @@ router.get('/sedes', async (_req, res) => {
 })
 
 // ─────────────────────────────────────────────
-// NIVELES — GET /api/admin/niveles/stats
+// NIVELES — GET /api/admin/niveles
+// ─────────────────────────────────────────────
+router.get('/niveles', async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('niveles')
+      .select('id, nombre, orden')
+      .order('orden', { ascending: true })
+    if (error) throw error
+    res.json({ data: data ?? [] })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error al obtener niveles' })
+  }
+})
+
+// ─────────────────────────────────────────────
+// NIVELES STATS — GET /api/admin/niveles/stats
 // ─────────────────────────────────────────────
 router.get('/niveles/stats', async (_req, res) => {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('nivel')
+      .select('nivel_id, niveles(nombre)')
       .eq('tipo_usuario_id', 1)
       .eq('activo', true)
 
     if (error) throw error
 
-    const conteo = { Rojo: 0, Intermedio: 0, Azul: 0, null: 0 }
+    const conteo = {}
     for (const u of data ?? []) {
-      const n = u.nivel ?? 'null'
-      if (n in conteo) conteo[n]++
-      else conteo['null']++
+      const nombre = u.niveles?.nombre ?? 'Sin nivel'
+      conteo[nombre] = (conteo[nombre] || 0) + 1
     }
 
     res.json({ data: conteo })
@@ -295,7 +309,7 @@ router.get('/comunicados', async (_req, res) => {
   try {
     const { data, error } = await supabase
       .from('comunicados')
-      .select('id, titulo, destinatarios, fecha')
+      .select('id, titulo, destinatarios, fecha, mensaje')
       .order('fecha', { ascending: false })
       .limit(10)
 

@@ -41,6 +41,7 @@ app.get('/api/comunicados', async (_req, res) => {
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
+      .in('destinatarios', ['todos', 'con_deuda', 'nivel_rojo', 'nivel_azul'])
       .order('fecha', { ascending: false })
       .limit(5)
     if (error) {
@@ -54,12 +55,13 @@ app.get('/api/comunicados', async (_req, res) => {
   }
 })
 
-// Todos los comunicados — para la pantalla completa del socio
+// Todos los comunicados para socios
 app.get('/api/comunicados/todos', async (_req, res) => {
   try {
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
+      .in('destinatarios', ['todos', 'con_deuda', 'nivel_rojo', 'nivel_azul'])
       .order('fecha', { ascending: false })
     if (error) {
       if (error.code === '42P01') return res.json({ data: [] })

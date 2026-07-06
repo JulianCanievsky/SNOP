@@ -311,3 +311,29 @@ export function useNiveles() {
 
   return { niveles, cargando }
 }
+
+// ─── COMUNICADOS ENTRENADOR ───────────────────────────────────────────────────
+
+export function useComunicadosEntrenador() {
+  const [comunicados, setComunicados] = useState([])
+  const [cargando, setCargando] = useState(true)
+
+  useEffect(() => {
+    async function cargar() {
+      try {
+        const { data } = await axios.get(
+          `${API_BASE}/entrenador/comunicados`,
+          authHeaders()
+        )
+        setComunicados(data.data || [])
+      } catch (err) {
+        console.error('Error al cargar comunicados', err)
+      } finally {
+        setCargando(false)
+      }
+    }
+    cargar()
+  }, [])
+
+  return { comunicados, cargando }
+}

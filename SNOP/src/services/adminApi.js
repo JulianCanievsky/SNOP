@@ -23,6 +23,7 @@ export const getSedes         = ()       => axios.get(`${API_BASE}/admin/sedes`,
 export const getSedesPublicas = ()       => axios.get(`${API_BASE}/sedes`).then(r => r.data.data)
 
 // Niveles
+export const getNiveles       = ()       => axios.get(`${API_BASE}/admin/niveles`, auth()).then(r => r.data.data)
 export const getNivelesStats  = ()       => axios.get(`${API_BASE}/admin/niveles/stats`, auth()).then(r => r.data.data)
 
 // Comunicados

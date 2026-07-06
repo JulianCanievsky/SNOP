@@ -703,4 +703,25 @@ router.get('/perfil', async (req, res) => {
   }
 })
 
+// ─── GET /comunicados ─────────────────────────────────────────────────────────
+// Comunicados dirigidos a entrenadores o a todos
+router.get('/comunicados', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('comunicados')
+      .select('id, titulo, mensaje, fecha, destinatarios')
+      .in('destinatarios', ['entrenadores', 'todos'])
+      .order('fecha', { ascending: false })
+
+    if (error) {
+      if (error.code === '42P01') return res.json({ data: [] })
+      throw error
+    }
+    res.json({ data: data ?? [] })
+  } catch (err) {
+    console.error('GET /entrenador/comunicados', err)
+    res.status(500).json({ error: 'Error al obtener comunicados' })
+  }
+})
+
 export default router

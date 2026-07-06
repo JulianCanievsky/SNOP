@@ -222,3 +222,37 @@
   color: #94a3b8;
   font-size: 14px;
 }
+
+/* ── Comunicados entrenador ──────────────────────────────────── */
+.comunicados-lista-e {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comunicado-item-e {
+  background: white;
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.comunicado-titulo-e {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+}
+
+.comunicado-mensaje-e {
+  font-size: 13px;
+  color: #475569;
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.comunicado-fecha-e {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: capitalize;
+}

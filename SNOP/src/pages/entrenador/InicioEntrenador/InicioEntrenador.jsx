@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
-import { useInicioEntrenador } from '../../../hooks/useEntrenador'
+import { useInicioEntrenador, useComunicadosEntrenador } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
 import './InicioEntrenador.css'
 
@@ -31,6 +31,7 @@ function formatHora(fechaISO) {
 export default function InicioEntrenador() {
   const { user } = useAuth()
   const { resumen, solicitudesPendientes, cargando, recargar } = useInicioEntrenador()
+  const { comunicados } = useComunicadosEntrenador()
   const navigate = useNavigate()
 
   const hora = new Date().getHours()
@@ -148,6 +149,26 @@ export default function InicioEntrenador() {
           ))}
         </div>
       </section>
+
+      {/* COMUNICADOS */}
+      {comunicados.length > 0 && (
+        <section className="seccion-e">
+          <p className="seccion-e-titulo">Comunicados</p>
+          <div className="comunicados-lista-e">
+            {comunicados.slice(0, 3).map((c) => (
+              <div key={c.id} className="comunicado-item-e">
+                <p className="comunicado-titulo-e">{c.titulo}</p>
+                <p className="comunicado-mensaje-e">{c.mensaje}</p>
+                <span className="comunicado-fecha-e">
+                  {new Date(c.fecha).toLocaleDateString('es-AR', {
+                    day: 'numeric', month: 'long',
+                  })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <BottomNavEntrenador />
     </div>

@@ -16,13 +16,16 @@ function iniciales(nombre) {
 }
 
 function BadgeNivel({ nivel }) {
+  const nombre = nivel ?? 'Sin nivel'
   const map = {
-    Rojo:        'rojo',
-    Intermedio:  'intermedio',
-    Azul:        'azul',
+    'Rojo':         'rojo',
+    'Intermedio':   'intermedio',
+    'Azul':         'azul',
+    'Principiante': 'sin-nivel',
+    'Avanzado':     'azul',
   }
-  const cls = map[nivel] ?? 'sin-nivel'
-  return <span className={`badge-nivel ${cls}`}>{nivel ?? 'Sin nivel'}</span>
+  const cls = map[nombre] ?? 'sin-nivel'
+  return <span className={`badge-nivel ${cls}`}>{nombre}</span>
 }
 
 function BadgeCuota({ alDia }) {
@@ -111,7 +114,7 @@ export default function GestionSocios() {
                   <p className="socio-email">{s.email}</p>
                 </div>
                 <div className="socio-badges">
-                  <BadgeNivel nivel={s.nivel} />
+                  <BadgeNivel nivel={s.niveles?.nombre} />
                   <BadgeCuota alDia={s.cuota_al_dia} />
                 </div>
               </div>

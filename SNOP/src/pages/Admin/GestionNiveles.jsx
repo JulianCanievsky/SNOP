@@ -1,32 +1,40 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
-import { getSocios, editarSocio, getNivelesStats } from '../../services/adminApi'
+import { getSocios, editarSocio, getNivelesStats, getNiveles } from '../../services/adminApi'
 import './Admin.css'
 
-const NIVELES = ['Rojo', 'Intermedio', 'Azul']
-
-function NivelBadge({ nivel }) {
-  const map = { Rojo: 'rojo', Intermedio: 'intermedio', Azul: 'azul' }
-  const cls = map[nivel] ?? 'sin-nivel'
-  const short = nivel === 'Intermedio' ? 'Interm.' : (nivel ?? '—')
-  return <span className={`badge-nivel ${cls}`}>{short}</span>
+function NivelBadge({ nombre }) {
+  const map = {
+    'Rojo':         'rojo',
+    'Intermedio':   'intermedio',
+    'Azul':         'azul',
+    'Principiante': 'sin-nivel',
+    'Avanzado':     'azul',
+  }
+  const cls = map[nombre] ?? 'sin-nivel'
+  return <span className={`badge-nivel ${cls}`}>{nombre ?? '—'}</span>
 }
 
 export default function GestionNiveles() {
   const navigate = useNavigate()
   const [socios,   setSocios]   = useState([])
+  const [niveles,  setNiveles]  = useState([])
   const [stats,    setStats]    = useState({})
   const [cargando, setCargando] = useState(true)
-  // id del socio cuyo selector de nivel está abierto
-  const [editando, setEditando] = useState(null)
+  const [editando, setEditando] = useState(null) // id del socio con selector abierto
 
   const cargar = useCallback(async () => {
     setCargando(true)
     try {
-      const [s, st] = await Promise.all([getSocios({ filtro: 'activos' }), getNivelesStats()])
+      const [s, st, niv] = await Promise.all([
+        getSocios({ filtro: 'activos' }),
+        getNivelesStats(),
+        getNiveles(),
+      ])
       setSocios(s)
       setStats(st)
+      setNiveles(niv)
     } catch (err) {
       console.error(err)
     } finally {
@@ -36,18 +44,14 @@ export default function GestionNiveles() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  async function cambiarNivel(socioId, nuevoNivel) {
+  async function cambiarNivel(socioId, nuevoNivelId, nuevoNivelNombre) {
     try {
-      await editarSocio(socioId, { nivel: nuevoNivel })
-      setSocios(prev => prev.map(s => s.id === socioId ? { ...s, nivel: nuevoNivel } : s))
-      setStats(prev => {
-        const socio = socios.find(s => s.id === socioId)
-        const viejo = socio?.nivel
-        const nuevo = { ...prev }
-        if (viejo && nuevo[viejo] > 0) nuevo[viejo]--
-        if (nuevoNivel) nuevo[nuevoNivel] = (nuevo[nuevoNivel] ?? 0) + 1
-        return nuevo
-      })
+      await editarSocio(socioId, { nivel_id: nuevoNivelId || null })
+      setSocios(prev => prev.map(s =>
+        s.id === socioId
+          ? { ...s, nivel_id: nuevoNivelId, niveles: nuevoNivelId ? { id: nuevoNivelId, nombre: nuevoNivelNombre } : null }
+          : s
+      ))
     } catch (err) {
       alert(err.response?.data?.error || 'Error al cambiar nivel')
     } finally {
@@ -64,12 +68,12 @@ export default function GestionNiveles() {
       </div>
 
       <div className="admin-body">
-        {/* Stats */}
+        {/* Stats por nivel */}
         <div className="stats-grid">
-          {NIVELES.map(n => (
-            <div key={n} className="stat-card">
-              <div className="stat-num">{stats[n] ?? 0}</div>
-              <div className="stat-lbl">{n}</div>
+          {Object.entries(stats).map(([nombre, count]) => (
+            <div key={nombre} className="stat-card">
+              <div className="stat-num">{count}</div>
+              <div className="stat-lbl">{nombre}</div>
             </div>
           ))}
         </div>
@@ -86,6 +90,8 @@ export default function GestionNiveles() {
               socios.map(s => {
                 const iniciales = s.nombre?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
                 const abierto   = editando === s.id
+                const nivelNombre = s.niveles?.nombre
+
                 return (
                   <div key={s.id} className="nivel-row">
                     <div className="socio-avatar">{iniciales}</div>
@@ -94,15 +100,15 @@ export default function GestionNiveles() {
                     </div>
 
                     {abierto ? (
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {NIVELES.map(n => (
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {niveles.map(n => (
                           <button
-                            key={n}
-                            className={`nivel-btn ${n.toLowerCase()} ${s.nivel === n ? 'sel' : ''}`}
+                            key={n.id}
+                            className={`nivel-btn ${n.nombre.toLowerCase()} ${s.nivel_id === n.id ? 'sel' : ''}`}
                             style={{ minWidth: 56, padding: '6px 8px', fontSize: 11 }}
-                            onClick={() => cambiarNivel(s.id, n)}
+                            onClick={() => cambiarNivel(s.id, n.id, n.nombre)}
                           >
-                            {n === 'Intermedio' ? 'Int.' : n}
+                            {n.nombre}
                           </button>
                         ))}
                         <button
@@ -115,7 +121,7 @@ export default function GestionNiveles() {
                       </div>
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <NivelBadge nivel={s.nivel} />
+                        <NivelBadge nombre={nivelNombre} />
                         <button
                           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#6b7280' }}
                           onClick={() => setEditando(s.id)}
