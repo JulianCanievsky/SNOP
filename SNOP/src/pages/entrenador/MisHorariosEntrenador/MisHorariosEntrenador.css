@@ -17,6 +17,7 @@
   font-size: 26px;
   font-weight: 700;
   margin: 0 0 2px;
+  color: white;
 }
 
 .mis-horarios-e-header .subtitulo {
@@ -51,7 +52,7 @@
 
 .dia-horarios-fila {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   padding: 12px 16px;
   border-bottom: 1px solid #f1f5f9;
@@ -69,8 +70,8 @@
 
 .slots-fila {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 8px;
   flex: 1;
 }
 
@@ -87,6 +88,51 @@
 .slot-chip.libre    { background: #dcfce7; color: #16a34a; }
 .slot-chip.ocupado  { background: #fee2e2; color: #dc2626; }
 .slot-chip.pendiente { background: #fef3c7; color: #d97706; }
+
+/* ── Fila de slot con sede y botón cancelar ──────────────────── */
+.slot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.slot-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.slot-sede {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-cancelar-slot {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.btn-cancelar-slot:hover { background: #fecaca; }
+.btn-cancelar-slot:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Agregar disponibilidad ──────────────────────────────────── */
 .agregar-disp-card {

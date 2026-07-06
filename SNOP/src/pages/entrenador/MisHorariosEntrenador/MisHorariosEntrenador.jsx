@@ -46,12 +46,13 @@ function agruparPorDia(horarios) {
 }
 
 export default function MisHorariosEntrenador() {
-  const { horarios, sedes, cargando, guardando, agregarHorario } = useMisHorarios()
+  const { horarios, sedes, cargando, guardando, agregarHorario, cancelarHorario } = useMisHorarios()
   const [dia, setDia] = useState('Lunes')
   const [hora, setHora] = useState('15:00')
   const [sedeId, setSedeId] = useState('')
   const [exito, setExito] = useState(false)
   const [errMsg, setErrMsg] = useState('')
+  const [cancelando, setCancelando] = useState(null)
 
   const horariosPorDia = agruparPorDia(horarios)
 
@@ -64,6 +65,18 @@ export default function MisHorariosEntrenador() {
       setTimeout(() => setExito(false), 3000)
     } catch (err) {
       setErrMsg(err.response?.data?.error || 'Error al guardar')
+    }
+  }
+
+  const handleCancelar = async (turnoId) => {
+    if (!window.confirm('¿Cancelar este horario?')) return
+    try {
+      setCancelando(turnoId)
+      await cancelarHorario(turnoId)
+    } catch (err) {
+      alert(err.response?.data?.error || 'Error al cancelar')
+    } finally {
+      setCancelando(null)
     }
   }
 
@@ -95,11 +108,26 @@ export default function MisHorariosEntrenador() {
                         ? 'Libre'
                         : estado === 'ocupado'
                           ? 'Ocupado'
-                          : 'Entrenamiento'
+                          : 'Pendiente'
                       return (
-                        <span key={s.id} className={`slot-chip ${estado}`}>
-                          {formatHora(s.fecha_inicio)} · {etiqueta}
-                        </span>
+                        <div key={s.id} className="slot-row">
+                          <div className="slot-row-info">
+                            <span className={`slot-chip ${estado}`}>
+                              {formatHora(s.fecha_inicio)} · {etiqueta}
+                            </span>
+                            {s.sedes?.nombre && (
+                              <span className="slot-sede">📍 {s.sedes.nombre}</span>
+                            )}
+                          </div>
+                          <button
+                            className="btn-cancelar-slot"
+                            disabled={cancelando === s.id}
+                            onClick={() => handleCancelar(s.id)}
+                            title="Cancelar horario"
+                          >
+                            {cancelando === s.id ? '...' : '✕'}
+                          </button>
+                        </div>
                       )
                     })}
                   </div>

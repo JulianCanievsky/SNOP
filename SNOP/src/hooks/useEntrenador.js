@@ -205,7 +205,15 @@ export function useMisHorarios() {
     }
   }
 
-  return { horarios, sedes, cargando, error, guardando, recargar: cargar, agregarHorario }
+  const cancelarHorario = async (turnoId) => {
+    await axios.delete(
+      `${API_BASE}/entrenador/mis-horarios/${turnoId}`,
+      authHeaders()
+    )
+    await cargar()
+  }
+
+  return { horarios, sedes, cargando, error, guardando, recargar: cargar, agregarHorario, cancelarHorario }
 }
 
 // ─── SOLICITUDES ──────────────────────────────────────────────────────────────
@@ -276,4 +284,30 @@ export function usePerfilEntrenador() {
   }, [cargar])
 
   return { perfil, cargando, error, recargar: cargar }
+}
+
+// ─── NIVELES ──────────────────────────────────────────────────────────────────
+
+export function useNiveles() {
+  const [niveles, setNiveles] = useState([])
+  const [cargando, setCargando] = useState(true)
+
+  useEffect(() => {
+    async function cargar() {
+      try {
+        const { data } = await axios.get(
+          `${API_BASE}/entrenador/niveles`,
+          authHeaders()
+        )
+        setNiveles(data.data || [])
+      } catch (err) {
+        console.error('Error al cargar niveles', err)
+      } finally {
+        setCargando(false)
+      }
+    }
+    cargar()
+  }, [])
+
+  return { niveles, cargando }
 }

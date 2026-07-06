@@ -85,7 +85,7 @@ export default function InicioEntrenador() {
             <span className="contador-num naranja">
               {cargando ? '—' : resumen?.turnos_pendientes ?? 0}
             </span>
-            <span className="contador-label">Turnos pendientes</span>
+            <span className="contador-label">Clases a confirmar</span>
           </div>
         </div>
       </header>

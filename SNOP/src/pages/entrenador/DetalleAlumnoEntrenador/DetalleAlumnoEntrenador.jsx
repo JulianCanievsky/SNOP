@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useDetalleAlumno } from '../../../hooks/useEntrenador'
+import { useDetalleAlumno, useNiveles } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
 import './DetalleAlumnoEntrenador.css'
 
@@ -30,25 +30,8 @@ export default function DetalleAlumnoEntrenador() {
   const { alumnoId } = useParams()
   const navigate = useNavigate()
   const { alumno, cargando, cambiarNivel } = useDetalleAlumno(alumnoId)
+  const { niveles } = useNiveles()
   const [guardando, setGuardando] = useState(false)
-  const [niveles, setNiveles] = useState([])
-
-  // Cargar lista de niveles desde Supabase directamente
-  useEffect(() => {
-    async function fetchNiveles() {
-      try {
-        const { supabase } = await import('../../../lib/supabase')
-        const { data } = await supabase
-          .from('niveles')
-          .select('id, nombre, orden')
-          .order('orden')
-        setNiveles(data || [])
-      } catch (err) {
-        console.error(err)
-      }
-    }
-    fetchNiveles()
-  }, [])
 
   const handleCambiarNivel = async (nivelId) => {
     try {
@@ -140,31 +123,22 @@ export default function DetalleAlumnoEntrenador() {
           <p className="card-seccion-titulo">Cambiar nivel</p>
           <p className="nivel-descripcion">El nivel es asignado por el entrenador</p>
           <div className="nivel-opciones">
-            {niveles.length > 0
-              ? niveles.map((n) => {
-                  const sc = selClass(nivelActual, n.nombre)
-                  return (
-                    <button
-                      key={n.id}
-                      className={`nivel-opcion-btn ${sc}`}
-                      disabled={guardando}
-                      onClick={() => handleCambiarNivel(n.id)}
-                    >
-                      {n.nombre}
-                      {alumno.nivel_id === n.id && ' ✓'}
-                    </button>
-                  )
-                })
-              : /* Fallback si no cargaron niveles */
-                ['Rojo', 'Intermedio', 'Azul'].map((nombre) => (
+            {niveles
+              .filter((n) => ['azul', 'intermedio', 'rojo'].includes(n.nombre.toLowerCase()))
+              .map((n) => {
+                const sc = selClass(nivelActual, n.nombre)
+                return (
                   <button
-                    key={nombre}
-                    className={`nivel-opcion-btn ${selClass(nivelActual, nombre)}`}
+                    key={n.id}
+                    className={`nivel-opcion-btn ${sc}`}
                     disabled={guardando}
+                    onClick={() => handleCambiarNivel(n.id)}
                   >
-                    {nombre}
+                    {n.nombre}
+                    {alumno.nivel_id === n.id && ' ✓'}
                   </button>
-                ))}
+                )
+              })}
           </div>
         </div>
       </div>

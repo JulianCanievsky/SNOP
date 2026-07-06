@@ -404,12 +404,26 @@ router.post('/mis-horarios', async (req, res) => {
     fechaBase.setHours(hh, mm, 0, 0)
     const fechaFin = new Date(fechaBase.getTime() + 90 * 60 * 1000)
 
+    // Buscar una mesa disponible en la sede (mesa_id es NOT NULL en la tabla)
+    const { data: mesas } = await supabase
+      .from('mesas')
+      .select('id')
+      .eq('sede_id', Number(sede_id))
+      .eq('activa', true)
+      .limit(1)
+
+    const mesaId = mesas?.[0]?.id ?? null
+    if (!mesaId) {
+      return res.status(400).json({ error: 'No hay mesas disponibles en esta sede' })
+    }
+
     const { data, error } = await supabase
       .from('turnos')
       .insert({
         user_id: entrenadorId,
         tipo_turno_id: 2,
-        sede_id,
+        sede_id: Number(sede_id),
+        mesa_id: mesaId,
         fecha_inicio: fechaBase.toISOString(),
         fecha_fin: fechaFin.toISOString(),
         duracion_min: 90,
@@ -419,12 +433,48 @@ router.post('/mis-horarios', async (req, res) => {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error POST /mis-horarios:', JSON.stringify(error))
+      return res.status(500).json({ error: error.message || 'Error al agregar horario' })
+    }
 
     res.status(201).json({ data })
   } catch (err) {
-    console.error('POST /mis-horarios', err)
-    res.status(500).json({ error: 'Error al agregar horario' })
+    console.error('POST /mis-horarios catch:', err)
+    res.status(500).json({ error: err.message || 'Error al agregar horario' })
+  }
+})
+
+// ─── DELETE /mis-horarios/:turnoId ───────────────────────────────────────────
+router.delete('/mis-horarios/:turnoId', async (req, res) => {
+  try {
+    const entrenadorId = req.userId
+    const { turnoId } = req.params
+
+    // Verificar que el turno le pertenece al entrenador y es tipo_turno_id=2
+    const { data: turno, error: errVerif } = await supabase
+      .from('turnos')
+      .select('id, user_id, tipo_turno_id')
+      .eq('id', turnoId)
+      .eq('user_id', entrenadorId)
+      .eq('tipo_turno_id', 2)
+      .single()
+
+    if (errVerif || !turno) {
+      return res.status(403).json({ error: 'Turno no encontrado o sin permiso' })
+    }
+
+    // Eliminar inscripciones asociadas primero
+    await supabase.from('socio_turno').delete().eq('turno_id', turnoId)
+
+    // Eliminar el turno
+    const { error } = await supabase.from('turnos').delete().eq('id', turnoId)
+    if (error) throw error
+
+    res.json({ message: 'Horario cancelado' })
+  } catch (err) {
+    console.error('DELETE /mis-horarios/:id', err)
+    res.status(500).json({ error: 'Error al cancelar horario' })
   }
 })
 
@@ -575,6 +625,22 @@ router.patch('/solicitudes/:solicitudId/rechazar', async (req, res) => {
   } catch (err) {
     console.error('PATCH /solicitudes/:id/rechazar', err)
     res.status(500).json({ error: 'Error al rechazar solicitud' })
+  }
+})
+
+// ─── GET /niveles ─────────────────────────────────────────────────────────────
+router.get('/niveles', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('niveles')
+      .select('id, nombre, orden')
+      .order('orden', { ascending: true })
+
+    if (error) throw error
+    res.json({ data: data || [] })
+  } catch (err) {
+    console.error('GET /niveles', err)
+    res.status(500).json({ error: 'Error al obtener niveles' })
   }
 })
 
