@@ -110,7 +110,10 @@ export default function Login() {
             />
           </div>
 
-          <span className="link-forgot">¿Olvidaste tu contraseña?</span>
+          <span
+            className="link-forgot"
+            onClick={() => navigate('/forgot-password')}
+          >¿Olvidaste tu contraseña?</span>
 
           <button type="submit" className="btn-login" disabled={loading}>
             {loading && <span className="spinner" />}

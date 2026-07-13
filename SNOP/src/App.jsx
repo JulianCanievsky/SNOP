@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Splash             from './pages/Splash/Splash'
 import Login              from './pages/login/login'
 import Registro           from './pages/registro/registro'
+import ForgotPassword     from './pages/ForgotPassword/ForgotPassword'
+import ResetPassword      from './pages/ResetPassword/ResetPassword'
 import Inicio             from './pages/Inicio/Inicio'
 import MisTurnos          from './pages/MisTurnos/MisTurnos'
 import JuegoLibre         from './pages/JuegoLibre/JuegoLibre'
@@ -67,8 +69,10 @@ function AppRoutes() {
       />
 
       {/* Auth */}
-      <Route path="/login"    element={<Login />} />
-      <Route path="/registro" element={<Registro />} />
+      <Route path="/login"            element={<Login />} />
+      <Route path="/registro"         element={<Registro />} />
+      <Route path="/forgot-password"  element={<ForgotPassword />} />
+      <Route path="/reset-password"   element={<ResetPassword />} />
 
       {/* Socios (tipo_usuario_id = 1) */}
       <Route path="/inicio"             element={<RutaProtegida rolesPermitidos={[1]}><Inicio /></RutaProtegida>} />

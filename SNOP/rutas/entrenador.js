@@ -380,11 +380,15 @@ router.get('/sedes', async (req, res) => {
 router.post('/mis-horarios', async (req, res) => {
   try {
     const entrenadorId = req.userId
-    const { dia, hora, sede_id } = req.body
+    const { dia, hora, sede_id, duracion_min } = req.body
 
     if (!dia || !hora || !sede_id) {
       return res.status(400).json({ error: 'dia, hora y sede_id son requeridos' })
     }
+
+    // Validar duración — default 60 min si no se envía
+    const durMin = Number(duracion_min)
+    const duracionFinal = [30, 45, 60, 90, 120].includes(durMin) ? durMin : 60
 
     const DIAS = {
       lunes: 1, martes: 2, miercoles: 3, miércoles: 3,
@@ -402,7 +406,7 @@ router.post('/mis-horarios', async (req, res) => {
 
     const [hh, mm] = hora.split(':').map(Number)
     fechaBase.setHours(hh, mm, 0, 0)
-    const fechaFin = new Date(fechaBase.getTime() + 90 * 60 * 1000)
+    const fechaFin = new Date(fechaBase.getTime() + duracionFinal * 60 * 1000)
 
     // Buscar una mesa disponible en la sede (mesa_id es NOT NULL en la tabla)
     const { data: mesas } = await supabase
@@ -426,7 +430,7 @@ router.post('/mis-horarios', async (req, res) => {
         mesa_id: mesaId,
         fecha_inicio: fechaBase.toISOString(),
         fecha_fin: fechaFin.toISOString(),
-        duracion_min: 90,
+        duracion_min: duracionFinal,
         estado: true,
         capacidad_maxima: 2,
       })

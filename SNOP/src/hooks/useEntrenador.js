@@ -191,12 +191,12 @@ export function useMisHorarios() {
     cargar()
   }, [cargar])
 
-  const agregarHorario = async ({ dia, hora, sede_id }) => {
+  const agregarHorario = async ({ dia, hora, sede_id, duracion_min }) => {
     try {
       setGuardando(true)
       await axios.post(
         `${API_BASE}/entrenador/mis-horarios`,
-        { dia, hora, sede_id },
+        { dia, hora, sede_id, duracion_min },
         authHeaders()
       )
       await cargar()

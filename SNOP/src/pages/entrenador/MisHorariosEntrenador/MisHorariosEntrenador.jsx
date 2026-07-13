@@ -8,6 +8,13 @@ const HORAS_DISPONIBLES = [
   '08:00','09:00','10:00','11:00','12:00','13:00',
   '14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00',
 ]
+const DURACIONES = [
+  { label: '30 min', value: 30 },
+  { label: '45 min', value: 45 },
+  { label: '1 hora', value: 60 },
+  { label: '1h 30min', value: 90 },
+  { label: '2 horas', value: 120 },
+]
 
 function getDiaJS(nombreDia) {
   // devuelve el índice 0=domingo, 1=lunes…
@@ -47,11 +54,12 @@ function agruparPorDia(horarios) {
 
 export default function MisHorariosEntrenador() {
   const { horarios, sedes, cargando, guardando, agregarHorario, cancelarHorario } = useMisHorarios()
-  const [dia, setDia] = useState('Lunes')
-  const [hora, setHora] = useState('15:00')
-  const [sedeId, setSedeId] = useState('')
-  const [exito, setExito] = useState(false)
-  const [errMsg, setErrMsg] = useState('')
+  const [dia,       setDia]       = useState('Lunes')
+  const [hora,      setHora]      = useState('15:00')
+  const [sedeId,    setSedeId]    = useState('')
+  const [duracion,  setDuracion]  = useState(60)
+  const [exito,     setExito]     = useState(false)
+  const [errMsg,    setErrMsg]    = useState('')
   const [cancelando, setCancelando] = useState(null)
 
   const horariosPorDia = agruparPorDia(horarios)
@@ -60,7 +68,7 @@ export default function MisHorariosEntrenador() {
     if (!sedeId) { setErrMsg('Seleccioná una sede'); return }
     setErrMsg('')
     try {
-      await agregarHorario({ dia, hora, sede_id: sedeId })
+      await agregarHorario({ dia, hora, sede_id: sedeId, duracion_min: duracion })
       setExito(true)
       setTimeout(() => setExito(false), 3000)
     } catch (err) {
@@ -114,6 +122,7 @@ export default function MisHorariosEntrenador() {
                           <div className="slot-row-info">
                             <span className={`slot-chip ${estado}`}>
                               {formatHora(s.fecha_inicio)} · {etiqueta}
+                              {s.duracion_min && <span className="slot-duracion"> · {s.duracion_min}min</span>}
                             </span>
                             {s.sedes?.nombre && (
                               <span className="slot-sede">📍 {s.sedes.nombre}</span>
@@ -166,6 +175,19 @@ export default function MisHorariosEntrenador() {
             >
               {HORAS_DISPONIBLES.map((h) => (
                 <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-field">
+            <label className="form-label">Duración</label>
+            <select
+              className="form-select"
+              value={duracion}
+              onChange={(e) => setDuracion(Number(e.target.value))}
+            >
+              {DURACIONES.map((d) => (
+                <option key={d.value} value={d.value}>{d.label}</option>
               ))}
             </select>
           </div>

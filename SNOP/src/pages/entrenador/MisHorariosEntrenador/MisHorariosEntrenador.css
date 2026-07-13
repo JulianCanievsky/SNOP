@@ -89,6 +89,11 @@
 .slot-chip.ocupado  { background: #fee2e2; color: #dc2626; }
 .slot-chip.pendiente { background: #fef3c7; color: #d97706; }
 
+.slot-duracion {
+  font-weight: 400;
+  opacity: 0.75;
+}
+
 /* ── Fila de slot con sede y botón cancelar ──────────────────── */
 .slot-row {
   display: flex;
