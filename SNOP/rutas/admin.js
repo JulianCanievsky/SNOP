@@ -372,12 +372,13 @@ router.get('/config', async (req, res) => {
 // ─────────────────────────────────────────────
 router.post('/juego-libre', async (req, res) => {
   try {
-    const { sede_id, fecha, hora_inicio, hora_fin, capacidad_maxima, niveles_habilitados, cantidad_mesas } = req.body
+    const { sede_id, fecha, hora_inicio, hora_fin, capacidad_maxima } = req.body
 
     if (!sede_id || !fecha || !hora_inicio || !hora_fin) {
       return res.status(400).json({ error: 'Sede, fecha, hora inicio y hora fin son requeridos' })
     }
 
+    // Construir timestamps — hora_inicio/hora_fin llegan como "HH:MM"
     const fecha_inicio = new Date(`${fecha}T${hora_inicio}:00`).toISOString()
     const fecha_fin    = new Date(`${fecha}T${hora_fin}:00`).toISOString()
 
@@ -388,19 +389,20 @@ router.post('/juego-libre', async (req, res) => {
         fecha_inicio,
         fecha_fin,
         capacidad_maxima: capacidad_maxima || 12,
-        niveles_habilitados: niveles_habilitados ?? ['Rojo', 'Intermedio', 'Azul'],
-        cantidad_mesas: cantidad_mesas || 3,
         activo: true,
-        creado_por: req.userId,
       })
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error al crear juego libre:', JSON.stringify(error, null, 2))
+      throw error
+    }
+
     res.status(201).json({ data, mensaje: 'Espacio de juego creado' })
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Error al crear juego libre' })
+    console.error('POST /juego-libre catch:', err)
+    res.status(500).json({ error: err.message || 'Error al crear juego libre' })
   }
 })
 

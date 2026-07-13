@@ -121,3 +121,145 @@
 }
 
 .btn-logout-e:hover { background: #f8fafc; }
+
+/* ── Rating card ─────────────────────────────────────────────── */
+.perfil-e-rating-card {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.rating-resumen {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 12px 16px 16px;
+}
+
+.rating-numero-grande {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 72px;
+}
+
+.rating-valor {
+  font-size: 42px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.rating-estrellas-vis {
+  display: flex;
+  gap: 1px;
+}
+
+.re-estrella {
+  font-size: 14px;
+  color: #d1d5db;
+}
+
+.re-estrella.llena {
+  color: #f59e0b;
+}
+
+.rating-total {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* Barras de distribución */
+.rating-dist {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rating-dist-fila {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rating-dist-label {
+  font-size: 11px;
+  color: #94a3b8;
+  width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.rating-dist-barra-bg {
+  flex: 1;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rating-dist-barra-fill {
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.rating-dist-count {
+  font-size: 11px;
+  color: #94a3b8;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+/* Reseñas recientes */
+.rating-recientes {
+  border-top: 1px solid #f1f5f9;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rating-recientes-titulo {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.rating-resena {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.resena-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resena-estrellas {
+  font-size: 13px;
+  color: #f59e0b;
+  letter-spacing: -1px;
+}
+
+.resena-socio {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.resena-comentario {
+  font-size: 13px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.4;
+}

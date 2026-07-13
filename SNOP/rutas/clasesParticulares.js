@@ -49,14 +49,21 @@ router.get('/entrenadores', async (req, res) => {
             tipo_turno_id
           `)
           .eq('user_id', entrenador.id)
-          .gte('fecha_inicio', desdeHoy)       // solo turnos de hoy en adelante
+          .gte('fecha_inicio', desdeHoy)
           .order('fecha_inicio', { ascending: true })
 
         if (errorTurnos) console.log(errorTurnos)
 
+        // Contar calificaciones reales
+        const { count: totalRatings } = await supabase
+          .from('ratings_entrenador')
+          .select('id', { count: 'exact', head: true })
+          .eq('entrenador_id', entrenador.id)
+
         return {
           ...entrenador,
-          tipo_usuario: entrenador.tipo_usuario?.nombre,
+          tipo_usuario:  entrenador.tipo_usuario?.nombre,
+          total_ratings: totalRatings ?? 0,
           turnos_disponibles: (turnos || []).map((t) => ({
             id: t.id,
             fecha_inicio: t.fecha_inicio,
@@ -126,10 +133,16 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
       .gte('fecha_inicio', hoyDet.toISOString())
       .order('fecha_inicio', { ascending: true })
 
+    const { count: totalRatings } = await supabase
+      .from('ratings_entrenador')
+      .select('id', { count: 'exact', head: true })
+      .eq('entrenador_id', entrenadorId)
+
     res.json({
       data: {
         ...entrenador,
-        tipo_usuario: entrenador.tipo_usuario?.nombre,
+        tipo_usuario:  entrenador.tipo_usuario?.nombre,
+        total_ratings: totalRatings ?? 0,
         turnos_disponibles: (turnos || []).map((t) => ({
           id: t.id,
           fecha_inicio: t.fecha_inicio,

@@ -3,6 +3,8 @@ import './MisTurnos.css'
 import TurnoCard from '../../components/TurnoCard/TurnoCard'
 import { getAgenda, cancelarTurno, cancelarJuegoLibre } from '../../services/turnosApi'
 import BottomNav from '../../components/BottomNav/BottomNav'
+import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
+import { useRating } from '../../hooks/useRating'
 
 // Convierte una fecha ISO (puede ser UTC) a la fecha local del browser en formato YYYY-MM-DD
 function toLocalDateStr(isoString) {
@@ -25,6 +27,8 @@ export default function MisTurnos() {
   const [agenda,          setAgenda]          = useState([])
   const [loading,         setLoading]         = useState(true)
   const [diaSeleccionado, setDiaSeleccionado] = useState(0)
+
+  const { turnoActual, enviando, cargarPendientes, enviarRating, omitirRating } = useRating()
 
   useEffect(() => {
     async function cargar() {
@@ -55,6 +59,8 @@ export default function MisTurnos() {
       }
     }
     cargar()
+    // Chequear si hay turnos para calificar cada vez que se abre la agenda
+    cargarPendientes()
   }, [])
 
   // Próximos 7 días
@@ -133,6 +139,16 @@ export default function MisTurnos() {
       </main>
 
       <BottomNav />
+
+      {/* Rating post-turno — aparece como bottom sheet si hay algo para calificar */}
+      {turnoActual && (
+        <RatingEntrenador
+          turno={turnoActual}
+          onEnviar={enviarRating}
+          onOmitir={omitirRating}
+          enviando={enviando}
+        />
+      )}
     </div>
   )
 }

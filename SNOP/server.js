@@ -16,6 +16,7 @@ import entrenadorRouter         from './rutas/entrenador.js'
 import authRouter               from './rutas/auth.js'
 import adminRouter              from './rutas/admin.js'
 import agendaRouter             from './rutas/agenda.js'
+import ratingsRouter            from './rutas/ratings.js'
 
 dotenv.config()
 
@@ -78,6 +79,7 @@ app.use('/juego-libre',             juegoLibreRoutes)
 app.use('/api/juego-libre',         juegoLibreRoutes)
 app.use('/api/turnos',              turnosRoutes)
 app.use('/api/agenda',              agendaRouter)
+app.use('/api/ratings',             ratingsRouter)
 app.use('/api/clases-particulares', clasesParticularesRoutes)
 app.use('/api/perfil',              perfilRouter)
 app.use('/api/entrenador',          entrenadorRouter)

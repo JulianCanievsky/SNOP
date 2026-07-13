@@ -23,6 +23,7 @@ const DetalleJuegoLibre = ({
   onVolver,
   onConfirmar,
   onCancelar,
+  procesando = false,
 }) => {
   const duracion = calcularDuracion(evento.fecha_inicio, evento.fecha_fin)
   const horario = formatearHora(evento.fecha_inicio, evento.fecha_fin)
@@ -100,11 +101,19 @@ const DetalleJuegoLibre = ({
 
         <div className="detalle-acciones">
           {evento.ya_inscripto
-            ? <button className="btn-cancelar-inscripcion" onClick={() => onCancelar(evento.id)}>
-                Cancelar inscripción
+            ? <button
+                className="btn-cancelar-inscripcion"
+                onClick={() => onCancelar(evento.id)}
+                disabled={procesando}
+              >
+                {procesando ? 'Cancelando...' : 'Cancelar inscripción'}
               </button>
-            : <button className="btn-confirmar" onClick={onConfirmar}>
-                Confirmar inscripción
+            : <button
+                className="btn-confirmar"
+                onClick={onConfirmar}
+                disabled={procesando}
+              >
+                {procesando ? 'Procesando...' : 'Confirmar inscripción'}
               </button>
           }
         </div>

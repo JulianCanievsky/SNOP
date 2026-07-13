@@ -99,6 +99,7 @@ const JuegoLibre = () => {
   const [filtroSede, setFiltroSede] = useState('')
   const [filtroFecha, setFiltroFecha] = useState('')
   const [sedes, setSedes] = useState([])
+  const [procesando, setProcesando] = useState(false)
 
   useEffect(() => {
     getSedesPublicas().then(setSedes).catch(() => setSedes([]))
@@ -107,22 +108,30 @@ const JuegoLibre = () => {
   const handleAnotarme = (evento) => setEventoSeleccionado(evento)
 
   const handleConfirmar = async () => {
+    if (procesando) return
+    setProcesando(true)
     try {
       await inscribirse(eventoSeleccionado.id)
       setEventoSeleccionado(null)
       await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha })
     } catch (err) {
       alert(err.response?.data?.error || 'Error al inscribirse')
+    } finally {
+      setProcesando(false)
     }
   }
 
   const handleCancelarDesdeDetalle = async (eventoId) => {
+    if (procesando) return
+    setProcesando(true)
     try {
       await cancelarInscripcion(eventoId)
       setEventoSeleccionado(null)
       await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha })
     } catch (err) {
       alert(err.response?.data?.error || 'Error al cancelar')
+    } finally {
+      setProcesando(false)
     }
   }
 
@@ -139,6 +148,7 @@ const JuegoLibre = () => {
         onVolver={() => setEventoSeleccionado(null)}
         onConfirmar={handleConfirmar}
         onCancelar={handleCancelarDesdeDetalle}
+        procesando={procesando}
       />
     )
   }

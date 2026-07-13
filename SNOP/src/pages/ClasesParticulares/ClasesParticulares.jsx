@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useClasesParticulares } from '../../hooks/useClasesParticulares'
 import ConfirmarClase from '../../components/TurnoCard/ConfirmarClase'
 import BottomNav from '../../components/BottomNav/BottomNav'
+import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
+import { useRating } from '../../hooks/useRating'
+import { useEffect } from 'react'
 import './ClasesParticulares.css'
 
 const formatearDiaHora = (fechaISO) => {
@@ -24,9 +27,14 @@ const AvatarEntrenador = ({ nombre, foto_url, tamanio = 'md' }) => {
   )
 }
 
-const Estrellas = ({ rating }) => {
+const Estrellas = ({ rating, total }) => {
   const valor = parseFloat(rating) || 0
-  return <span className="estrellas">⭐ {valor.toFixed(1)}</span>
+  return (
+    <span className="estrellas">
+      ⭐ {valor > 0 ? valor.toFixed(1) : 'Sin rating'}
+      {total > 0 && <span className="estrellas-total"> ({total})</span>}
+    </span>
+  )
 }
 
 const TarjetaEntrenador = ({ entrenador, solicitudes, onReservar }) => {
@@ -48,7 +56,7 @@ const TarjetaEntrenador = ({ entrenador, solicitudes, onReservar }) => {
         <div className="entrenador-datos">
           <p className="entrenador-nombre">{entrenador.nombre}</p>
           <div className="entrenador-meta">
-            <Estrellas rating={entrenador.rating} />
+            <Estrellas rating={entrenador.rating} total={entrenador.total_ratings} />
             <span className="entrenador-tipo">· {entrenador.tipo_usuario || 'Entrenador'}</span>
           </div>
         </div>
@@ -95,10 +103,17 @@ const ClasesParticulares = () => {
     liberarSolicitud,
   } = useClasesParticulares()
 
+  const { turnoActual, enviando: enviandoRating, cargarPendientes, enviarRating, omitirRating } = useRating()
+
   const [reserva,     setReserva]     = useState(null)
   const [enviando,    setEnviando]    = useState(false)
   const [exito,       setExito]       = useState(false)
   const [fechaFiltro, setFechaFiltro] = useState('')
+
+  // Chequear pendientes de calificación al abrir la pantalla
+  useEffect(() => {
+    cargarPendientes()
+  }, [cargarPendientes])
 
   const handleReservar = (entrenador, turno) => {
     setReserva({ entrenador, turno })
@@ -255,6 +270,11 @@ const ClasesParticulares = () => {
                       await liberarSolicitud(s.id)
                       await cargarEntrenadores()
                       await obtenerSolicitudes()
+                      // Si la clase ya terminó, recargar pendientes de rating
+                      const fechaFin = s.turnos?.fecha_fin
+                      if (fechaFin && new Date(fechaFin) <= new Date()) {
+                        await cargarPendientes()
+                      }
                     }}
                   >
                     Liberar turno
@@ -266,6 +286,16 @@ const ClasesParticulares = () => {
         )}
       </div>
       <BottomNav />
+
+      {/* Rating post-clase — bottom sheet si hay clases particulares sin calificar */}
+      {turnoActual && (
+        <RatingEntrenador
+          turno={turnoActual}
+          onEnviar={enviarRating}
+          onOmitir={omitirRating}
+          enviando={enviandoRating}
+        />
+      )}
     </div>
   )
 }

@@ -103,6 +103,7 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
 
     if (errorEvento || !evento) return res.status(404).json({ error: 'Evento no encontrado' })
 
+    // Verificar ya inscripto
     const { data: yaInscripto } = await supabase
       .from('inscripciones_juego_libre')
       .select('id')
@@ -113,6 +114,7 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
 
     if (yaInscripto) return res.status(400).json({ error: 'Ya estás inscripto' })
 
+    // Verificar capacidad con count actualizado
     const { count } = await supabase
       .from('inscripciones_juego_libre')
       .select('*', { count: 'exact', head: true })
@@ -121,11 +123,36 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
 
     if (count >= evento.capacidad_maxima) return res.status(400).json({ error: 'El evento está completo' })
 
+    // Insert con manejo de constraint único para evitar duplicados por race condition
     const { error: errorInsc } = await supabase
       .from('inscripciones_juego_libre')
       .insert({ evento_id: eventoId, socio_id: socioId, estado: 'activo' })
 
-    if (errorInsc) throw errorInsc
+    if (errorInsc) {
+      // Código 23505 = unique_violation en PostgreSQL (ya existe el registro)
+      if (errorInsc.code === '23505') {
+        return res.status(400).json({ error: 'Ya estás inscripto' })
+      }
+      throw errorInsc
+    }
+
+    // Verificar que no se haya pasado del límite (control post-insert)
+    const { count: countFinal } = await supabase
+      .from('inscripciones_juego_libre')
+      .select('*', { count: 'exact', head: true })
+      .eq('evento_id', eventoId)
+      .eq('estado', 'activo')
+
+    if (countFinal > evento.capacidad_maxima) {
+      // Revertir — se pasó del límite por race condition
+      await supabase
+        .from('inscripciones_juego_libre')
+        .update({ estado: 'cancelado' })
+        .eq('evento_id', eventoId)
+        .eq('socio_id', socioId)
+        .eq('estado', 'activo')
+      return res.status(400).json({ error: 'El evento está completo' })
+    }
 
     res.json({ mensaje: 'Inscripción confirmada' })
 
