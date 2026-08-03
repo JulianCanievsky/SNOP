@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
+import api from '../../lib/apiClient.js'
 import './ForgotPassword.css'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 export default function ForgotPassword() {
   const [email,   setEmail]   = useState('')
@@ -18,9 +16,7 @@ export default function ForgotPassword() {
 
     setLoading(true)
     try {
-      await axios.post(`${API_BASE}/auth/forgot-password`, {
-        email: email.trim().toLowerCase(),
-      })
+      await api.post('/auth/forgot-password', { email: email.trim().toLowerCase() })
       setEnviado(true)
     } catch (err) {
       setError(err.response?.data?.error || 'Error al procesar la solicitud')

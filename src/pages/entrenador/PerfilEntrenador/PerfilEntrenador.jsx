@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import { useAuth } from '../../../context/AuthContext'
 import { usePerfilEntrenador } from '../../../hooks/useEntrenador'
+import api from '../../../lib/apiClient.js'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
 import './PerfilEntrenador.css'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-const authHeaders = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem('snop_token')}` },
-})
 
 function iniciales(nombre = '') {
   return nombre.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -39,7 +34,7 @@ export default function PerfilEntrenador() {
   // Cargar distribución de ratings
   useEffect(() => {
     if (!datos?.id) return
-    axios.get(`${API_BASE}/ratings/entrenador/${datos.id}`, authHeaders())
+    api.get(`/ratings/entrenador/${datos.id}`)
       .then(r => setRatingDetalle(r.data.data))
       .catch(() => {}) // silencioso si falla
   }, [datos?.id])

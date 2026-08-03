@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../../lib/apiClient.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import './Comunicados.css'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 // Clave en localStorage para guardar el ID del último comunicado leído
 const STORAGE_KEY = 'snop_comunicado_leido'
@@ -39,7 +37,7 @@ export default function Comunicados() {
   useEffect(() => {
     async function fetchComunicados() {
       try {
-        const { data } = await axios.get(`${API_BASE}/comunicados/todos`)
+        const { data } = await api.get('/comunicados/todos')
         const lista = data?.data ?? []
         setComunicados(lista)
         // Al abrir la pantalla marcamos todo como leído

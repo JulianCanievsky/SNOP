@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-
-const obtenerToken = () => localStorage.getItem('snop_token')
+import api from '../../lib/apiClient.js'
 
 export const useJuegoLibre = () => {
   const [eventos, setEventos] = useState([])
@@ -18,9 +14,7 @@ export const useJuegoLibre = () => {
       if (filtros.sede_id) params.append('sede_id', filtros.sede_id)
       if (filtros.fecha) params.append('fecha', filtros.fecha)
 
-      const { data } = await axios.get(`${API_BASE}/juego-libre?${params}`, {
-        headers: { Authorization: `Bearer ${obtenerToken()}` },
-      })
+      const { data } = await api.get(`/juego-libre?${params}`)
       setEventos(data)
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar los eventos')
@@ -34,19 +28,12 @@ export const useJuegoLibre = () => {
   }, [cargarEventos])
 
   const inscribirse = async (eventoId) => {
-    const { data } = await axios.post(
-      `${API_BASE}/juego-libre/${eventoId}/inscribir`,
-      {},
-      { headers: { Authorization: `Bearer ${obtenerToken()}` } }
-    )
+    const { data } = await api.post(`/juego-libre/${eventoId}/inscribir`, {})
     return data
   }
 
   const cancelarInscripcion = async (eventoId) => {
-    const { data } = await axios.delete(
-      `${API_BASE}/juego-libre/${eventoId}/cancelar`,
-      { headers: { Authorization: `Bearer ${obtenerToken()}` } }
-    )
+    const { data } = await api.delete(`/juego-libre/${eventoId}/cancelar`)
     return data
   }
 

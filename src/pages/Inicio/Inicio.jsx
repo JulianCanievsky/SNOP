@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import axios from 'axios'
+import api from '../../lib/apiClient.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import './Inicio.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-const getToken = () => localStorage.getItem('snop_token')
 const STORAGE_KEY = 'snop_comunicado_leido'
 
 function getUltimoLeido() {
@@ -33,9 +31,7 @@ export default function Inicio() {
     async function fetchProximosTurnos() {
       if (!user?.id) return
       try {
-        const { data } = await axios.get(`${API_BASE}/perfil`, {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        })
+        const { data } = await api.get('/perfil')
         const turnos = data?.data?.turnos ?? []
         const ahora = new Date()
         const futuros = turnos
@@ -50,7 +46,7 @@ export default function Inicio() {
 
     async function fetchComunicados() {
       try {
-        const { data } = await axios.get(`${API_BASE}/comunicados`)
+        const { data } = await api.get('/comunicados')
         const lista = data?.data ?? []
         setComunicados(lista)
         setNoLeidos(calcularNoLeidos(lista))

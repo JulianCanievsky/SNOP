@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../../lib/apiClient.js'
 import './registro.css'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
 export default function Registro() {
   const navigate = useNavigate()
@@ -45,7 +43,7 @@ export default function Registro() {
 
     setLoading(true)
     try {
-      const { data } = await axios.post(`${API_BASE}/auth/registro`, {
+      const { data } = await api.post('/auth/registro', {
         nombre: nombre.trim(),
         email: email.trim().toLowerCase(),
         password,
