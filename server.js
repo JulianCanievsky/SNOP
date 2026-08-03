@@ -33,23 +33,39 @@ import ratingsRouter            from './rutas/ratings.js'
 const app = express()
 
 // ─── CORS — restringido a los orígenes del frontend ──────────────────────────
+// Lee CORS_ORIGINS del entorno. Puede ser una lista separada por comas.
+// Ejemplo en Railway: CORS_ORIGINS=https://snop-psi.vercel.app
 const originesPermitidos = (process.env.CORS_ORIGINS || 'http://localhost:5173')
   .split(',')
   .map((o) => o.trim())
+  .filter(Boolean)
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Permitir requests sin origin (herramientas REST, server-to-server)
-      if (!origin || originesPermitidos.includes(origin)) {
-        callback(null, true)
-      } else {
-        callback(new Error(`Origen no permitido por CORS: ${origin}`))
-      }
-    },
-    credentials: true,
-  })
-)
+console.log('[CORS] Orígenes permitidos:', originesPermitidos)
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (curl, Postman, server-to-server)
+    if (!origin) return callback(null, true)
+
+    if (originesPermitidos.includes(origin)) {
+      callback(null, true)
+    } else {
+      console.warn(`[CORS] Origen bloqueado: ${origin}`)
+      // Devolvemos false en vez de un Error para que Express responda
+      // con 403 pero SÍ incluya los headers CORS (evita el error de browser)
+      callback(null, false)
+    }
+  },
+  credentials: true,
+  // Exponer headers necesarios para el cliente
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+}
+
+// Aplicar CORS antes de todo — incluyendo el handler explícito de preflight
+app.use(cors(corsOptions))
+// Responder OK a todas las peticiones OPTIONS (preflight) — sintaxis Express 5
+app.options('/*path', cors(corsOptions))
 
 app.use(express.json())
 
