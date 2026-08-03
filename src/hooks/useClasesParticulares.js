@@ -1,13 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-
-const getToken = () => localStorage.getItem('snop_token')
-
-const authHeaders = () => ({
-  headers: { Authorization: `Bearer ${getToken()}` },
-})
+import api from '../lib/apiClient.js'
 
 export const useClasesParticulares = () => {
   const [entrenadores, setEntrenadores] = useState([])
@@ -19,10 +11,8 @@ export const useClasesParticulares = () => {
     try {
       setCargando(true)
       setError(null)
-      const { data } = await axios.get(
-        `${API_BASE}/clases-particulares/entrenadores`
-        // entrenadores es público — no requiere auth
-      )
+      // endpoint público — el interceptor omite el token si no hay sesión
+      const { data } = await api.get('/clases-particulares/entrenadores')
       setEntrenadores(data.data || [])
     } catch (err) {
       console.error(err)
@@ -34,10 +24,7 @@ export const useClasesParticulares = () => {
 
   const obtenerSolicitudes = useCallback(async () => {
     try {
-      const { data } = await axios.get(
-        `${API_BASE}/clases-particulares/mis-solicitudes`,
-        authHeaders()
-      )
+      const { data } = await api.get('/clases-particulares/mis-solicitudes')
       setSolicitudes(data.data || [])
     } catch (err) {
       console.error(err)
@@ -50,28 +37,23 @@ export const useClasesParticulares = () => {
   }, [cargarEntrenadores, obtenerSolicitudes])
 
   const obtenerEntrenador = async (entrenadorId) => {
-    const { data } = await axios.get(
-      `${API_BASE}/clases-particulares/entrenadores/${entrenadorId}`
-    )
+    const { data } = await api.get(`/clases-particulares/entrenadores/${entrenadorId}`)
     return data.data
   }
 
   const enviarSolicitud = async ({ entrenador_id, turno_id, mensaje }) => {
-    const { data } = await axios.post(
-      `${API_BASE}/clases-particulares/solicitar`,
-      { entrenador_id, turno_id, mensaje },
-      authHeaders()
-    )
+    const { data } = await api.post('/clases-particulares/solicitar', {
+      entrenador_id,
+      turno_id,
+      mensaje,
+    })
     await obtenerSolicitudes()
     await cargarEntrenadores()
     return data
   }
 
   const liberarSolicitud = async (solicitudId) => {
-    await axios.delete(
-      `${API_BASE}/clases-particulares/liberar/${solicitudId}`,
-      authHeaders()
-    )
+    await api.delete(`/clases-particulares/liberar/${solicitudId}`)
     await obtenerSolicitudes()
     await cargarEntrenadores()
   }

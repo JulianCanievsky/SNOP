@@ -1,15 +1,8 @@
 import express from 'express'
-import { createClient } from '@supabase/supabase-js'
 import autenticar from '../src/middlewares/autenticar.js'
-import dotenv from 'dotenv'
-dotenv.config()
+import supabase from '../src/config/db.js'
 
 const router = express.Router()
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
 
 // ─────────────────────────────────────────────────────────────
 // POST /api/ratings

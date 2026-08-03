@@ -1,13 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-
-const getToken = () => localStorage.getItem('snop_token')
-
-const authHeaders = () => ({
-  headers: { Authorization: `Bearer ${getToken()}` },
-})
+import api from '../lib/apiClient.js'
 
 // ─── INICIO ──────────────────────────────────────────────────────────────────
 
@@ -22,8 +14,8 @@ export function useInicioEntrenador() {
       setCargando(true)
       setError(null)
       const [resumenRes, solicitudesRes] = await Promise.all([
-        axios.get(`${API_BASE}/entrenador/resumen-hoy`, authHeaders()),
-        axios.get(`${API_BASE}/entrenador/solicitudes`, authHeaders()),
+        api.get('/entrenador/resumen-hoy'),
+        api.get('/entrenador/solicitudes'),
       ])
       setResumen(resumenRes.data.data)
       setSolicitudesPendientes(
@@ -36,9 +28,7 @@ export function useInicioEntrenador() {
     }
   }, [])
 
-  useEffect(() => {
-    cargar()
-  }, [cargar])
+  useEffect(() => { cargar() }, [cargar])
 
   return { resumen, solicitudesPendientes, cargando, error, recargar: cargar }
 }
@@ -54,10 +44,7 @@ export function useMisClasesEntrenador() {
     try {
       setCargando(true)
       setError(null)
-      const { data } = await axios.get(
-        `${API_BASE}/entrenador/mis-clases`,
-        authHeaders()
-      )
+      const { data } = await api.get('/entrenador/mis-clases')
       setClases(data.data || [])
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar clases')
@@ -66,16 +53,10 @@ export function useMisClasesEntrenador() {
     }
   }, [])
 
-  useEffect(() => {
-    cargar()
-  }, [cargar])
+  useEffect(() => { cargar() }, [cargar])
 
   const cancelarClase = async (turnoId) => {
-    await axios.patch(
-      `${API_BASE}/entrenador/clases/${turnoId}/cancelar`,
-      {},
-      authHeaders()
-    )
+    await api.patch(`/entrenador/clases/${turnoId}/cancelar`, {})
     await cargar()
   }
 
@@ -93,10 +74,7 @@ export function useMisAlumnos() {
     try {
       setCargando(true)
       setError(null)
-      const { data } = await axios.get(
-        `${API_BASE}/entrenador/mis-alumnos`,
-        authHeaders()
-      )
+      const { data } = await api.get('/entrenador/mis-alumnos')
       setAlumnos(data.data || [])
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar alumnos')
@@ -105,16 +83,10 @@ export function useMisAlumnos() {
     }
   }, [])
 
-  useEffect(() => {
-    cargar()
-  }, [cargar])
+  useEffect(() => { cargar() }, [cargar])
 
   const cambiarNivel = async (alumnoId, nivelId) => {
-    await axios.patch(
-      `${API_BASE}/entrenador/alumnos/${alumnoId}/nivel`,
-      { nivel_id: nivelId },
-      authHeaders()
-    )
+    await api.patch(`/entrenador/alumnos/${alumnoId}/nivel`, { nivel_id: nivelId })
     await cargar()
   }
 
@@ -133,10 +105,7 @@ export function useDetalleAlumno(alumnoId) {
     try {
       setCargando(true)
       setError(null)
-      const { data } = await axios.get(
-        `${API_BASE}/entrenador/alumnos/${alumnoId}`,
-        authHeaders()
-      )
+      const { data } = await api.get(`/entrenador/alumnos/${alumnoId}`)
       setAlumno(data.data)
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar alumno')
@@ -145,16 +114,10 @@ export function useDetalleAlumno(alumnoId) {
     }
   }, [alumnoId])
 
-  useEffect(() => {
-    cargar()
-  }, [cargar])
+  useEffect(() => { cargar() }, [cargar])
 
   const cambiarNivel = async (nivelId) => {
-    await axios.patch(
-      `${API_BASE}/entrenador/alumnos/${alumnoId}/nivel`,
-      { nivel_id: nivelId },
-      authHeaders()
-    )
+    await api.patch(`/entrenador/alumnos/${alumnoId}/nivel`, { nivel_id: nivelId })
     await cargar()
   }
 
@@ -175,8 +138,8 @@ export function useMisHorarios() {
       setCargando(true)
       setError(null)
       const [horariosRes, sedesRes] = await Promise.all([
-        axios.get(`${API_BASE}/entrenador/mis-horarios`, authHeaders()),
-        axios.get(`${API_BASE}/entrenador/sedes`, authHeaders()),
+        api.get('/entrenador/mis-horarios'),
+        api.get('/entrenador/sedes'),
       ])
       setHorarios(horariosRes.data.data || [])
       setSedes(sedesRes.data.data || [])
@@ -187,18 +150,12 @@ export function useMisHorarios() {
     }
   }, [])
 
-  useEffect(() => {
-    cargar()
-  }, [cargar])
+  useEffect(() => { cargar() }, [cargar])
 
   const agregarHorario = async ({ dia, hora, sede_id, duracion_min }) => {
     try {
       setGuardando(true)
-      await axios.post(
-        `${API_BASE}/entrenador/mis-horarios`,
-        { dia, hora, sede_id, duracion_min },
-        authHeaders()
-      )
+      await api.post('/entrenador/mis-horarios', { dia, hora, sede_id, duracion_min })
       await cargar()
     } finally {
       setGuardando(false)
@@ -206,10 +163,7 @@ export function useMisHorarios() {
   }
 
   const cancelarHorario = async (turnoId) => {
-    await axios.delete(
-      `${API_BASE}/entrenador/mis-horarios/${turnoId}`,
-      authHeaders()
-    )
+    await api.delete(`/entrenador/mis-horarios/${turnoId}`)
     await cargar()
   }
 
@@ -227,10 +181,7 @@ export function useSolicitudesEntrenador() {
     try {
       setCargando(true)
       setError(null)
-      const { data } = await axios.get(
-        `${API_BASE}/entrenador/solicitudes`,
-        authHeaders()
-      )
+      const { data } = await api.get('/entrenador/solicitudes')
       setSolicitudes(data.data || [])
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar solicitudes')
@@ -239,17 +190,10 @@ export function useSolicitudesEntrenador() {
     }
   }, [])
 
-  useEffect(() => {
-    cargar()
-  }, [cargar])
+  useEffect(() => { cargar() }, [cargar])
 
   const responderSolicitud = async (solicitudId, accion) => {
-    // accion: 'confirmar' | 'rechazar'
-    await axios.patch(
-      `${API_BASE}/entrenador/solicitudes/${solicitudId}/${accion}`,
-      {},
-      authHeaders()
-    )
+    await api.patch(`/entrenador/solicitudes/${solicitudId}/${accion}`, {})
     await cargar()
   }
 
@@ -267,10 +211,7 @@ export function usePerfilEntrenador() {
     try {
       setCargando(true)
       setError(null)
-      const { data } = await axios.get(
-        `${API_BASE}/entrenador/perfil`,
-        authHeaders()
-      )
+      const { data } = await api.get('/entrenador/perfil')
       setPerfil(data.data)
     } catch (err) {
       setError(err.response?.data?.error || 'Error al cargar perfil')
@@ -279,9 +220,7 @@ export function usePerfilEntrenador() {
     }
   }, [])
 
-  useEffect(() => {
-    cargar()
-  }, [cargar])
+  useEffect(() => { cargar() }, [cargar])
 
   return { perfil, cargando, error, recargar: cargar }
 }
@@ -293,20 +232,11 @@ export function useNiveles() {
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    async function cargar() {
-      try {
-        const { data } = await axios.get(
-          `${API_BASE}/entrenador/niveles`,
-          authHeaders()
-        )
-        setNiveles(data.data || [])
-      } catch (err) {
-        console.error('Error al cargar niveles', err)
-      } finally {
-        setCargando(false)
-      }
-    }
-    cargar()
+    api
+      .get('/entrenador/niveles')
+      .then(({ data }) => setNiveles(data.data || []))
+      .catch((err) => console.error('Error al cargar niveles', err))
+      .finally(() => setCargando(false))
   }, [])
 
   return { niveles, cargando }
@@ -319,20 +249,11 @@ export function useComunicadosEntrenador() {
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    async function cargar() {
-      try {
-        const { data } = await axios.get(
-          `${API_BASE}/entrenador/comunicados`,
-          authHeaders()
-        )
-        setComunicados(data.data || [])
-      } catch (err) {
-        console.error('Error al cargar comunicados', err)
-      } finally {
-        setCargando(false)
-      }
-    }
-    cargar()
+    api
+      .get('/entrenador/comunicados')
+      .then(({ data }) => setComunicados(data.data || []))
+      .catch((err) => console.error('Error al cargar comunicados', err))
+      .finally(() => setCargando(false))
   }, [])
 
   return { comunicados, cargando }

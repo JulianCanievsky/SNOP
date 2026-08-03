@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-
-const getToken = () => localStorage.getItem('snop_token')
+import api from '../lib/apiClient.js'
 
 export const usePerfil = () => {
   const [perfil, setPerfil] = useState(null)
@@ -14,9 +10,7 @@ export const usePerfil = () => {
     try {
       setCargando(true)
       setError(null)
-      const { data } = await axios.get(`${API_BASE}/perfil`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      })
+      const { data } = await api.get('/perfil')
       setPerfil(data.data)
     } catch (err) {
       console.error(err)

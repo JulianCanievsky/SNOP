@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useInicioEntrenador, useComunicadosEntrenador } from '../../../hooks/useEntrenador'
+import api from '../../../lib/apiClient.js'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
 import './InicioEntrenador.css'
 
@@ -47,12 +48,7 @@ export default function InicioEntrenador() {
 
   const handleResponder = async (solicitudId, accion) => {
     try {
-      const token = localStorage.getItem('snop_token')
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-      await fetch(`${API_BASE}/entrenador/solicitudes/${solicitudId}/${accion}`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      await api.patch(`/entrenador/solicitudes/${solicitudId}/${accion}`, {})
       recargar()
     } catch (err) {
       console.error(err)

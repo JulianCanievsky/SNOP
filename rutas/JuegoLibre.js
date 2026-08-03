@@ -1,19 +1,10 @@
-import dotenv from 'dotenv'
-dotenv.config()
-
 import express from 'express'
-import { createClient } from '@supabase/supabase-js'
 import autenticar from '../src/middlewares/autenticar.js'
+import supabase from '../src/config/db.js'
 
 const router = express.Router()
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
-
 // Alias para compatibilidad: el middleware pone req.userId
-// el resto del código usaba req.socio_id
 function adaptarSocioId(req, _res, next) {
   req.socio_id = req.userId
   next()
@@ -42,7 +33,6 @@ router.get('/', autenticar, adaptarSocioId, async (req, res) => {
     const { data: eventos, error } = await query
     if (error) throw error
 
-    // Traer inscripciones
     const { data: inscripciones, error: errorInsc } = await supabase
       .from('inscripciones_juego_libre')
       .select('evento_id, socio_id')
@@ -50,8 +40,7 @@ router.get('/', autenticar, adaptarSocioId, async (req, res) => {
 
     if (errorInsc) throw errorInsc
 
-    // Traer usuarios de los inscriptos
-    const socioIds = [...new Set(inscripciones.map(i => i.socio_id))]
+    const socioIds = [...new Set(inscripciones.map((i) => i.socio_id))]
     let usuarios = []
     if (socioIds.length > 0) {
       const { data: usersData, error: errorUsers } = await supabase
@@ -62,9 +51,9 @@ router.get('/', autenticar, adaptarSocioId, async (req, res) => {
       usuarios = usersData
     }
 
-    const resultado = eventos.map(evento => {
-      const anotados = inscripciones.filter(i => i.evento_id === evento.id)
-      const yaInscripto = anotados.some(i => i.socio_id === socioId)
+    const resultado = eventos.map((evento) => {
+      const anotados = inscripciones.filter((i) => i.evento_id === evento.id)
+      const yaInscripto = anotados.some((i) => i.socio_id === socioId)
 
       return {
         ...evento,
@@ -72,20 +61,16 @@ router.get('/', autenticar, adaptarSocioId, async (req, res) => {
         nombre_sede: evento.sedes?.nombre ?? `Sede ${evento.sede_id}`,
         estado: anotados.length >= evento.capacidad_maxima ? 'completo' : 'abierto',
         ya_inscripto: yaInscripto,
-        participantes: anotados.map(i => {
-          const user = usuarios.find(u => u.id === i.socio_id)
-          return {
-            nombre: user?.nombre || '?',
-            foto_url: user?.foto_url || null
-          }
-        })
+        participantes: anotados.map((i) => {
+          const user = usuarios.find((u) => u.id === i.socio_id)
+          return { nombre: user?.nombre || '?', foto_url: user?.foto_url || null }
+        }),
       }
     })
 
     res.json(resultado)
-
   } catch (error) {
-    console.error('ERROR GET:', JSON.stringify(error, null, 2))
+    console.error('ERROR GET /api/juego-libre:', error)
     res.status(500).json({ error: 'Error al obtener juego libre' })
   }
 })
@@ -110,33 +95,33 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
       .eq('evento_id', eventoId)
       .eq('socio_id', socioId)
       .eq('estado', 'activo')
-      .single()
+      .maybeSingle()
 
     if (yaInscripto) return res.status(400).json({ error: 'Ya estás inscripto' })
 
-    // Verificar capacidad con count actualizado
+    // Verificar capacidad
     const { count } = await supabase
       .from('inscripciones_juego_libre')
       .select('*', { count: 'exact', head: true })
       .eq('evento_id', eventoId)
       .eq('estado', 'activo')
 
-    if (count >= evento.capacidad_maxima) return res.status(400).json({ error: 'El evento está completo' })
+    if (count >= evento.capacidad_maxima)
+      return res.status(400).json({ error: 'El evento está completo' })
 
-    // Insert con manejo de constraint único para evitar duplicados por race condition
+    // Insert con manejo de unique_violation para race condition
     const { error: errorInsc } = await supabase
       .from('inscripciones_juego_libre')
       .insert({ evento_id: eventoId, socio_id: socioId, estado: 'activo' })
 
     if (errorInsc) {
-      // Código 23505 = unique_violation en PostgreSQL (ya existe el registro)
       if (errorInsc.code === '23505') {
         return res.status(400).json({ error: 'Ya estás inscripto' })
       }
       throw errorInsc
     }
 
-    // Verificar que no se haya pasado del límite (control post-insert)
+    // Control post-insert contra race condition
     const { count: countFinal } = await supabase
       .from('inscripciones_juego_libre')
       .select('*', { count: 'exact', head: true })
@@ -144,7 +129,6 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
       .eq('estado', 'activo')
 
     if (countFinal > evento.capacidad_maxima) {
-      // Revertir — se pasó del límite por race condition
       await supabase
         .from('inscripciones_juego_libre')
         .update({ estado: 'cancelado' })
@@ -155,9 +139,8 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
     }
 
     res.json({ mensaje: 'Inscripción confirmada' })
-
   } catch (error) {
-    console.error('ERROR POST:', JSON.stringify(error, null, 2))
+    console.error('ERROR POST /api/juego-libre/:id/inscribir:', error)
     res.status(500).json({ error: 'Error al inscribirse' })
   }
 })
@@ -177,9 +160,8 @@ router.delete('/:id/cancelar', autenticar, adaptarSocioId, async (req, res) => {
     if (error) throw error
 
     res.json({ mensaje: 'Inscripción cancelada' })
-
   } catch (error) {
-    console.error('ERROR DELETE:', JSON.stringify(error, null, 2))
+    console.error('ERROR DELETE /api/juego-libre/:id/cancelar:', error)
     res.status(500).json({ error: 'Error al cancelar' })
   }
 })

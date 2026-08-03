@@ -1,20 +1,13 @@
 import express from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { createClient } from '@supabase/supabase-js'
-import dotenv from 'dotenv'
-dotenv.config()
+import supabase from '../src/config/db.js'
 
 const router = express.Router()
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
+const BCRYPT_ROUNDS = 12
 
 // ─── POST /api/auth/login ─────────────────────────────────────────────────────
-// Compara email + password contra la tabla users (bcrypt).
-// Devuelve un JWT propio firmado con JWT_SECRET.
 router.post('/login', async (req, res) => {
   const { email, password, tipo_usuario_id } = req.body
 
@@ -23,7 +16,6 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    // Traer el usuario con su password hash
     const { data: usuario, error } = await supabase
       .from('users')
       .select('id, nombre, email, password, tipo_usuario_id, club_id, activo, cuota_al_dia, foto_url')
@@ -42,42 +34,32 @@ router.post('/login', async (req, res) => {
     if (tipo_usuario_id && usuario.tipo_usuario_id !== tipo_usuario_id) {
       const roles = { 1: 'Socio', 2: 'Entrenador', 3: 'Administrador' }
       return res.status(403).json({
-        error: `Este correo no corresponde al rol ${roles[tipo_usuario_id] ?? tipo_usuario_id}`
+        error: `Este correo no corresponde al rol ${roles[tipo_usuario_id] ?? tipo_usuario_id}`,
       })
     }
 
-    // Comparar contraseña
-    // Soporta dos casos:
-    //   a) hash bcrypt almacenado (empieza con $2b$ o $2a$)
-    //   b) contraseña en texto plano (usuarios legacy / recién migrados)
-    let passwordOk = false
-    if (usuario.password && (usuario.password.startsWith('$2b$') || usuario.password.startsWith('$2a$'))) {
-      passwordOk = await bcrypt.compare(password, usuario.password)
-    } else {
-      // Texto plano — comparación directa y luego migrar a hash
-      passwordOk = usuario.password === password
-      if (passwordOk) {
-        const hash = await bcrypt.hash(password, 10)
-        await supabase.from('users').update({ password: hash }).eq('id', usuario.id)
-      }
+    // Verificar contraseña — solo bcrypt (se eliminó soporte de texto plano)
+    if (
+      !usuario.password ||
+      (!usuario.password.startsWith('$2b$') && !usuario.password.startsWith('$2a$'))
+    ) {
+      // Hash inválido o cuenta sin contraseña configurada
+      return res.status(401).json({ error: 'Correo o contraseña incorrectos' })
     }
 
+    const passwordOk = await bcrypt.compare(password, usuario.password)
     if (!passwordOk) {
       return res.status(401).json({ error: 'Correo o contraseña incorrectos' })
     }
 
-    // Generar JWT propio
     const token = jwt.sign(
       { id: usuario.id, email: usuario.email, tipo_usuario_id: usuario.tipo_usuario_id },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     )
 
-    // Nunca devolver el hash de la contraseña
     const { password: _pw, ...perfil } = usuario
-
     res.json({ token, user: perfil })
-
   } catch (err) {
     console.error('POST /api/auth/login', err)
     res.status(500).json({ error: 'Error interno al iniciar sesión' })
@@ -85,8 +67,6 @@ router.post('/login', async (req, res) => {
 })
 
 // ─── POST /api/auth/registro ──────────────────────────────────────────────────
-// Crea un usuario nuevo en la tabla users con password hasheado.
-// Solo para socios (tipo_usuario_id = 1).
 router.post('/registro', async (req, res) => {
   const { nombre, email, password } = req.body
 
@@ -99,7 +79,6 @@ router.post('/registro', async (req, res) => {
   }
 
   try {
-    // Verificar que no exista
     const { data: existente } = await supabase
       .from('users')
       .select('id')
@@ -110,7 +89,7 @@ router.post('/registro', async (req, res) => {
       return res.status(409).json({ error: 'Ya existe una cuenta con ese correo electrónico' })
     }
 
-    const hash = await bcrypt.hash(password, 10)
+    const hash = await bcrypt.hash(password, BCRYPT_ROUNDS)
 
     const { data: nuevoUsuario, error: insertError } = await supabase
       .from('users')
@@ -118,7 +97,7 @@ router.post('/registro', async (req, res) => {
         nombre: nombre.trim(),
         email: email.trim().toLowerCase(),
         password: hash,
-        tipo_usuario_id: 1,   // socio por defecto
+        tipo_usuario_id: 1,
         activo: true,
         cuota_al_dia: true,
         fecha_alta: new Date().toISOString(),
@@ -132,7 +111,6 @@ router.post('/registro', async (req, res) => {
       mensaje: '¡Cuenta creada! El entrenador te asignará tu nivel. Ya podés iniciar sesión.',
       user: nuevoUsuario,
     })
-
   } catch (err) {
     console.error('POST /api/auth/registro', err)
     res.status(500).json({ error: 'Error al crear la cuenta' })
@@ -140,13 +118,15 @@ router.post('/registro', async (req, res) => {
 })
 
 // ─── POST /api/auth/forgot-password ──────────────────────────────────────────
-// Genera un token de reset (JWT, expira en 1h) y devuelve el link.
-// En producción con SMTP configurado, también envía el email.
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body
 
   if (!email?.trim()) {
     return res.status(400).json({ error: 'El correo es requerido' })
+  }
+
+  const RESPUESTA_OK = {
+    mensaje: 'Si el correo está registrado, recibirás un link para restablecer tu contraseña.',
   }
 
   try {
@@ -156,21 +136,18 @@ router.post('/forgot-password', async (req, res) => {
       .eq('email', email.trim().toLowerCase())
       .maybeSingle()
 
-    // Siempre responder igual para no revelar si el email existe o no
-    const RESPUESTA_OK = { mensaje: 'Si el correo está registrado, recibirás un link para restablecer tu contraseña.' }
-
+    // Siempre responder igual para no revelar si el email existe
     if (!usuario || !usuario.activo) {
       return res.json(RESPUESTA_OK)
     }
 
-    // Generar token firmado con el hash actual de la password como secret extra
-    // (si la password cambia, el token queda inválido automáticamente)
     const { data: usuarioConPw } = await supabase
       .from('users')
       .select('password')
       .eq('id', usuario.id)
       .single()
 
+    // El token se firma con el hash actual: si la contraseña cambia, el token queda inválido
     const secretReset = `${process.env.JWT_SECRET}-${usuarioConPw.password}`
     const resetToken = jwt.sign(
       { id: usuario.id, email: usuario.email },
@@ -181,15 +158,14 @@ router.post('/forgot-password', async (req, res) => {
     const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
     const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`
 
-    // ── Enviar email ───────────────────────────────────────────────────────
     if (process.env.RESEND_API_KEY) {
       try {
         const { Resend } = await import('resend')
         const resend = new Resend(process.env.RESEND_API_KEY)
 
         await resend.emails.send({
-          from:    process.env.RESEND_FROM || 'SNOP Club <onboarding@resend.dev>',
-          to:      usuario.email,
+          from: process.env.RESEND_FROM || 'SNOP Club <onboarding@resend.dev>',
+          to: usuario.email,
           subject: 'Restablecé tu contraseña — SNOP',
           html: `
             <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
@@ -208,15 +184,12 @@ router.post('/forgot-password', async (req, res) => {
         })
       } catch (emailErr) {
         console.error('Error enviando email con Resend:', emailErr)
-        // No bloqueamos la respuesta si el email falla
       }
     } else {
-      // Sin API key — loguear el link en consola (desarrollo)
-      console.log(`\n🔑 RESET LINK para ${usuario.email}:\n${resetLink}\n`)
+      console.log(`\n[DEV] RESET LINK para ${usuario.email}:\n${resetLink}\n`)
     }
 
     res.json(RESPUESTA_OK)
-
   } catch (err) {
     console.error('POST /api/auth/forgot-password', err)
     res.status(500).json({ error: 'Error al procesar la solicitud' })
@@ -224,8 +197,6 @@ router.post('/forgot-password', async (req, res) => {
 })
 
 // ─── POST /api/auth/reset-password ───────────────────────────────────────────
-// Verifica el token y actualiza la contraseña.
-// Body: { token, password }
 router.post('/reset-password', async (req, res) => {
   const { token, password } = req.body
 
@@ -238,13 +209,11 @@ router.post('/reset-password', async (req, res) => {
   }
 
   try {
-    // Decodificar sin verificar para obtener el id
     const decoded = jwt.decode(token)
     if (!decoded?.id) {
       return res.status(400).json({ error: 'Token inválido' })
     }
 
-    // Traer password actual para reconstruir el secret
     const { data: usuario } = await supabase
       .from('users')
       .select('id, email, password, activo')
@@ -255,12 +224,10 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Token inválido o expirado' })
     }
 
-    // Verificar el token con el secret que incluye el hash actual
     const secretReset = `${process.env.JWT_SECRET}-${usuario.password}`
     jwt.verify(token, secretReset) // lanza si expiró o es inválido
 
-    // Hashear la nueva contraseña y guardar
-    const hash = await bcrypt.hash(password, 10)
+    const hash = await bcrypt.hash(password, BCRYPT_ROUNDS)
     const { error: updateError } = await supabase
       .from('users')
       .update({ password: hash })
@@ -269,7 +236,6 @@ router.post('/reset-password', async (req, res) => {
     if (updateError) throw updateError
 
     res.json({ mensaje: 'Contraseña actualizada correctamente. Ya podés iniciar sesión.' })
-
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       return res.status(400).json({ error: 'El link expiró. Solicitá uno nuevo.' })

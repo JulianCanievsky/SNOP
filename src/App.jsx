@@ -33,14 +33,18 @@ import MisHorariosEntrenador   from './pages/entrenador/MisHorariosEntrenador/Mi
 import SolicitudesEntrenador   from './pages/entrenador/SolicitudesEntrenador/SolicitudesEntrenador'
 import PerfilEntrenador        from './pages/entrenador/PerfilEntrenador/PerfilEntrenador'
 
-// Rutas protegidas: redirige al login si no hay sesión
+// Rutas protegidas: redirige al inicio correcto si no hay sesión o el rol no coincide
 function RutaProtegida({ children, rolesPermitidos }) {
   const { user, loading } = useAuth()
 
   if (loading) return null
   if (!user) return <Navigate to="/login" replace />
+
   if (rolesPermitidos && !rolesPermitidos.includes(user.tipo_usuario_id)) {
-    return <Navigate to="/login" replace />
+    // Redirige a la pantalla principal del rol real del usuario
+    if (user.tipo_usuario_id === 3) return <Navigate to="/admin" replace />
+    if (user.tipo_usuario_id === 2) return <Navigate to="/entrenador/inicio" replace />
+    return <Navigate to="/inicio" replace />
   }
 
   return children

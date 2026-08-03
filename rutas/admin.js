@@ -1,16 +1,11 @@
 import express from 'express'
-import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
 import autenticar from '../src/middlewares/autenticar.js'
-import dotenv from 'dotenv'
-dotenv.config()
+import supabase from '../src/config/db.js'
 
 const router = express.Router()
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
+const BCRYPT_ROUNDS = 12
 
 // Middleware: solo admins (tipo_usuario_id = 3)
 function soloAdmin(req, res, next) {
@@ -56,9 +51,6 @@ router.get('/stats', async (_req, res) => {
   }
 })
 
-// ─────────────────────────────────────────────
-// SOCIOS — GET /api/admin/socios
-// ─────────────────────────────────────────────
 // ─────────────────────────────────────────────
 // SOCIOS — GET /api/admin/socios
 // ─────────────────────────────────────────────
@@ -136,7 +128,7 @@ router.post('/socios', async (req, res) => {
     if (existente) return res.status(409).json({ error: 'Ya existe un socio con ese email' })
 
     const rawPassword = password || 'snop1234'
-    const hash = await bcrypt.hash(rawPassword, 12)
+    const hash = await bcrypt.hash(rawPassword, BCRYPT_ROUNDS)
 
     const { data, error } = await supabase
       .from('users')

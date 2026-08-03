@@ -1,13 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
+import supabase from '../src/config/db.js'
 
 const router = express.Router()
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
 
 // GET ENTRENADORES
 router.get('/entrenadores', async (req, res) => {
