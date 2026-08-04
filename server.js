@@ -104,13 +104,17 @@ app.get('/api/sedes', async (_req, res) => {
   res.json({ data: data ?? [] })
 })
 
-// Comunicados — últimos 5 para Inicio del socio
+// Comunicados — últimos 5 para Inicio del socio (solo los últimos 5 días)
 app.get('/api/comunicados', async (_req, res) => {
   try {
+    const hace5Dias = new Date()
+    hace5Dias.setDate(hace5Dias.getDate() - 5)
+
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
       .in('destinatarios', ['todos', 'con_deuda', 'nivel_rojo', 'nivel_azul'])
+      .gte('fecha', hace5Dias.toISOString())
       .order('fecha', { ascending: false })
       .limit(5)
     if (error) {
@@ -124,13 +128,17 @@ app.get('/api/comunicados', async (_req, res) => {
   }
 })
 
-// Todos los comunicados para socios
+// Todos los comunicados para socios (solo los últimos 5 días)
 app.get('/api/comunicados/todos', async (_req, res) => {
   try {
+    const hace5Dias = new Date()
+    hace5Dias.setDate(hace5Dias.getDate() - 5)
+
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
       .in('destinatarios', ['todos', 'con_deuda', 'nivel_rojo', 'nivel_azul'])
+      .gte('fecha', hace5Dias.toISOString())
       .order('fecha', { ascending: false })
     if (error) {
       if (error.code === '42P01') return res.json({ data: [] })
