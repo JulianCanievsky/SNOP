@@ -32,6 +32,9 @@ import ratingsRouter            from './rutas/ratings.js'
 
 const app = express()
 
+// ─── Trust proxy — necesario en Railway/Heroku/Render detrás de un proxy ─────
+app.set('trust proxy', 1)
+
 // ─── CORS — restringido a los orígenes del frontend ──────────────────────────
 // Lee CORS_ORIGINS del entorno. Puede ser una lista separada por comas.
 // Ejemplo en Railway: CORS_ORIGINS=https://snop-psi.vercel.app
@@ -47,12 +50,14 @@ const corsOptions = {
     // Permitir requests sin origin (curl, Postman, server-to-server)
     if (!origin) return callback(null, true)
 
-    if (originesPermitidos.includes(origin)) {
+    // Permitir cualquier subdominio de vercel.app (previews de Vercel)
+    const esVercelPreview = /^https:\/\/[a-z0-9-]+-[a-z0-9]+-[a-z0-9-]+-projects\.vercel\.app$/.test(origin)
+      || /^https:\/\/snop[a-z0-9-]*\.vercel\.app$/.test(origin)
+
+    if (originesPermitidos.includes(origin) || esVercelPreview) {
       callback(null, true)
     } else {
       console.warn(`[CORS] Origen bloqueado: ${origin}`)
-      // Devolvemos false en vez de un Error para que Express responda
-      // con 403 pero SÍ incluya los headers CORS (evita el error de browser)
       callback(null, false)
     }
   },
