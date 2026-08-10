@@ -5,15 +5,19 @@ import DetalleTorneo from './DetalleTorneo'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import './Torneos.css'
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 const formatFecha = (iso) => {
   const d = new Date(iso)
-  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-  return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]}`
+  return d.toLocaleDateString('es-AR', {
+    weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ,
+  }).replace(/^(.)/, c => c.toUpperCase())
 }
 
 const formatHora = (ini, fin) => {
-  const h = d => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  const h = d => new Date(d).toLocaleTimeString('es-AR', {
+    hour: '2-digit', minute: '2-digit', timeZone: TZ,
+  })
   return fin ? `${h(ini)} — ${h(fin)} hs` : `${h(ini)} hs`
 }
 

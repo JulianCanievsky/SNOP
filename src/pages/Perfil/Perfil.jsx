@@ -4,11 +4,13 @@ import { usePerfil } from '../../hooks/usePerfil'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import './Perfil.css'
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 const formatHora = (iso) =>
-  new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+  new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ })
 
 const formatFecha = (iso) =>
-  new Date(iso).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+  new Date(iso).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
 
 // Mapeo nombre de nivel → clase CSS del Admin (reutilizadas)
 function nivelClase(nombre) {

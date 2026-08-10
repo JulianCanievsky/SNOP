@@ -1,26 +1,21 @@
 import { useEffect, useState } from 'react'
 import './MisTurnos.css'
 import TurnoCard from '../../components/TurnoCard/TurnoCard'
-import { getAgenda, cancelarTurno, cancelarJuegoLibre } from '../../services/turnosApi'
+import { getAgenda, cancelarTurno, cancelarJuegoLibre, cancelarTorneo } from '../../services/turnosApi'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
 import { useRating } from '../../hooks/useRating'
 
-// Convierte una fecha ISO (puede ser UTC) a la fecha local del browser en formato YYYY-MM-DD
+const TZ = 'America/Argentina/Buenos_Aires'
+
+// Convierte una fecha ISO (UTC) a YYYY-MM-DD en ART, independientemente del TZ del browser
 function toLocalDateStr(isoString) {
-  const d = new Date(isoString)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return new Date(isoString).toLocaleDateString('en-CA', { timeZone: TZ })
 }
 
-// Convierte un objeto Date local a YYYY-MM-DD (para construir el selector de días)
+// Convierte un objeto Date local a YYYY-MM-DD en ART (para construir el selector de días)
 function toDateStr(fecha) {
-  const y = fecha.getFullYear()
-  const m = String(fecha.getMonth() + 1).padStart(2, '0')
-  const d = String(fecha.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+  return fecha.toLocaleDateString('en-CA', { timeZone: TZ })
 }
 
 export default function MisTurnos() {
@@ -87,6 +82,8 @@ export default function MisTurnos() {
     try {
       if (evento.tipo === 'juego_libre') {
         await cancelarJuegoLibre(evento.juego_libre_id)
+      } else if (evento.tipo === 'torneo') {
+        await cancelarTorneo(evento.torneo_id)
       } else {
         await cancelarTurno(evento.turno_id)
       }

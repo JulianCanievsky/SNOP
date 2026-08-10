@@ -8,21 +8,23 @@ import { useBonos } from '../../hooks/useBonos'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import './MisClases.css'
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 const formatFecha = (iso) => {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('es-AR', {
-    weekday: 'short', day: '2-digit', month: '2-digit',
+    weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ,
   })
 }
 
 const formatHora = (iso) => {
   if (!iso) return ''
-  return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
 }
 
 const formatVencimiento = (iso) => {
   if (!iso) return ''
-  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
+  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric', timeZone: TZ })
 }
 
 export default function MisClases() {

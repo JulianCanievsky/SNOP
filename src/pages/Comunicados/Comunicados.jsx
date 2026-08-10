@@ -17,6 +17,8 @@ function marcarTodosLeidos(comunicados) {
   localStorage.setItem(STORAGE_KEY, String(maxId))
 }
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 function formatFecha(fechaISO) {
   if (!fechaISO) return ''
   const d = new Date(fechaISO)
@@ -25,6 +27,7 @@ function formatFecha(fechaISO) {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: TZ,
   }).replace(/^\w/, c => c.toUpperCase())
 }
 

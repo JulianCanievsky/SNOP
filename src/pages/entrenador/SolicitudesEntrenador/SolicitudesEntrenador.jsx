@@ -15,16 +15,18 @@ function nivelBadgeClass(nombreNivel = '') {
   return 'nivel-default'
 }
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 function formatFechaCorta(iso) {
   if (!iso) return ''
   const d = new Date(iso)
-  return d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })
+  return d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short', timeZone: TZ })
 }
 
 function formatHora(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false,
+    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
   })
 }
 

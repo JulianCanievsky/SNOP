@@ -25,3 +25,8 @@ export async function cancelarJuegoLibre(eventoId) {
   const response = await api.delete(`/juego-libre/${eventoId}/cancelar`)
   return response.data
 }
+
+export async function cancelarTorneo(torneoId) {
+  const response = await api.delete(`/torneos/${torneoId}/cancelar`)
+  return response.data
+}

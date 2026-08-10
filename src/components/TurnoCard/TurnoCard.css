@@ -42,9 +42,10 @@
   flex-shrink: 0;
 }
 
-.badge-tipo--fijo  { background: #eff6ff; color: #1d4ed8; }
-.badge-tipo--clase { background: #f0fdf4; color: #15803d; }
-.badge-tipo--juego { background: #fff7ed; color: #c2410c; }
+.badge-tipo--fijo   { background: #eff6ff; color: #1d4ed8; }
+.badge-tipo--clase  { background: #f0fdf4; color: #15803d; }
+.badge-tipo--juego  { background: #fff7ed; color: #c2410c; }
+.badge-tipo--torneo { background: #fdf4ff; color: #7c3aed; }
 
 /* ── HORARIO ── */
 .horario {

@@ -115,15 +115,23 @@ export default function CrearJuegoLibre() {
     }
   }
 
+  const TZ = 'America/Argentina/Buenos_Aires'
+
   function formatFechaHora(iso) {
-    const d   = new Date(iso)
-    const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' })
-    const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+    const d    = new Date(iso)
+    const dia  = d.toLocaleDateString('es-AR', {
+      weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ,
+    })
+    const hora = d.toLocaleTimeString('es-AR', {
+      hour: '2-digit', minute: '2-digit', timeZone: TZ,
+    })
     return `${dia} · ${hora} hs`
   }
 
   function formatFechaInsc(iso) {
-    return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+    return new Date(iso).toLocaleDateString('es-AR', {
+      day: '2-digit', month: '2-digit', year: '2-digit', timeZone: TZ,
+    })
   }
 
   const NIVEL_STYLE = {

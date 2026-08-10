@@ -1,19 +1,20 @@
 import "../../pages/ClasesParticulares/ClasesParticulares.css";
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 const formatearFechaCompleta = (fechaISO) => {
-  const fecha = new Date(fechaISO);
-  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  return `${dias[fecha.getDay()]} ${fecha.getDate()} · ${hora} hs`;
-};
+  const fecha = new Date(fechaISO)
+  const dia  = fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
+  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  return `${dia.charAt(0).toUpperCase() + dia.slice(1)} · ${hora} hs`
+}
 
 const formatearDiaHora = (fechaISO) => {
-  const fecha = new Date(fechaISO);
-  const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-  return `${dias[fecha.getDay()]} ${fecha.getDate()} - ${hora} hs`;
-};
+  const fecha = new Date(fechaISO)
+  const dia  = fecha.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', timeZone: TZ })
+  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  return `${dia} - ${hora} hs`
+}
 
 const ConfirmarClase = ({ entrenador, turno, onVolver, onConfirmar, enviando }) => {
   const iniciales = entrenador.nombre

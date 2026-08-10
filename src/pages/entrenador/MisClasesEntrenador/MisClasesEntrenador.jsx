@@ -14,9 +14,11 @@ function nivelBadgeClass(nombreNivel = '') {
   return 'nivel-default'
 }
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 function formatHora(iso) {
   return new Date(iso).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false,
+    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
   })
 }
 
@@ -28,7 +30,8 @@ function buildDias() {
       fecha: d,
       letra: DIAS_LETRA[d.getDay()],
       numero: d.getDate(),
-      iso: d.toISOString().slice(0, 10),
+      // Construimos la fecha ISO en ART para comparar correctamente con fecha_inicio
+      iso: d.toLocaleDateString('en-CA', { timeZone: TZ }), // 'en-CA' produce YYYY-MM-DD
     }
   })
 }
@@ -42,7 +45,11 @@ export default function MisClasesEntrenador() {
   const fechaSel = dias[diaIdx].iso
 
   const clasesFiltradas = clases.filter(
-    (c) => c.fecha_inicio?.slice(0, 10) === fechaSel
+    // Comparamos la fecha del turno en ART contra la fecha seleccionada,
+    // también en ART — evita desfasaje cuando fecha_inicio es UTC medianoche.
+    (c) => c.fecha_inicio
+      ? new Date(c.fecha_inicio).toLocaleDateString('en-CA', { timeZone: TZ }) === fechaSel
+      : false
   )
 
   const handleCancelar = async (turnoId) => {
@@ -67,8 +74,8 @@ export default function MisClasesEntrenador() {
       <header className="mis-clases-e-header">
         <h1>Mis clases</h1>
         <p className="subtitulo">
-          {dias[diaIdx].fecha.toLocaleDateString('es-AR', { weekday: 'long' }).charAt(0).toUpperCase() +
-            dias[diaIdx].fecha.toLocaleDateString('es-AR', { weekday: 'long' }).slice(1)}
+          {dias[diaIdx].fecha.toLocaleDateString('es-AR', { weekday: 'long', timeZone: TZ }).charAt(0).toUpperCase() +
+            dias[diaIdx].fecha.toLocaleDateString('es-AR', { weekday: 'long', timeZone: TZ }).slice(1)}
         </p>
 
         <div className="dias-scroll">

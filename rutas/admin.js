@@ -76,7 +76,6 @@ router.get('/socios', async (req, res) => {
       throw error
     }
 
-    console.log(`GET /admin/socios → ${data?.length ?? 0} resultados`)
     res.json({ data: data ?? [] })
   } catch (err) {
     console.error('GET /admin/socios — catch:', err)
@@ -372,8 +371,10 @@ router.post('/juego-libre', async (req, res) => {
     }
 
     // Construir timestamps — hora_inicio/hora_fin llegan como "HH:MM"
-    const fecha_inicio = new Date(`${fecha}T${hora_inicio}:00`).toISOString()
-    const fecha_fin    = new Date(`${fecha}T${hora_fin}:00`).toISOString()
+    // Se agrega el offset ART (-03:00) explícitamente para que el valor
+    // guardado en UTC sea correcto independientemente del TZ del servidor.
+    const fecha_inicio = new Date(`${fecha}T${hora_inicio}:00-03:00`).toISOString()
+    const fecha_fin    = new Date(`${fecha}T${hora_fin}:00-03:00`).toISOString()
 
     const { data, error } = await supabase
       .from('juego_libre')
@@ -931,8 +932,8 @@ router.post('/torneos', async (req, res) => {
       return res.status(400).json({ error: 'Nombre, sede, fecha, horario y modalidad son requeridos' })
     }
 
-    const fecha_inicio = new Date(`${fecha}T${hora_inicio}:00`).toISOString()
-    const fecha_fin    = new Date(`${fecha}T${hora_fin}:00`).toISOString()
+    const fecha_inicio = new Date(`${fecha}T${hora_inicio}:00-03:00`).toISOString()
+    const fecha_fin    = new Date(`${fecha}T${hora_fin}:00-03:00`).toISOString()
 
     const { data, error } = await supabase
       .from('torneos')

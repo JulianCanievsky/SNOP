@@ -135,14 +135,16 @@ export default function Inicio() {
     { label: 'Mi perfil',   sub: 'Cuenta y turnos',  emoji: '👤', path: '/perfil' },
   ]
 
+  const TZ = 'America/Argentina/Buenos_Aires'
+
   function formatFecha(fechaISO) {
     const d = new Date(fechaISO)
-    const fecha = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+    const fecha = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
     return fecha.charAt(0).toUpperCase() + fecha.slice(1)
   }
 
   function formatHora(inicio, fin) {
-    const h = (d) => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+    const h = (d) => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ })
     return fin ? `${h(inicio)} — ${h(fin)} hs` : `${h(inicio)} hs`
   }
 

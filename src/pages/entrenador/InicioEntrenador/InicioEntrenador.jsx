@@ -14,10 +14,12 @@ function iniciales(nombre = '') {
     .toUpperCase()
 }
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 function formatFechaCorta(fechaISO) {
   if (!fechaISO) return ''
   const d = new Date(fechaISO)
-  return d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })
+  return d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short', timeZone: TZ })
 }
 
 function formatHora(fechaISO) {
@@ -26,6 +28,7 @@ function formatHora(fechaISO) {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
+    timeZone: TZ,
   })
 }
 
@@ -157,7 +160,7 @@ export default function InicioEntrenador() {
                 <p className="comunicado-mensaje-e">{c.mensaje}</p>
                 <span className="comunicado-fecha-e">
                   {new Date(c.fecha).toLocaleDateString('es-AR', {
-                    day: 'numeric', month: 'long',
+                    day: 'numeric', month: 'long', timeZone: TZ,
                   })}
                 </span>
               </div>

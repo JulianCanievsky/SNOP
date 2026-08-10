@@ -12,18 +12,20 @@ import {
 import { asignarAbono, getAbonosAdmin } from '../../services/bonosApi'
 import './Admin.css'
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 function formatFechaTurno(iso) {
   const d = new Date(iso)
-  const fecha = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' })
-  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  const fecha = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', timeZone: TZ })
+  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
   return `${fecha.charAt(0).toUpperCase()}${fecha.slice(1)} · ${hora} hs`
 }
 
 function formatTurnoOpcion(t) {
   const tipo = t.tipo_turno_id === 2 ? 'Clase particular' : 'Entrenamiento'
   const d    = new Date(t.fecha_inicio)
-  const fecha = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' })
-  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  const fecha = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ })
+  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
   return `${tipo} · ${fecha} ${hora} · ${t.sede} · ${t.entrenador} (${t.cupo_disponible} cupo${t.cupo_disponible !== 1 ? 's' : ''})`
 }
 

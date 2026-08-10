@@ -12,16 +12,18 @@ const NIVEL_STYLE = {
   Azul:       { background: '#dbeafe', color: '#1d4ed8' },
 }
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 function formatFechaHora(iso) {
   if (!iso) return '—'
   const d    = new Date(iso)
-  const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' })
-  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ })
+  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
   return `${dia} · ${hora} hs`
 }
 
 function formatFechaCorta(iso) {
-  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: TZ })
 }
 
 // ── Panel de inscriptos desplegable ──────────────────────────────────────────
@@ -285,7 +287,7 @@ export default function AdminActividades() {
                         key={jl.id}
                         tipo="Juego libre"
                         titulo={formatFechaHora(jl.fecha_inicio)}
-                        subtitulo={`${jl.sedes?.nombre ?? 'Sede'} · hasta ${new Date(jl.fecha_fin).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`}
+                        subtitulo={`${jl.sedes?.nombre ?? 'Sede'} · hasta ${new Date(jl.fecha_fin).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })} hs`}
                         inscriptos={insc}
                         capacidad={jl.capacidad_maxima}
                         color={COLORES.juego_libre}

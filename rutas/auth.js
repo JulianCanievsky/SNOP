@@ -237,8 +237,18 @@ router.post('/forgot-password', async (req, res) => {
         })
       } catch (emailErr) {
         console.error('Error enviando email con Resend:', emailErr)
+        // En producción, si el envío falla, lo registramos pero no exponemos el detalle al cliente
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      // RESEND_API_KEY no configurada en producción — el email NO se enviará.
+      // Esto es un error de configuración del servidor, no del usuario.
+      console.error(
+        '[forgot-password] RESEND_API_KEY no está configurada en producción. ' +
+        'El email de recuperación NO fue enviado para: ' + usuario.email +
+        '\nConfigurá RESEND_API_KEY en las variables de entorno del servidor.'
+      )
     } else {
+      // Desarrollo local: mostrar el link en consola para pruebas sin email real
       console.log(`\n[DEV] RESET LINK para ${usuario.email}:\n${resetLink}\n`)
     }
 

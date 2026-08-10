@@ -12,14 +12,16 @@ const AvatarGrande = ({ p }) => {
   )
 }
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 const formatFecha = (iso) => {
   const d = new Date(iso)
-  const fecha = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+  const fecha = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
   return fecha.charAt(0).toUpperCase() + fecha.slice(1)
 }
 
 const formatHora = (ini, fin) => {
-  const h = d => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  const h = d => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
   return fin ? `${h(ini)} — ${h(fin)} hs` : `${h(ini)} hs`
 }
 

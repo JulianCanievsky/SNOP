@@ -3,6 +3,8 @@ import { useMisHorarios } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
 import './MisHorariosEntrenador.css'
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 const HORAS_DISPONIBLES = [
   '08:00','09:00','10:00','11:00','12:00','13:00',
@@ -16,18 +18,9 @@ const DURACIONES = [
   { label: '2 horas', value: 120 },
 ]
 
-function getDiaJS(nombreDia) {
-  // devuelve el índice 0=domingo, 1=lunes…
-  const MAP = {
-    lunes: 1, martes: 2, miércoles: 3, miercoles: 3,
-    jueves: 4, viernes: 5, sábado: 6, sabado: 6, domingo: 0,
-  }
-  return MAP[nombreDia.toLowerCase()] ?? -1
-}
-
 function formatHora(iso) {
   return new Date(iso).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false,
+    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
   })
 }
 
@@ -44,7 +37,7 @@ function agruparPorDia(horarios) {
   const mapa = {}
   for (const h of horarios) {
     const d = new Date(h.fecha_inicio)
-    const diaN = d.toLocaleDateString('es-AR', { weekday: 'long' })
+    const diaN = d.toLocaleDateString('es-AR', { weekday: 'long', timeZone: TZ })
     const dia = diaN.charAt(0).toUpperCase() + diaN.slice(1)
     if (!mapa[dia]) mapa[dia] = []
     mapa[dia].push(h)

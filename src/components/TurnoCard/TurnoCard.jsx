@@ -18,6 +18,11 @@ const TIPO_CONFIG = {
     badgeClass: 'badge-tipo--juego',
     icono:      '🏓',
   },
+  torneo: {
+    label:      'Torneo',
+    badgeClass: 'badge-tipo--torneo',
+    icono:      '🏆',
+  },
 }
 
 export default function TurnoCard({ evento, onCancelar }) {
@@ -29,15 +34,17 @@ export default function TurnoCard({ evento, onCancelar }) {
 
   const cfg = TIPO_CONFIG[evento.tipo] ?? TIPO_CONFIG.turno_fijo
 
+  const TZ = 'America/Argentina/Buenos_Aires'
+
   const fechaObj   = new Date(evento.fecha_inicio)
   const fechaTexto = fechaObj.toLocaleDateString('es-AR', {
-    weekday: 'long', day: 'numeric', month: 'long',
+    weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ,
   })
   const horaInicio = fechaObj.toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false,
+    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
   })
   const horaFin = new Date(evento.fecha_fin).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false,
+    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
   })
 
   async function confirmarCancelacion() {
@@ -79,8 +86,12 @@ export default function TurnoCard({ evento, onCancelar }) {
         {/* INFO CONTEXTUAL según tipo */}
         <div className="info">
           {evento.sede      && <span>📍 {evento.sede}</span>}
-          {evento.entrenador && <span>· 👤 {evento.entrenador}</span>}
-          {evento.mesa != null && <span>· Mesa {evento.mesa}</span>}
+          {evento.tipo === 'torneo' && evento.nombre && <span>· 🏆 {evento.nombre}</span>}
+          {evento.tipo === 'torneo' && evento.modalidad && (
+            <span>· {evento.modalidad === 'dobles' ? '👥 Dobles' : '🧍 Singles'}</span>
+          )}
+          {evento.tipo !== 'torneo' && evento.entrenador && <span>· 👤 {evento.entrenador}</span>}
+          {evento.tipo !== 'torneo' && evento.mesa != null && <span>· Mesa {evento.mesa}</span>}
         </div>
 
         {/* ACCIÓN */}
@@ -89,7 +100,7 @@ export default function TurnoCard({ evento, onCancelar }) {
             className="cancelar-btn"
             onClick={() => setMostrarModal(true)}
           >
-            Cancelar {evento.tipo === 'juego_libre' ? 'inscripción' : 'turno'}
+            Cancelar {evento.tipo === 'juego_libre' ? 'inscripción' : evento.tipo === 'torneo' ? 'inscripción al torneo' : 'turno'}
           </button>
         )}
       </div>
@@ -98,7 +109,7 @@ export default function TurnoCard({ evento, onCancelar }) {
       {mostrarModal && (
         <div className="modal-overlay" onClick={() => setMostrarModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3>¿Cancelar {evento.tipo === 'juego_libre' ? 'inscripción' : 'turno'}?</h3>
+            <h3>¿Cancelar {evento.tipo === 'juego_libre' ? 'inscripción' : evento.tipo === 'torneo' ? 'inscripción al torneo' : 'turno'}?</h3>
             <p>
               Estás por cancelar{' '}
               <strong>{cfg.label.toLowerCase()}</strong> del{' '}

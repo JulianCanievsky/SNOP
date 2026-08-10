@@ -8,10 +8,12 @@ function iniciales(nombre = '') {
   return nombre.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 }
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 function formatTurno(fechaISO, sede) {
-  const d = new Date(fechaISO)
-  const dia = d.toLocaleDateString('es-AR', { weekday: 'long' })
-  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })
+  const d    = new Date(fechaISO)
+  const dia  = d.toLocaleDateString('es-AR', { weekday: 'long', timeZone: TZ })
+  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ })
   const diaCapital = dia.charAt(0).toUpperCase() + dia.slice(1)
   return `${diaCapital} — ${hora} hs · Sede ${sede || '—'}`
 }

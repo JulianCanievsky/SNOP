@@ -7,11 +7,13 @@ import { useRating } from '../../hooks/useRating'
 import { useEffect } from 'react'
 import './ClasesParticulares.css'
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 const formatearDiaHora = (fechaISO) => {
   const fecha = new Date(fechaISO)
-  const dias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
-  return `${dias[fecha.getDay()]} ${fecha.getDate()} · ${hora}`
+  const dia  = fecha.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', timeZone: TZ })
+  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  return `${dia} · ${hora}`
 }
 
 const AvatarEntrenador = ({ nombre, foto_url, tamanio = 'md' }) => {
@@ -144,9 +146,9 @@ const ClasesParticulares = () => {
       ...entrenador,
       turnos_disponibles: entrenador.turnos_disponibles.filter(turno => {
         if (!fechaFiltro) return true
-        const f = new Date(turno.fecha_inicio)
-        const iso = `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`
-        return iso === fechaFiltro
+        // Convertir la fecha del turno a ART antes de comparar contra el filtro
+        const isoART = new Date(turno.fecha_inicio).toLocaleDateString('en-CA', { timeZone: TZ })
+        return isoART === fechaFiltro
       }),
     }))
     .filter(e => e.turnos_disponibles.length > 0)
@@ -240,16 +242,16 @@ const ClasesParticulares = () => {
                 <div key={s.id} className="solicitud-card">
                   <div className="solicitud-fecha">
                     {new Date(s.turnos.fecha_inicio).toLocaleDateString('es-AR', {
-                      weekday: 'long', day: 'numeric', month: 'long',
+                      weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ,
                     })}
                   </div>
                   <div className="solicitud-hora">
                     {new Date(s.turnos.fecha_inicio).toLocaleTimeString('es-AR', {
-                      hour: '2-digit', minute: '2-digit',
+                      hour: '2-digit', minute: '2-digit', timeZone: TZ,
                     })}
                     {s.turnos.fecha_fin && (
                       <> — {new Date(s.turnos.fecha_fin).toLocaleTimeString('es-AR', {
-                        hour: '2-digit', minute: '2-digit',
+                        hour: '2-digit', minute: '2-digit', timeZone: TZ,
                       })} hs</>
                     )}
                     {s.turnos.duracion_min && ` · ${s.turnos.duracion_min} min`}

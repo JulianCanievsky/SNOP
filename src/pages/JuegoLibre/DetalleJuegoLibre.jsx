@@ -28,10 +28,13 @@ const DetalleJuegoLibre = ({
   const duracion = calcularDuracion(evento.fecha_inicio, evento.fecha_fin)
   const horario = formatearHora(evento.fecha_inicio, evento.fecha_fin)
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
   const fechaFormateada = new Date(evento.fecha_inicio).toLocaleDateString('es-AR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
+    timeZone: TZ,
   })
   const fechaCapitalizada = fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1)
 

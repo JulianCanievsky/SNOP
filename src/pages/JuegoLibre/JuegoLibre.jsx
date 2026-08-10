@@ -6,15 +6,20 @@ import { getSedesPublicas } from '../../services/adminApi'
 import { useEffect } from 'react'
 import './JuegoLibre.css'
 
+const TZ = 'America/Argentina/Buenos_Aires'
+
 const formatearFecha = (fechaISO) => {
   const fecha = new Date(fechaISO)
-  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-  const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-  return `${dias[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]}`
+  // Extraemos día-de-semana y día-del-mes en ART para no depender del TZ del browser
+  const opts = { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ }
+  return fecha.toLocaleDateString('es-AR', opts)
+    .replace(/^(.)/, c => c.toUpperCase()) // capitalizar primer letra
 }
 
 const formatearHora = (inicio, fin) => {
-  const h = (d) => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  const h = (d) => new Date(d).toLocaleTimeString('es-AR', {
+    hour: '2-digit', minute: '2-digit', timeZone: TZ,
+  })
   return `${h(inicio)} — ${h(fin)} hs`
 }
 
