@@ -405,14 +405,23 @@ router.get('/juego-libre', async (_req, res) => {
     const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
     const { data, error } = await supabase
       .from('juego_libre')
-      .select('id, fecha_inicio, fecha_fin, capacidad_maxima, sede_id, sedes(nombre)')
+      .select(`
+        id, fecha_inicio, fecha_fin, capacidad_maxima, sede_id, sedes(nombre),
+        inscripciones_juego_libre(id, estado)
+      `)
       .eq('activo', true)
       .gte('fecha_inicio', hoy.toISOString())
       .order('fecha_inicio', { ascending: true })
       .limit(10)
 
     if (error) throw error
-    res.json({ data: data ?? [] })
+
+    const resultado = (data ?? []).map(ev => ({
+      ...ev,
+      _inscriptos: (ev.inscripciones_juego_libre ?? []).filter(i => i.estado === 'activo').length,
+    }))
+
+    res.json({ data: resultado })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Error al obtener juegos libres' })
@@ -473,6 +482,83 @@ router.get('/juego-libre/:id/inscriptos', async (req, res) => {
   } catch (err) {
     console.error('GET /admin/juego-libre/:id/inscriptos', err)
     res.status(500).json({ error: 'Error al obtener inscriptos' })
+  }
+})
+
+// ─────────────────────────────────────────────
+// TODOS LOS TURNOS — GET /api/admin/turnos/todos
+// Lista TODOS los turnos futuros (incluyendo completos) para el panel de actividades
+// ─────────────────────────────────────────────
+router.get('/turnos/todos', async (_req, res) => {
+  try {
+    const desde = new Date()
+    desde.setHours(0, 0, 0, 0)
+
+    const { data: turnos, error } = await supabase
+      .from('turnos')
+      .select(`
+        id, fecha_inicio, fecha_fin, capacidad_maxima, tipo_turno_id,
+        sedes ( id, nombre ),
+        users!turnos_user_id_fkey ( id, nombre ),
+        socio_turno ( id, estado )
+      `)
+      .eq('tipo_turno_id', 1)
+      .eq('estado', true)
+      .gte('fecha_inicio', desde.toISOString())
+      .order('fecha_inicio', { ascending: true })
+      .limit(30)
+
+    if (error) throw error
+
+    const resultado = (turnos ?? []).map(t => ({
+      id:              t.id,
+      fecha_inicio:    t.fecha_inicio,
+      fecha_fin:       t.fecha_fin,
+      tipo_turno_id:   t.tipo_turno_id,
+      sede:            t.sedes?.nombre ?? '—',
+      entrenador:      t.users?.nombre ?? '—',
+      capacidad_maxima: t.capacidad_maxima,
+      inscriptos:      (t.socio_turno ?? []).filter(s => s.estado === true).length,
+      cupo_disponible: (t.capacidad_maxima ?? 0) - (t.socio_turno ?? []).filter(s => s.estado === true).length,
+    }))
+
+    res.json({ data: resultado })
+  } catch (err) {
+    console.error('GET /admin/turnos/todos', err)
+    res.status(500).json({ error: 'Error al obtener turnos' })
+  }
+})
+
+// ─────────────────────────────────────────────
+// INSCRIPTOS TURNO — GET /api/admin/turnos-inscriptos/:turnoId
+// ─────────────────────────────────────────────
+router.get('/turnos-inscriptos/:turnoId', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('socio_turno')
+      .select(`
+        id, estado, fecha_inscripcion,
+        users!socio_turno_user_id_fkey ( id, nombre, email, telefono, nivel_id, niveles(nombre) )
+      `)
+      .eq('turno_id', req.params.turnoId)
+      .eq('estado', true)
+      .order('fecha_inscripcion', { ascending: true })
+
+    if (error) throw error
+
+    const inscriptos = (data ?? []).map(i => ({
+      id:                i.id,
+      nombre:            i.users?.nombre ?? '—',
+      email:             i.users?.email  ?? '—',
+      telefono:          i.users?.telefono ?? null,
+      nivel:             i.users?.niveles?.nombre ?? 'Sin nivel',
+      fecha_inscripcion: i.fecha_inscripcion,
+    }))
+
+    res.json({ data: inscriptos, total: inscriptos.length })
+  } catch (err) {
+    console.error('GET /admin/turnos-inscriptos/:turnoId', err)
+    res.status(500).json({ error: 'Error al obtener inscriptos del turno' })
   }
 })
 
