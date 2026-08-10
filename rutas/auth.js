@@ -7,6 +7,22 @@ const router = express.Router()
 
 const BCRYPT_ROUNDS = 12
 
+// ── GET /api/auth/clubes — público, para poblar el selector en registro ────────
+router.get('/clubes', async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('clubes')
+      .select('id, nombre')
+      .eq('activo', true)
+      .order('nombre')
+    if (error) throw error
+    res.json({ data: data ?? [] })
+  } catch (err) {
+    console.error('GET /api/auth/clubes', err)
+    res.status(500).json({ error: 'Error al obtener clubes' })
+  }
+})
+
 // ─── POST /api/auth/login ─────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { email, password, tipo_usuario_id } = req.body
@@ -18,7 +34,7 @@ router.post('/login', async (req, res) => {
   try {
     const { data: usuario, error } = await supabase
       .from('users')
-      .select('id, nombre, email, password, tipo_usuario_id, club_id, activo, cuota_al_dia, foto_url')
+      .select('id, nombre, email, password, tipo_usuario_id, club_id, activo, estado_cuenta, cuota_al_dia, foto_url, nivel_id, niveles(id, nombre)')
       .eq('email', email.trim().toLowerCase())
       .single()
 
@@ -26,7 +42,20 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Correo o contraseña incorrectos' })
     }
 
+    // Cuenta desactivada por el club
     if (!usuario.activo) {
+      return res.status(403).json({ error: 'Tu cuenta está desactivada. Contactá al club.' })
+    }
+
+    // Cuenta pendiente de aprobación (nuevo estado, mensaje diferenciado)
+    const estadoCuenta = usuario.estado_cuenta ?? 'activa'
+    if (estadoCuenta === 'pendiente') {
+      return res.status(403).json({
+        error: 'Tu solicitud para unirte al club todavía no fue aprobada. Te avisaremos cuando esté lista.',
+      })
+    }
+
+    if (estadoCuenta === 'desactivada') {
       return res.status(403).json({ error: 'Tu cuenta está desactivada. Contactá al club.' })
     }
 
@@ -38,12 +67,11 @@ router.post('/login', async (req, res) => {
       })
     }
 
-    // Verificar contraseña — solo bcrypt (se eliminó soporte de texto plano)
+    // Verificar contraseña
     if (
       !usuario.password ||
       (!usuario.password.startsWith('$2b$') && !usuario.password.startsWith('$2a$'))
     ) {
-      // Hash inválido o cuenta sin contraseña configurada
       return res.status(401).json({ error: 'Correo o contraseña incorrectos' })
     }
 
@@ -53,13 +81,18 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: usuario.id, email: usuario.email, tipo_usuario_id: usuario.tipo_usuario_id },
+      { id: usuario.id, email: usuario.email, tipo_usuario_id: usuario.tipo_usuario_id, nivel_id: usuario.nivel_id ?? null },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     )
 
-    const { password: _pw, ...perfil } = usuario
-    res.json({ token, user: perfil })
+    const { password: _pw, niveles, estado_cuenta: _ec, ...perfil } = usuario
+    const perfilFinal = {
+      ...perfil,
+      nivel_id:     usuario.nivel_id ?? null,
+      nivel_nombre: usuario.niveles?.nombre ?? null,
+    }
+    res.json({ token, user: perfilFinal })
   } catch (err) {
     console.error('POST /api/auth/login', err)
     res.status(500).json({ error: 'Error interno al iniciar sesión' })
@@ -68,10 +101,10 @@ router.post('/login', async (req, res) => {
 
 // ─── POST /api/auth/registro ──────────────────────────────────────────────────
 router.post('/registro', async (req, res) => {
-  const { nombre, email, password } = req.body
+  const { nombre, email, password, club_id } = req.body
 
-  if (!nombre?.trim() || !email?.trim() || !password) {
-    return res.status(400).json({ error: 'Completá todos los campos' })
+  if (!nombre?.trim() || !email?.trim() || !password || !club_id) {
+    return res.status(400).json({ error: 'Completá todos los campos, incluyendo el club' })
   }
 
   if (password.length < 6) {
@@ -89,27 +122,51 @@ router.post('/registro', async (req, res) => {
       return res.status(409).json({ error: 'Ya existe una cuenta con ese correo electrónico' })
     }
 
+    // Verificar que el club existe
+    const { data: club, error: errClub } = await supabase
+      .from('clubes')
+      .select('id, nombre')
+      .eq('id', club_id)
+      .single()
+
+    if (errClub || !club) {
+      return res.status(400).json({ error: 'El club seleccionado no existe' })
+    }
+
     const hash = await bcrypt.hash(password, BCRYPT_ROUNDS)
 
+    // Crear usuario con estado_cuenta = 'pendiente' (sin acceso hasta aprobación)
     const { data: nuevoUsuario, error: insertError } = await supabase
       .from('users')
       .insert({
-        nombre: nombre.trim(),
-        email: email.trim().toLowerCase(),
-        password: hash,
+        nombre:          nombre.trim(),
+        email:           email.trim().toLowerCase(),
+        password:        hash,
         tipo_usuario_id: 1,
-        activo: true,
-        cuota_al_dia: true,
-        fecha_alta: new Date().toISOString(),
+        activo:          true,          // activo = true, el bloqueo lo maneja estado_cuenta
+        estado_cuenta:   'pendiente',
+        cuota_al_dia:    false,
+        fecha_alta:      new Date().toISOString(),
       })
-      .select('id, nombre, email, tipo_usuario_id, club_id, activo, cuota_al_dia, foto_url')
+      .select('id, nombre, email, tipo_usuario_id, club_id, activo, cuota_al_dia, foto_url, nivel_id')
       .single()
 
     if (insertError) throw insertError
 
+    // Crear solicitud de ingreso al club
+    await supabase
+      .from('solicitudes_club')
+      .insert({
+        user_id:        nuevoUsuario.id,
+        club_id:        Number(club_id),
+        estado:         'pendiente',
+        fecha_solicitud: new Date().toISOString(),
+      })
+
     res.status(201).json({
-      mensaje: '¡Cuenta creada! El entrenador te asignará tu nivel. Ya podés iniciar sesión.',
-      user: nuevoUsuario,
+      mensaje: `Solicitud enviada a ${club.nombre}. Te avisaremos cuando el admin la apruebe.`,
+      user: { ...nuevoUsuario, nivel_nombre: null },
+      pendiente: true,
     })
   } catch (err) {
     console.error('POST /api/auth/registro', err)
@@ -136,7 +193,6 @@ router.post('/forgot-password', async (req, res) => {
       .eq('email', email.trim().toLowerCase())
       .maybeSingle()
 
-    // Siempre responder igual para no revelar si el email existe
     if (!usuario || !usuario.activo) {
       return res.json(RESPUESTA_OK)
     }
@@ -147,7 +203,6 @@ router.post('/forgot-password', async (req, res) => {
       .eq('id', usuario.id)
       .single()
 
-    // El token se firma con el hash actual: si la contraseña cambia, el token queda inválido
     const secretReset = `${process.env.JWT_SECRET}-${usuarioConPw.password}`
     const resetToken = jwt.sign(
       { id: usuario.id, email: usuario.email },
@@ -162,7 +217,6 @@ router.post('/forgot-password', async (req, res) => {
       try {
         const { Resend } = await import('resend')
         const resend = new Resend(process.env.RESEND_API_KEY)
-
         await resend.emails.send({
           from: process.env.RESEND_FROM || 'SNOP Club <onboarding@resend.dev>',
           to: usuario.email,
@@ -171,8 +225,7 @@ router.post('/forgot-password', async (req, res) => {
             <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
               <h2 style="color:#1256b0;margin:0 0 8px;">Restablecé tu contraseña</h2>
               <p style="color:#555;margin:0 0 24px;">Hola <strong>${usuario.nombre}</strong>, recibimos una solicitud para restablecer tu contraseña.</p>
-              <a href="${resetLink}"
-                 style="display:inline-block;padding:14px 28px;background:#1a6fd4;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:15px;">
+              <a href="${resetLink}" style="display:inline-block;padding:14px 28px;background:#1a6fd4;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:15px;">
                 Restablecer contraseña
               </a>
               <p style="color:#999;font-size:12px;margin-top:24px;">
@@ -225,7 +278,7 @@ router.post('/reset-password', async (req, res) => {
     }
 
     const secretReset = `${process.env.JWT_SECRET}-${usuario.password}`
-    jwt.verify(token, secretReset) // lanza si expiró o es inválido
+    jwt.verify(token, secretReset)
 
     const hash = await bcrypt.hash(password, BCRYPT_ROUNDS)
     const { error: updateError } = await supabase

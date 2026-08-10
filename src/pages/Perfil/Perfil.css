@@ -265,3 +265,18 @@
   justify-content: center;
   font-size: 14px;
 }
+
+/* ── BADGE NIVEL (reutiliza paleta de Admin) ── */
+.badge-nivel {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-nivel.rojo        { background: #fee2e2; color: #b91c1c; }
+.badge-nivel.intermedio  { background: #fef9c3; color: #92400e; }
+.badge-nivel.azul        { background: #dbeafe; color: #1d4ed8; }
+.badge-nivel.sin-nivel   { background: #f3f4f6; color: #6b7280; }

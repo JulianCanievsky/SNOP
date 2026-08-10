@@ -1,0 +1,335 @@
+/* ── TORNEOS ─────────────────────────────────────────────────── */
+.torneos-container {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding-bottom: 88px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.tor-header {
+  background: #7c3aed;
+  padding: 28px 20px 24px;
+  border-radius: 0 0 24px 24px;
+}
+
+.tor-titulo    { font-size: 22px; font-weight: 700; color: white; margin: 0 0 2px; }
+.tor-subtitulo { font-size: 13px; color: rgba(255,255,255,.82); margin: 0; }
+
+.tor-contenido {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── TARJETA ── */
+.tor-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  border: 1.5px solid #e5e7eb;
+}
+
+.tor-card--completo { opacity: .75; }
+
+.tor-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.tor-nombre  { font-size: 15px; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
+.tor-fecha   { font-size: 12px; color: #6b7280; margin: 0; }
+
+.tor-badge {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.tor-badge--completo { background: #fee2e2; color: #b91c1c; }
+
+.tor-modalidad {
+  font-size: 11px;
+  color: #7c3aed;
+  font-weight: 600;
+  text-align: right;
+}
+
+.tor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.tor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tor-avatares { display: flex; gap: -4px; }
+
+.tor-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  margin-left: -4px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.tor-avatar:first-child { margin-left: 0; }
+.tor-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── BOTONES TARJETA ── */
+.tor-btn-ver {
+  padding: 7px 14px;
+  background: #ede9fe;
+  color: #7c3aed;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tor-btn-anotarme {
+  padding: 7px 14px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+}
+
+.tor-btn-anotarme:hover { background: #6d28d9; }
+
+.tor-btn-cancelar {
+  padding: 7px 14px;
+  background: #fef2f2;
+  color: #ef4444;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ── ESTADOS ── */
+.tor-estado {
+  text-align: center;
+  padding: 48px 20px;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.tor-estado--error { color: #ef4444; }
+
+.tor-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: tor-spin .7s linear infinite;
+}
+
+@keyframes tor-spin { to { transform: rotate(360deg); } }
+
+.tor-btn-reintentar {
+  padding: 8px 20px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ════════════════════════════════════════════════
+   DETALLE TORNEO
+════════════════════════════════════════════════ */
+.tor-detalle-container {
+  min-height: 100vh;
+  background: #f1f5f9;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.tor-detalle-header {
+  background: #7c3aed;
+  padding: 28px 20px 24px;
+  border-radius: 0 0 24px 24px;
+}
+
+.tor-btn-volver {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.85);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 0 10px;
+  display: block;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.tor-detalle-nombre {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 2px;
+}
+
+.tor-detalle-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,.82);
+  margin: 0;
+}
+
+.tor-detalle-body {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tor-detalle-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.tor-detalle-fila {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.tor-detalle-ico { font-size: 18px; flex-shrink: 0; }
+
+.tor-detalle-val  { font-size: 14px; font-weight: 600; color: #1e293b; margin: 0 0 2px; }
+.tor-detalle-meta { font-size: 12px; color: #6b7280; margin: 0; }
+
+.tor-detalle-sep {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 0 -4px;
+}
+
+.tor-detalle-aviso {
+  padding: 10px 0 4px;
+  font-size: 13px;
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+.tor-detalle-aviso p { margin: 0; }
+
+/* Anotados grid */
+.tor-anotados { background: white; border-radius: 14px; padding: 16px; }
+.tor-anotados-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin: 0 0 14px;
+}
+
+.tor-anotados-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.tor-avatar-grande-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.tor-avatar-grande {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.tor-avatar-grande img { width: 100%; height: 100%; object-fit: cover; }
+
+.tor-avatar-nombre {
+  font-size: 11px;
+  color: #6b7280;
+  max-width: 52px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Acciones */
+.tor-detalle-acciones { margin-top: 4px; }
+
+.tor-btn-confirmar, .tor-btn-cancelar-det, .tor-btn-lleno {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, opacity .15s;
+}
+
+.tor-btn-confirmar    { background: #7c3aed; color: white; }
+.tor-btn-confirmar:hover:not(:disabled) { background: #6d28d9; }
+.tor-btn-confirmar:disabled { opacity: .5; cursor: not-allowed; }
+
+.tor-btn-cancelar-det { background: #fef2f2; color: #ef4444; }
+.tor-btn-cancelar-det:disabled { opacity: .5; cursor: not-allowed; }
+
+.tor-btn-lleno { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }

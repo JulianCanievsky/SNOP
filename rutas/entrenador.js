@@ -1,6 +1,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import { crearNotificacion, enviarEmail, emailClaseConfirmada, emailClaseRechazada } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
 
@@ -578,6 +579,39 @@ router.patch('/solicitudes/:solicitudId/confirmar', async (req, res) => {
 
     if (error) throw error
 
+    // Notificación + email al socio
+    try {
+      const { data: solConDatos } = await supabase
+        .from('socio_turno')
+        .select(`user_id, turnos( fecha_inicio, sedes(nombre), users!turnos_user_id_fkey(nombre) )`)
+        .eq('id', solicitudId).single()
+
+      const socioId   = solConDatos?.user_id
+      const t         = solConDatos?.turnos
+      const fechaStr  = t?.fecha_inicio
+        ? new Date(t.fecha_inicio).toLocaleString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+        : 'próximamente'
+      const sedeStr   = t?.sedes?.nombre ?? 'la sede'
+      const entrenStr = t?.users?.nombre ?? 'el entrenador'
+
+      const { data: socioData } = await supabase
+        .from('users').select('nombre, email').eq('id', socioId).single()
+
+      if (socioData) {
+        await crearNotificacion({
+          user_id: socioId,
+          titulo:  'Clase particular confirmada',
+          mensaje: `Tu clase del ${fechaStr} con ${entrenStr} fue confirmada.`,
+          tipo:    'clase_confirmada',
+          link:    '/mis-turnos',
+        })
+        const tmpl = emailClaseConfirmada({ nombre: socioData.nombre, fechaTurno: fechaStr, entrenador: entrenStr, sede: sedeStr })
+        await enviarEmail({ to: socioData.email, ...tmpl })
+      }
+    } catch (notifErr) {
+      console.error('Notif clase confirmada:', notifErr)
+    }
+
     res.json({ message: 'Solicitud confirmada' })
   } catch (err) {
     console.error('PATCH /solicitudes/:id/confirmar', err)
@@ -594,7 +628,7 @@ router.patch('/solicitudes/:solicitudId/rechazar', async (req, res) => {
 
     const { data: sol, error: errSol } = await supabase
       .from('socio_turno')
-      .select('id, turno_id')
+      .select('id, turno_id, user_id')
       .eq('id', solicitudId)
       .single()
 
@@ -619,6 +653,34 @@ router.patch('/solicitudes/:solicitudId/rechazar', async (req, res) => {
       .eq('id', solicitudId)
 
     if (error) throw error
+
+    // Notificación + email al socio
+    try {
+      const { data: turnoData } = await supabase
+        .from('turnos')
+        .select('fecha_inicio, users!turnos_user_id_fkey(nombre)')
+        .eq('id', sol.turno_id).single()
+
+      const { data: socioData } = await supabase
+        .from('users').select('nombre, email').eq('id', sol.user_id).maybeSingle()
+
+      if (socioData && turnoData) {
+        const fechaStr  = new Date(turnoData.fecha_inicio).toLocaleString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+        const entrenStr = turnoData.users?.nombre ?? 'el entrenador'
+
+        await crearNotificacion({
+          user_id: sol.user_id,
+          titulo:  'Solicitud de clase rechazada',
+          mensaje: `Tu solicitud para la clase del ${fechaStr} con ${entrenStr} no fue confirmada.`,
+          tipo:    'clase_rechazada',
+          link:    '/clases-particulares',
+        })
+        const tmpl = emailClaseRechazada({ nombre: socioData.nombre, fechaTurno: fechaStr, entrenador: entrenStr })
+        await enviarEmail({ to: socioData.email, ...tmpl })
+      }
+    } catch (notifErr) {
+      console.error('Notif clase rechazada:', notifErr)
+    }
 
     res.json({ message: 'Solicitud rechazada' })
   } catch (err) {

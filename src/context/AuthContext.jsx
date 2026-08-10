@@ -38,6 +38,17 @@ export function AuthProvider({ children }) {
     return perfil
   }
 
+  // Permite actualizar el user en contexto + localStorage sin re-login
+  // (útil cuando el admin cambia el nivel del socio)
+  function actualizarUser(campos) {
+    setUser(prev => {
+      if (!prev) return prev
+      const actualizado = { ...prev, ...campos }
+      localStorage.setItem('snop_user', JSON.stringify(actualizado))
+      return actualizado
+    })
+  }
+
   function logout() {
     setUser(null)
     localStorage.removeItem('snop_user')
@@ -45,7 +56,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, actualizarUser }}>
       {children}
     </AuthContext.Provider>
   )

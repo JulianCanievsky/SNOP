@@ -19,10 +19,13 @@ export default function AdminInicio() {
   }, [])
 
   const acciones = [
-    { titulo: 'Gestionar socios',    sub: 'Ver y editar socios',      emoji: '👥', path: '/admin/socios' },
-    { titulo: 'Crear juego libre',   sub: 'Nuevo espacio de juego',   emoji: '🏓', path: '/admin/juego-libre' },
-    { titulo: 'Enviar comunicado',   sub: 'Notificar a socios',       emoji: '📢', path: '/admin/comunicado' },
-    { titulo: 'Gestión de niveles',  sub: 'Asignar niveles',          emoji: '⭐', path: '/admin/niveles' },
+    { titulo: 'Solicitudes de ingreso', sub: 'Aprobar socios nuevos',    emoji: '📋', path: '/admin/solicitudes' },
+    { titulo: 'Gestionar socios',       sub: 'Ver y editar socios',      emoji: '👥', path: '/admin/socios' },
+    { titulo: 'Crear juego libre',      sub: 'Nuevo espacio de juego',   emoji: '🏓', path: '/admin/juego-libre' },
+    { titulo: 'Crear torneo',           sub: 'Torneo interno del club',  emoji: '🏆', path: '/admin/torneos' },
+    { titulo: 'Enviar comunicado',      sub: 'Notificar a socios',       emoji: '📢', path: '/admin/comunicado' },
+    { titulo: 'Gestión de niveles',     sub: 'Asignar niveles',          emoji: '⭐', path: '/admin/niveles' },
+    { titulo: 'Exportar actividades',   sub: 'Descargar Excel',          emoji: '📊', path: '/admin/exportar' },
   ]
 
   return (
@@ -32,7 +35,7 @@ export default function AdminInicio() {
           <div>
             <p style={{ fontSize: 12, opacity: .7, margin: '0 0 2px', color: 'white' }}>ADMIN (ORGANIZADOR)</p>
             <h1>Panel admin</h1>
-            <p>{user?.club_nombre ?? 'Club Porteño'}</p>
+            <p>{user?.club_nombre ?? user?.nombre ?? 'Panel Admin'}</p>
           </div>
           <div style={{
             width: 44, height: 44, borderRadius: '50%',

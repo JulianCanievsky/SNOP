@@ -1,0 +1,420 @@
+/* ── MIS CLASES ─────────────────────────────────────────────────── */
+.mis-clases {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding-bottom: 88px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.mc-header {
+  background: #2563eb;
+  color: white;
+  padding: 28px 20px 24px;
+  border-radius: 0 0 24px 24px;
+}
+
+.mc-volver {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.85);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 0 8px;
+  display: block;
+  font-family: inherit;
+}
+
+.mc-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 2px;
+}
+
+.mc-subtitulo {
+  font-size: 13px;
+  opacity: .82;
+  margin: 0;
+  color: white;
+}
+
+.mc-body {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── ALERTAS ── */
+.mc-alerta {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mc-alerta--ok    { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; }
+.mc-alerta--error { background: #fef2f2; color: #ef4444; border: 1px solid #fca5a5; }
+
+/* ── BONO CARD ── */
+.mc-bono-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07);
+}
+
+.mc-bono-plan {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 12px;
+}
+
+.mc-bono-nums {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-bottom: 14px;
+}
+
+.mc-bono-num {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.mc-bono-val {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.mc-bono-lbl {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.mc-bono-sep {
+  width: 1px;
+  height: 36px;
+  background: #e5e7eb;
+}
+
+.mc-barra {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.mc-barra-relleno {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 999px;
+  transition: width .4s ease;
+}
+
+.mc-bono-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+  text-align: center;
+}
+
+.mc-sin-abono {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 600;
+}
+
+/* ── TABS ── */
+.mc-tabs {
+  display: flex;
+  background: white;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+
+.mc-tab {
+  flex: 1;
+  padding: 9px 8px;
+  border: none;
+  background: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: inherit;
+}
+
+.mc-tab--activo {
+  background: #2563eb;
+  color: white;
+}
+
+/* ── LISTA ── */
+.mc-lista {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+
+.mc-vacio {
+  padding: 32px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* ── CLASE ROW ── */
+.mc-clase-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 10px;
+}
+
+.mc-clase-row:last-child { border-bottom: none; }
+
+.mc-clase-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mc-clase-fecha {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.mc-clase-sede {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.mc-badge-pasado {
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── CRÉDITO ROW ── */
+.mc-credito-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 10px;
+}
+
+.mc-credito-row:last-child { border-bottom: none; }
+
+.mc-credito-row--usado { opacity: .6; }
+
+.mc-credito-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mc-credito-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.mc-credito-sub {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.mc-credito-vence {
+  font-size: 11px;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.mc-badge-usado {
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── BOTONES ── */
+.mc-btn-primary {
+  padding: 10px 20px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, opacity .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mc-btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+.mc-btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+.mc-btn-secondary {
+  padding: 10px 20px;
+  background: transparent;
+  color: #2563eb;
+  border: 2px solid #2563eb;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+  white-space: nowrap;
+}
+
+.mc-btn-secondary:hover { background: #eff6ff; }
+
+.mc-btn-cancelar {
+  padding: 6px 14px;
+  background: #fef2f2;
+  color: #ef4444;
+  border: none;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mc-btn-cancelar:hover:not(:disabled) { background: #fecaca; }
+.mc-btn-cancelar:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── MODAL ── */
+.mc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex;
+  align-items: flex-end;
+  z-index: 200;
+  padding: 0;
+}
+
+.mc-modal {
+  background: white;
+  width: 100%;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.mc-modal-titulo {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px;
+}
+
+.mc-modal-sub {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 16px;
+}
+
+.mc-select {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1e293b;
+  background: white;
+  outline: none;
+  box-sizing: border-box;
+  margin-bottom: 4px;
+}
+
+.mc-select:focus { border-color: #2563eb; }
+
+.mc-modal-acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.mc-modal-acciones .mc-btn-secondary,
+.mc-modal-acciones .mc-btn-primary {
+  flex: 1;
+}
+
+/* ── ESTADOS ── */
+.mc-cargando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #6b7280;
+  gap: 12px;
+}
+
+.mc-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: mc-spin .7s linear infinite;
+}
+
+@keyframes mc-spin { to { transform: rotate(360deg); } }
+
+.mc-error {
+  padding: 40px 20px;
+  text-align: center;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}

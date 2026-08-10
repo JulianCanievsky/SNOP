@@ -27,7 +27,31 @@ export const enviarComunicado = (body)   => api.post('/admin/comunicados', body)
 // Config
 export const getConfig        = ()       => api.get('/admin/config').then(r => r.data.data)
 
+// Turnos (asignación admin)
+export const getTurnosDisponibles    = ()                       => api.get('/admin/turnos').then(r => r.data.data)
+export const asignarTurnoSocio       = (socioId, body)          => api.post(`/admin/socios/${socioId}/turnos`, body).then(r => r.data)
+export const quitarTurnoSocio        = (socioId, socioTurnoId)  => api.delete(`/admin/socios/${socioId}/turnos/${socioTurnoId}`).then(r => r.data)
+
+// Solicitudes de ingreso
+export const getSolicitudes          = ()    => api.get('/admin/solicitudes').then(r => r.data.data)
+export const aceptarSolicitud        = (id)  => api.patch(`/admin/solicitudes/${id}/aceptar`).then(r => r.data)
+export const rechazarSolicitud       = (id)  => api.patch(`/admin/solicitudes/${id}/rechazar`).then(r => r.data)
+
 // Juego libre
-export const getJuegosLibres  = ()       => api.get('/admin/juego-libre').then(r => r.data.data)
-export const crearJuegoLibre  = (body)   => api.post('/admin/juego-libre', body).then(r => r.data)
-export const borrarJuegoLibre = (id)     => api.delete(`/admin/juego-libre/${id}`).then(r => r.data)
+export const getJuegosLibres         = ()       => api.get('/admin/juego-libre').then(r => r.data.data)
+export const crearJuegoLibre         = (body)   => api.post('/admin/juego-libre', body).then(r => r.data)
+export const borrarJuegoLibre        = (id)     => api.delete(`/admin/juego-libre/${id}`).then(r => r.data)
+export const getInscriptosJuegoLibre = (id)     => api.get(`/admin/juego-libre/${id}/inscriptos`).then(r => r.data)
+
+// Exportación Excel — devuelve un Blob para descarga directa
+export async function exportarExcel(tipo, params = {}) {
+  const query = new URLSearchParams()
+  if (params.desde)   query.set('desde',   params.desde)
+  if (params.hasta)   query.set('hasta',   params.hasta)
+  if (params.sede_id) query.set('sede_id', params.sede_id)
+
+  const response = await api.get(`/admin/exportar/${tipo}?${query}`, {
+    responseType: 'blob',
+  })
+  return response.data // Blob
+}

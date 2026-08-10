@@ -69,7 +69,29 @@ router.get('/', autenticar, async (req, res) => {
       throw errJuegos
     }
 
-    // ── 3. Normalizar y filtrar fechas futuras en código ──────────────────
+    // ── 3. Torneos activos ────────────────────────────────────────────────
+    const { data: torneosInsc, error: errTorneos } = await supabase
+      .from('inscripciones_torneo')
+      .select(`
+        id,
+        torneos!inner (
+          id,
+          nombre,
+          fecha_inicio,
+          fecha_fin,
+          modalidad,
+          sedes ( nombre )
+        )
+      `)
+      .eq('socio_id', socioId)
+      .eq('estado', 'activo')
+
+    // Si la tabla torneos no existe aún, ignoramos silenciosamente
+    if (errTorneos && errTorneos.code !== '42P01') {
+      console.error('agenda — inscripciones_torneo:', errTorneos)
+    }
+
+    // ── 4. Normalizar y filtrar fechas futuras en código ──────────────────
     const eventos = []
 
     for (const insc of inscripciones ?? []) {
@@ -112,6 +134,29 @@ router.get('/', autenticar, async (req, res) => {
         entrenador:     null,
         mesa:           null,
         estado:         'inscripto',
+      })
+    }
+
+    // Torneos
+    for (const insc of (torneosInsc ?? [])) {
+      const t = insc.torneos
+      if (!t?.fecha_inicio) continue
+      if (t.fecha_inicio < ahora) continue
+
+      eventos.push({
+        id:           `tr-${insc.id}`,
+        source_id:    insc.id,
+        torneo_id:    t.id,
+        tipo:         'torneo',
+        fecha_inicio: t.fecha_inicio,
+        fecha_fin:    t.fecha_fin,
+        duracion_min: null,
+        sede:         t.sedes?.nombre ?? null,
+        entrenador:   null,
+        mesa:         null,
+        estado:       'inscripto',
+        nombre:       t.nombre,
+        modalidad:    t.modalidad,
       })
     }
 

@@ -12,6 +12,9 @@ import JuegoLibre         from './pages/JuegoLibre/JuegoLibre'
 import ClasesParticulares from './pages/ClasesParticulares/ClasesParticulares'
 import Perfil             from './pages/Perfil/Perfil'
 import Comunicados        from './pages/Comunicados/Comunicados'
+import MisClases          from './pages/MisClases/MisClases'
+import Torneos            from './pages/Torneos/Torneos'
+import Notificaciones     from './pages/Notificaciones/Notificaciones'
 
 // Admin
 import AdminInicio        from './pages/Admin/AdminInicio'
@@ -23,6 +26,9 @@ import EnviarComunicado   from './pages/Admin/EnviarComunicado'
 import GestionNiveles     from './pages/Admin/GestionNiveles'
 import ConfigAdmin        from './pages/Admin/ConfigAdmin'
 import AdminActividades   from './pages/Admin/AdminActividades'
+import ExportarActividades from './pages/Admin/ExportarActividades'
+import CrearTorneo        from './pages/Admin/CrearTorneo'
+import SolicitudesIngreso  from './pages/Admin/SolicitudesIngreso'
 
 // Entrenador
 import InicioEntrenador        from './pages/entrenador/InicioEntrenador/InicioEntrenador'
@@ -85,6 +91,9 @@ function AppRoutes() {
       <Route path="/clases-particulares" element={<RutaProtegida rolesPermitidos={[1]}><ClasesParticulares /></RutaProtegida>} />
       <Route path="/perfil"             element={<RutaProtegida rolesPermitidos={[1]}><Perfil /></RutaProtegida>} />
       <Route path="/comunicados"        element={<RutaProtegida rolesPermitidos={[1]}><Comunicados /></RutaProtegida>} />
+      <Route path="/mis-clases"         element={<RutaProtegida rolesPermitidos={[1]}><MisClases /></RutaProtegida>} />
+      <Route path="/torneos"             element={<RutaProtegida rolesPermitidos={[1]}><Torneos /></RutaProtegida>} />
+      <Route path="/notificaciones"      element={<RutaProtegida rolesPermitidos={[1]}><Notificaciones /></RutaProtegida>} />
 
       {/* Entrenador (tipo_usuario_id = 2) */}
       <Route path="/entrenador/inicio"          element={<RutaProtegida rolesPermitidos={[2]}><InicioEntrenador /></RutaProtegida>} />
@@ -105,6 +114,9 @@ function AppRoutes() {
       <Route path="/admin/niveles"       element={<RutaProtegida rolesPermitidos={[3]}><GestionNiveles /></RutaProtegida>} />
       <Route path="/admin/config"        element={<RutaProtegida rolesPermitidos={[3]}><ConfigAdmin /></RutaProtegida>} />
       <Route path="/admin/actividades"   element={<RutaProtegida rolesPermitidos={[3]}><AdminActividades /></RutaProtegida>} />
+      <Route path="/admin/exportar"      element={<RutaProtegida rolesPermitidos={[3]}><ExportarActividades /></RutaProtegida>} />
+      <Route path="/admin/torneos"       element={<RutaProtegida rolesPermitidos={[3]}><CrearTorneo /></RutaProtegida>} />
+      <Route path="/admin/solicitudes"   element={<RutaProtegida rolesPermitidos={[3]}><SolicitudesIngreso /></RutaProtegida>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

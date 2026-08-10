@@ -1,0 +1,157 @@
+/* ── NOTIFICACIONES ─────────────────────────────────────────── */
+.notif-page {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding-bottom: 88px;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.notif-header {
+  background: #2563eb;
+  padding: 28px 20px 20px;
+  border-radius: 0 0 24px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notif-volver {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.85);
+  font-size: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.notif-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  flex: 1;
+}
+
+.notif-btn-leer-todas {
+  background: rgba(255,255,255,.2);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+
+.notif-btn-leer-todas:hover { background: rgba(255,255,255,.3); }
+
+.notif-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── ITEMS ── */
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  background: white;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background .12s;
+}
+
+.notif-item:first-child { border-radius: 14px 14px 0 0; }
+.notif-item:last-child  { border-radius: 0 0 14px 14px; border-bottom: none; }
+.notif-item:only-child  { border-radius: 14px; }
+
+.notif-item[role="button"] { cursor: pointer; }
+.notif-item[role="button"]:hover { background: #f8fafc; }
+
+.notif-item--nueva { background: #eff6ff; }
+.notif-item--nueva:hover { background: #dbeafe; }
+
+.notif-ico {
+  font-size: 22px;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-contenido {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-titulo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.notif-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.notif-punto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+  flex-shrink: 0;
+}
+
+.notif-mensaje {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+.notif-fecha {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ── ESTADOS ── */
+.notif-estado {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.notif-vacio-ico { font-size: 40px; margin: 0; }
+
+.notif-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: notif-spin .7s linear infinite;
+}
+
+@keyframes notif-spin { to { transform: rotate(360deg); } }

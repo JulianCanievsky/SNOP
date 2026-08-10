@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
-import {
-  getSedes,
-  crearJuegoLibre,
-  getJuegosLibres,
-  borrarJuegoLibre,
-  getInscriptosJuegoLibre,
-} from '../../services/adminApi'
+import { getSedes } from '../../services/adminApi'
+import { crearTorneo, getTorneosAdmin, borrarTorneo, getInscriptosTorneo } from '../../services/torneosApi'
 import './Admin.css'
 
-const MESAS_POR_NIVEL = 4
+const NIVEL_STYLE = {
+  Rojo:       { background: '#fee2e2', color: '#b91c1c' },
+  Intermedio: { background: '#fef9c3', color: '#92400e' },
+  Azul:       { background: '#dbeafe', color: '#1d4ed8' },
+}
 
-export default function CrearJuegoLibre() {
+export default function CrearTorneo() {
   const navigate = useNavigate()
 
   const [sedes,      setSedes]      = useState([])
@@ -22,24 +21,24 @@ export default function CrearJuegoLibre() {
   const [exito,      setExito]      = useState(false)
   const [error,      setError]      = useState('')
 
-  // Modal de inscriptos
-  const [modalEventoId,   setModalEventoId]   = useState(null)
-  const [inscriptos,      setInscriptos]      = useState([])
-  const [cargandoModal,   setCargandoModal]   = useState(false)
+  // Modal inscriptos
+  const [modalId,       setModalId]       = useState(null)
+  const [inscriptos,    setInscriptos]    = useState([])
+  const [cargandoModal, setCargandoModal] = useState(false)
 
   const [form, setForm] = useState({
+    nombre:              '',
     sede_id:             '',
     fecha:               '',
-    hora_inicio:         '20:00',
-    hora_fin:            '21:30',
-    cantidad_mesas:      3,
+    hora_inicio:         '09:00',
+    hora_fin:            '13:00',
+    modalidad:           'singles',
+    capacidad_maxima:    16,
     niveles_habilitados: ['Rojo', 'Intermedio', 'Azul'],
   })
 
-  const capacidad = form.cantidad_mesas * MESAS_POR_NIVEL
-
   useEffect(() => {
-    Promise.all([getSedes(), getJuegosLibres()])
+    Promise.all([getSedes(), getTorneosAdmin()])
       .then(([s, p]) => { setSedes(s); setPublicados(p) })
       .catch(console.error)
       .finally(() => setCargando(false))
@@ -47,7 +46,10 @@ export default function CrearJuegoLibre() {
 
   function handleChange(e) {
     const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: name === 'cantidad_mesas' ? Number(value) : value }))
+    setForm(prev => ({
+      ...prev,
+      [name]: name === 'capacidad_maxima' ? Number(value) : value,
+    }))
     setError('')
   }
 
@@ -66,57 +68,49 @@ export default function CrearJuegoLibre() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    if (!form.sede_id || !form.fecha || !form.hora_inicio || !form.hora_fin) {
+    if (!form.nombre.trim() || !form.sede_id || !form.fecha || !form.modalidad) {
       setError('Completá todos los campos obligatorios')
       return
     }
     setEnviando(true)
     try {
-      await crearJuegoLibre({ ...form, capacidad_maxima: capacidad })
+      await crearTorneo(form)
       setExito(true)
-      const nuevos = await getJuegosLibres()
+      const nuevos = await getTorneosAdmin()
       setPublicados(nuevos)
-      setForm(prev => ({ ...prev, fecha: '', sede_id: '' }))
+      setForm(prev => ({ ...prev, nombre: '', fecha: '', sede_id: '' }))
       setTimeout(() => setExito(false), 3000)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear espacio')
+      setError(err.response?.data?.error || 'Error al crear torneo')
     } finally {
       setEnviando(false)
     }
   }
 
   async function eliminar(id) {
-    if (!window.confirm('¿Borrar este espacio de juego?')) return
+    if (!window.confirm('¿Borrar este torneo?')) return
     try {
-      await borrarJuegoLibre(id)
+      await borrarTorneo(id)
       setPublicados(prev => prev.filter(p => p.id !== id))
-      if (modalEventoId === id) setModalEventoId(null)
+      if (modalId === id) setModalId(null)
     } catch (err) {
       alert(err.response?.data?.error || 'Error al eliminar')
     }
   }
 
-  async function verInscriptos(eventoId) {
-    // Toggle: cerrar si ya está abierto
-    if (modalEventoId === eventoId) {
-      setModalEventoId(null)
-      return
-    }
-    setModalEventoId(eventoId)
+  async function verInscriptos(id) {
+    if (modalId === id) { setModalId(null); return }
+    setModalId(id)
     setCargandoModal(true)
     try {
-      const { data } = await getInscriptosJuegoLibre(eventoId)
+      const { data } = await getInscriptosTorneo(id)
       setInscriptos(data ?? [])
-    } catch (err) {
-      console.error(err)
-      setInscriptos([])
-    } finally {
-      setCargandoModal(false)
-    }
+    } catch { setInscriptos([]) }
+    finally { setCargandoModal(false) }
   }
 
   function formatFechaHora(iso) {
-    const d   = new Date(iso)
+    const d    = new Date(iso)
     const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' })
     const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
     return `${dia} · ${hora} hs`
@@ -126,32 +120,31 @@ export default function CrearJuegoLibre() {
     return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
   }
 
-  const NIVEL_STYLE = {
-    Rojo:        { background: '#fee2e2', color: '#b91c1c' },
-    Intermedio:  { background: '#fef9c3', color: '#92400e' },
-    Azul:        { background: '#dbeafe', color: '#1d4ed8' },
-  }
-
   return (
     <div className="admin-page">
       <div className="admin-header">
         <button className="btn-volver-admin" onClick={() => navigate('/admin')}>‹ Inicio</button>
-        <h1>Crear juego libre</h1>
-        <p>Nuevo espacio de juego</p>
+        <h1>Crear torneo</h1>
+        <p>Torneo interno del club</p>
       </div>
 
       <div className="admin-body">
-        {exito && <div className="alerta-exito">✓ Espacio publicado correctamente</div>}
+        {exito && <div className="alerta-exito">✓ Torneo publicado correctamente</div>}
         {error && <div className="alerta-error">{error}</div>}
 
         <form className="admin-form" onSubmit={handleSubmit}>
           <div className="form-group">
+            <label>Nombre del torneo</label>
+            <input name="nombre" type="text" className="form-input"
+              placeholder="ej. Copa de Verano 2026"
+              value={form.nombre} onChange={handleChange} />
+          </div>
+
+          <div className="form-group">
             <label>Sede</label>
             <select name="sede_id" className="form-select" value={form.sede_id} onChange={handleChange}>
               <option value="">Seleccioná una sede</option>
-              {sedes.map(s => (
-                <option key={s.id} value={s.id}>{s.nombre}</option>
-              ))}
+              {sedes.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
             </select>
           </div>
 
@@ -175,13 +168,26 @@ export default function CrearJuegoLibre() {
           </div>
 
           <div className="form-group">
-            <label>Cantidad de mesas</label>
-            <input name="cantidad_mesas" type="number" min="1" max="20" className="form-input"
-              value={form.cantidad_mesas} onChange={handleChange} />
+            <label>Modalidad</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {['singles', 'dobles'].map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  className={`filtro-pill${form.modalidad === m ? ' activo' : ''}`}
+                  onClick={() => setForm(prev => ({ ...prev, modalidad: m }))}
+                  style={{ flex: 1, textTransform: 'capitalize' }}
+                >
+                  {m === 'singles' ? '🧍 Singles' : '👥 Dobles'}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="cupo-calculado">
-            Capacidad máxima calculada: <strong>{capacidad} jugadores</strong>
+          <div className="form-group">
+            <label>Capacidad máxima ({form.modalidad === 'dobles' ? 'parejas' : 'jugadores'})</label>
+            <input name="capacidad_maxima" type="number" min="2" max="64" className="form-input"
+              value={form.capacidad_maxima} onChange={handleChange} />
           </div>
 
           <div className="form-group">
@@ -201,7 +207,7 @@ export default function CrearJuegoLibre() {
           </div>
 
           <button type="submit" className="btn-primary" disabled={enviando}>
-            {enviando ? 'Publicando...' : 'Publicar espacio'}
+            {enviando ? 'Publicando...' : 'Publicar torneo'}
           </button>
         </form>
 
@@ -214,21 +220,23 @@ export default function CrearJuegoLibre() {
                 <div className="estado-carga"><div className="spinner-admin" /></div>
               ) : (
                 publicados.map(p => {
-                  const abierto = modalEventoId === p.id
+                  const abierto = modalId === p.id
                   return (
                     <div key={p.id}>
                       <div className="juego-libre-item">
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p className="juego-libre-fecha">{formatFechaHora(p.fecha_inicio)}</p>
-                          <p className="juego-libre-sub">
-                            {p.sedes?.nombre ?? 'Sede'} · {p.capacidad_maxima} lugares
+                          <p className="juego-libre-fecha">
+                            🏆 {p.nombre}
+                            <span style={{ marginLeft: 6, fontSize: 11, background: '#eef2ff', color: '#4f46e5', padding: '2px 7px', borderRadius: 999, fontWeight: 700 }}>
+                              {p.modalidad}
+                            </span>
                           </p>
-                          {/* Contador de inscriptos */}
-                          {p._inscriptos !== undefined && (
-                            <p style={{ fontSize: 12, color: '#4f46e5', fontWeight: 600, margin: '2px 0 0' }}>
-                              {p._inscriptos} anotado{p._inscriptos !== 1 ? 's' : ''}
-                            </p>
-                          )}
+                          <p className="juego-libre-sub">
+                            {formatFechaHora(p.fecha_inicio)} · {p.sedes?.nombre ?? 'Sede'}
+                          </p>
+                          <p className="juego-libre-sub">
+                            {p.inscriptos ?? 0}/{p.capacidad_maxima} inscriptos
+                          </p>
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                           <button
@@ -242,41 +250,30 @@ export default function CrearJuegoLibre() {
                         </div>
                       </div>
 
-                      {/* ── Panel desplegable de inscriptos ── */}
                       {abierto && (
                         <div className="inscriptos-panel">
                           {cargandoModal ? (
                             <div style={{ textAlign: 'center', padding: '16px 0' }}>
                               <div className="spinner-admin" style={{ margin: '0 auto 8px' }} />
-                              <span style={{ fontSize: 13, color: '#6b7280' }}>Cargando...</span>
                             </div>
                           ) : inscriptos.length === 0 ? (
                             <p className="inscriptos-vacio">Nadie se anotó todavía.</p>
                           ) : (
                             <>
-                              <p className="inscriptos-titulo">
-                                {inscriptos.length} anotado{inscriptos.length !== 1 ? 's' : ''}
-                              </p>
+                              <p className="inscriptos-titulo">{inscriptos.length} inscripto{inscriptos.length !== 1 ? 's' : ''}</p>
                               {inscriptos.map((insc, idx) => (
                                 <div key={insc.id} className="inscripto-row">
                                   <div className="inscripto-num">{idx + 1}</div>
                                   <div className="inscripto-info">
                                     <span className="inscripto-nombre">{insc.nombre}</span>
                                     <span className="inscripto-email">{insc.email}</span>
-                                    {insc.telefono && (
-                                      <span className="inscripto-email">{insc.telefono}</span>
-                                    )}
+                                    {insc.telefono && <span className="inscripto-email">{insc.telefono}</span>}
                                   </div>
                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                                    <span
-                                      className="badge-nivel"
-                                      style={NIVEL_STYLE[insc.nivel] ?? { background: '#f3f4f6', color: '#6b7280' }}
-                                    >
+                                    <span className="badge-nivel" style={NIVEL_STYLE[insc.nivel] ?? { background: '#f3f4f6', color: '#6b7280' }}>
                                       {insc.nivel}
                                     </span>
-                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>
-                                      {formatFechaInsc(insc.fecha_inscripcion)}
-                                    </span>
+                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>{formatFechaInsc(insc.fecha_inscripcion)}</span>
                                   </div>
                                 </div>
                               ))}

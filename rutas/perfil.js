@@ -11,7 +11,7 @@ router.get('/', autenticar, async (req, res) => {
 
     const { data: usuario, error: errorUsuario } = await supabase
       .from('users')
-      .select('id, nombre, email, foto_url, cuota_al_dia, tipo_usuario_id')
+      .select('id, nombre, email, foto_url, cuota_al_dia, tipo_usuario_id, nivel_id, niveles(id, nombre)')
       .eq('id', usuario_id)
       .single()
 
@@ -43,7 +43,10 @@ router.get('/', autenticar, async (req, res) => {
 
     res.json({
       data: {
-        usuario,
+        usuario: {
+          ...usuario,
+          nivel_nombre: usuario.niveles?.nombre ?? null,
+        },
         turnos: inscripciones || []
       }
     })

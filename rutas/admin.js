@@ -2,6 +2,7 @@ import express from 'express'
 import bcrypt from 'bcryptjs'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import { crearNotificacion, enviarEmail, emailTurnoAsignado, emailSolicitudAceptada, emailSolicitudRechazada } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
 
@@ -330,7 +331,7 @@ router.get('/config', async (req, res) => {
     if (errAdmin) throw errAdmin
 
     const { data: club, error: errClub } = await supabase
-      .from('clubs')
+      .from('clubes')
       .select('id, nombre, whatsapp_link')
       .single()
 
@@ -430,6 +431,523 @@ router.delete('/juego-libre/:id', async (req, res) => {
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Error al eliminar juego libre' })
+  }
+})
+
+// INSCRIPTOS JUEGO LIBRE — GET /api/admin/juego-libre/:id/inscriptos
+router.get('/juego-libre/:id/inscriptos', async (req, res) => {
+  try {
+    const eventoId = req.params.id
+
+    const { data, error } = await supabase
+      .from('inscripciones_juego_libre')
+      .select(`
+        id,
+        fecha_inscripcion,
+        estado,
+        users!inscripciones_juego_libre_socio_id_fkey (
+          id,
+          nombre,
+          email,
+          telefono,
+          nivel_id,
+          niveles ( nombre )
+        )
+      `)
+      .eq('evento_id', eventoId)
+      .eq('estado', 'activo')
+      .order('fecha_inscripcion', { ascending: true })
+
+    if (error) throw error
+
+    const inscriptos = (data ?? []).map(i => ({
+      id:                i.id,
+      nombre:            i.users?.nombre ?? '—',
+      email:             i.users?.email  ?? '—',
+      telefono:          i.users?.telefono ?? null,
+      nivel:             i.users?.niveles?.nombre ?? 'Sin nivel',
+      fecha_inscripcion: i.fecha_inscripcion,
+    }))
+
+    res.json({ data: inscriptos, total: inscriptos.length })
+  } catch (err) {
+    console.error('GET /admin/juego-libre/:id/inscriptos', err)
+    res.status(500).json({ error: 'Error al obtener inscriptos' })
+  }
+})
+
+// ─────────────────────────────────────────────
+// TURNOS DISPONIBLES — GET /api/admin/turnos
+// Lista turnos futuros con cupo disponible para poblar el selector en DetalleSocio
+// ─────────────────────────────────────────────
+router.get('/turnos', async (_req, res) => {
+  try {
+    const desde = new Date()
+    desde.setHours(0, 0, 0, 0)
+
+    const { data: turnos, error } = await supabase
+      .from('turnos')
+      .select(`
+        id,
+        fecha_inicio,
+        fecha_fin,
+        capacidad_maxima,
+        tipo_turno_id,
+        sedes ( id, nombre ),
+        users ( id, nombre ),
+        socio_turno ( id )
+      `)
+      .gte('fecha_inicio', desde.toISOString())
+      .eq('estado', true)
+      .order('fecha_inicio', { ascending: true })
+
+    if (error) throw error
+
+    // Filtrar turnos con cupo disponible
+    const disponibles = (turnos ?? [])
+      .map(t => ({
+        id:              t.id,
+        fecha_inicio:    t.fecha_inicio,
+        fecha_fin:       t.fecha_fin,
+        tipo_turno_id:   t.tipo_turno_id,
+        sede:            t.sedes?.nombre ?? '—',
+        entrenador:      t.users?.nombre ?? '—',
+        capacidad_maxima: t.capacidad_maxima,
+        inscriptos:      t.socio_turno?.length ?? 0,
+        cupo_disponible: (t.capacidad_maxima ?? 0) - (t.socio_turno?.length ?? 0),
+      }))
+      .filter(t => t.cupo_disponible > 0)
+
+    res.json({ data: disponibles })
+  } catch (err) {
+    console.error('GET /admin/turnos', err)
+    res.status(500).json({ error: 'Error al obtener turnos disponibles' })
+  }
+})
+
+// ─────────────────────────────────────────────
+// ASIGNAR TURNO A SOCIO — POST /api/admin/socios/:id/turnos
+// Body: { turno_id }
+// ─────────────────────────────────────────────
+router.post('/socios/:id/turnos', async (req, res) => {
+  const socioId  = req.params.id
+  const { turno_id } = req.body
+
+  if (!turno_id) {
+    return res.status(400).json({ error: 'turno_id es requerido' })
+  }
+
+  try {
+    // Verificar que el socio existe
+    const { data: socio, error: errSocio } = await supabase
+      .from('users')
+      .select('id, nombre')
+      .eq('id', socioId)
+      .eq('tipo_usuario_id', 1)
+      .single()
+
+    if (errSocio || !socio) {
+      return res.status(404).json({ error: 'Socio no encontrado' })
+    }
+
+    // Verificar que el turno existe y tiene cupo
+    const { data: turno, error: errTurno } = await supabase
+      .from('turnos')
+      .select('id, capacidad_maxima, socio_turno(id)')
+      .eq('id', turno_id)
+      .single()
+
+    if (errTurno || !turno) {
+      return res.status(404).json({ error: 'Turno no encontrado' })
+    }
+
+    const inscriptos = turno.socio_turno?.length ?? 0
+    if (inscriptos >= turno.capacidad_maxima) {
+      return res.status(400).json({ error: 'El turno no tiene cupo disponible' })
+    }
+
+    // Verificar que el socio no está ya inscripto
+    const { data: yaInscripto } = await supabase
+      .from('socio_turno')
+      .select('id')
+      .eq('user_id', socioId)
+      .eq('turno_id', turno_id)
+      .maybeSingle()
+
+    if (yaInscripto) {
+      return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
+    }
+
+    // Insertar con estado = true (confirmado directo, no requiere aprobación del entrenador)
+    const { data, error } = await supabase
+      .from('socio_turno')
+      .insert({
+        user_id:           socioId,
+        turno_id,
+        estado:            true,
+        fecha_inscripcion: new Date().toISOString(),
+      })
+      .select(`
+        id,
+        estado,
+        turnos ( id, fecha_inicio, fecha_fin, sedes(nombre), mesas(numero) )
+      `)
+      .single()
+
+    if (error) {
+      if (error.code === '23505') {
+        return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
+      }
+      throw error
+    }
+
+    // Notificación in-app + email al socio
+    try {
+      const fechaTurnoStr = data.turnos?.fecha_inicio
+        ? new Date(data.turnos.fecha_inicio).toLocaleString('es-AR', {
+            weekday: 'long', day: 'numeric', month: 'long',
+            hour: '2-digit', minute: '2-digit',
+          })
+        : 'próximamente'
+      const sedeStr = data.turnos?.sedes?.nombre ?? 'la sede'
+
+      // Obtener email del socio
+      const { data: socioData } = await supabase
+        .from('users').select('nombre, email').eq('id', socioId).single()
+
+      if (socioData) {
+        await crearNotificacion({
+          user_id: socioId,
+          titulo:  'Nuevo turno asignado',
+          mensaje: `Tenés un turno el ${fechaTurnoStr} en ${sedeStr}.`,
+          tipo:    'turno_asignado',
+          link:    '/mis-turnos',
+        })
+        const tmpl = emailTurnoAsignado({ nombre: socioData.nombre, fechaTurno: fechaTurnoStr, sede: sedeStr })
+        await enviarEmail({ to: socioData.email, ...tmpl })
+      }
+    } catch (notifErr) {
+      console.error('Notif turno asignado:', notifErr)
+    }
+
+    res.status(201).json({ data, mensaje: 'Turno asignado correctamente' })
+  } catch (err) {
+    console.error('POST /admin/socios/:id/turnos', err)
+    res.status(500).json({ error: 'Error al asignar turno' })
+  }
+})
+
+// ─────────────────────────────────────────────
+// QUITAR TURNO A SOCIO — DELETE /api/admin/socios/:id/turnos/:turnoId
+// turnoId es el id de la fila en socio_turno (no el id del turno)
+// ─────────────────────────────────────────────
+router.delete('/socios/:id/turnos/:socioTurnoId', async (req, res) => {
+  const { id: socioId, socioTurnoId } = req.params
+
+  try {
+    // Verificar que la inscripción pertenece a este socio
+    const { data: insc, error: errInsc } = await supabase
+      .from('socio_turno')
+      .select('id, user_id')
+      .eq('id', socioTurnoId)
+      .eq('user_id', socioId)
+      .single()
+
+    if (errInsc || !insc) {
+      return res.status(404).json({ error: 'Inscripción no encontrada' })
+    }
+
+    const { error } = await supabase
+      .from('socio_turno')
+      .delete()
+      .eq('id', socioTurnoId)
+
+    if (error) throw error
+
+    res.json({ mensaje: 'Turno desasignado correctamente' })
+  } catch (err) {
+    console.error('DELETE /admin/socios/:id/turnos/:socioTurnoId', err)
+    res.status(500).json({ error: 'Error al quitar turno' })
+  }
+})
+
+// ─────────────────────────────────────────────
+// SOLICITUDES DE INGRESO — GET /api/admin/solicitudes
+// Lista solicitudes pendientes del club del admin
+// ─────────────────────────────────────────────
+router.get('/solicitudes', async (req, res) => {
+  try {
+    // Obtener club del admin logueado
+    const { data: adminUser } = await supabase
+      .from('users')
+      .select('club_id')
+      .eq('id', req.userId)
+      .single()
+
+    const clubId = adminUser?.club_id
+
+    let query = supabase
+      .from('solicitudes_club')
+      .select(`
+        id, estado, fecha_solicitud, fecha_resolucion,
+        users!solicitudes_club_user_id_fkey ( id, nombre, email, telefono )
+      `)
+      .order('fecha_solicitud', { ascending: false })
+
+    if (clubId) query = query.eq('club_id', clubId)
+
+    const { data, error } = await query
+    if (error) {
+      if (error.code === '42P01') return res.json({ data: [] })
+      throw error
+    }
+
+    res.json({ data: data ?? [] })
+  } catch (err) {
+    console.error('GET /admin/solicitudes', err)
+    res.status(500).json({ error: 'Error al obtener solicitudes' })
+  }
+})
+
+// ACEPTAR — PATCH /api/admin/solicitudes/:id/aceptar
+router.patch('/solicitudes/:id/aceptar', async (req, res) => {
+  try {
+    const solicitudId = req.params.id
+    const adminId     = req.userId
+
+    // Obtener club del admin
+    const { data: adminUser } = await supabase
+      .from('users')
+      .select('club_id')
+      .eq('id', adminId)
+      .single()
+
+    const { data: sol, error: errSol } = await supabase
+      .from('solicitudes_club')
+      .select('id, user_id, club_id, estado')
+      .eq('id', solicitudId)
+      .single()
+
+    if (errSol || !sol) return res.status(404).json({ error: 'Solicitud no encontrada' })
+    if (sol.estado !== 'pendiente') return res.status(400).json({ error: 'La solicitud ya fue resuelta' })
+
+    const clubId = sol.club_id ?? adminUser?.club_id
+
+    // Activar cuenta: estado_cuenta = 'activa', asignar club_id
+    await supabase
+      .from('users')
+      .update({ estado_cuenta: 'activa', club_id: clubId })
+      .eq('id', sol.user_id)
+
+    // Actualizar solicitud
+    await supabase
+      .from('solicitudes_club')
+      .update({
+        estado:           'aceptada',
+        fecha_resolucion: new Date().toISOString(),
+        resuelto_por:     adminId,
+      })
+      .eq('id', solicitudId)
+
+    // Notificación + email al socio
+    try {
+      const { data: socioData } = await supabase
+        .from('users').select('nombre, email').eq('id', sol.user_id).single()
+      const { data: clubData }  = await supabase
+        .from('clubes').select('nombre').eq('id', clubId).maybeSingle()
+
+      if (socioData) {
+        const clubNombre = clubData?.nombre ?? 'el club'
+        await crearNotificacion({
+          user_id: sol.user_id,
+          titulo:  '¡Solicitud aprobada!',
+          mensaje: `Ya sos parte de ${clubNombre}. Ya podés iniciar sesión.`,
+          tipo:    'solicitud_club',
+          link:    '/inicio',
+        })
+        const tmpl = emailSolicitudAceptada({ nombre: socioData.nombre, clubNombre })
+        await enviarEmail({ to: socioData.email, ...tmpl })
+      }
+    } catch (notifErr) {
+      console.error('Notif solicitud aceptada:', notifErr)
+    }
+
+    res.json({ mensaje: 'Solicitud aceptada. El socio ya puede iniciar sesión.' })
+  } catch (err) {
+    console.error('PATCH /admin/solicitudes/:id/aceptar', err)
+    res.status(500).json({ error: 'Error al aceptar solicitud' })
+  }
+})
+
+// RECHAZAR — PATCH /api/admin/solicitudes/:id/rechazar
+router.patch('/solicitudes/:id/rechazar', async (req, res) => {
+  try {
+    const solicitudId = req.params.id
+    const adminId     = req.userId
+
+    const { data: sol, error: errSol } = await supabase
+      .from('solicitudes_club')
+      .select('id, user_id, estado')
+      .eq('id', solicitudId)
+      .single()
+
+    if (errSol || !sol) return res.status(404).json({ error: 'Solicitud no encontrada' })
+    if (sol.estado !== 'pendiente') return res.status(400).json({ error: 'La solicitud ya fue resuelta' })
+
+    await supabase
+      .from('solicitudes_club')
+      .update({
+        estado:           'rechazada',
+        fecha_resolucion: new Date().toISOString(),
+        resuelto_por:     adminId,
+      })
+      .eq('id', solicitudId)
+
+    // Notificación + email al socio
+    try {
+      const { data: socioData } = await supabase
+        .from('users').select('nombre, email').eq('id', sol.user_id).single()
+      const { data: solData }   = await supabase
+        .from('solicitudes_club').select('club_id').eq('id', solicitudId).single()
+      const { data: clubData }  = await supabase
+        .from('clubes').select('nombre').eq('id', solData?.club_id).maybeSingle()
+
+      if (socioData) {
+        const clubNombre = clubData?.nombre ?? 'el club'
+        await crearNotificacion({
+          user_id: sol.user_id,
+          titulo:  'Solicitud no aprobada',
+          mensaje: `Tu solicitud para unirte a ${clubNombre} no fue aprobada.`,
+          tipo:    'solicitud_club',
+        })
+        const tmpl = emailSolicitudRechazada({ nombre: socioData.nombre, clubNombre })
+        await enviarEmail({ to: socioData.email, ...tmpl })
+      }
+    } catch (notifErr) {
+      console.error('Notif solicitud rechazada:', notifErr)
+    }
+
+    res.json({ mensaje: 'Solicitud rechazada.' })
+  } catch (err) {
+    console.error('PATCH /admin/solicitudes/:id/rechazar', err)
+    res.status(500).json({ error: 'Error al rechazar solicitud' })
+  }
+})
+
+// ─────────────────────────────────────────────
+// TORNEOS — POST /api/admin/torneos
+// ─────────────────────────────────────────────
+router.post('/torneos', async (req, res) => {
+  try {
+    const { nombre, sede_id, fecha, hora_inicio, hora_fin, modalidad, capacidad_maxima, niveles_habilitados } = req.body
+
+    if (!nombre?.trim() || !sede_id || !fecha || !hora_inicio || !hora_fin || !modalidad) {
+      return res.status(400).json({ error: 'Nombre, sede, fecha, horario y modalidad son requeridos' })
+    }
+
+    const fecha_inicio = new Date(`${fecha}T${hora_inicio}:00`).toISOString()
+    const fecha_fin    = new Date(`${fecha}T${hora_fin}:00`).toISOString()
+
+    const { data, error } = await supabase
+      .from('torneos')
+      .insert({
+        nombre: nombre.trim(),
+        sede_id,
+        fecha_inicio,
+        fecha_fin,
+        modalidad,
+        capacidad_maxima: capacidad_maxima || 16,
+        niveles_habilitados: niveles_habilitados ?? [],
+        activo: true,
+        creado_por: req.userId,
+      })
+      .select('*, sedes(nombre)')
+      .single()
+
+    if (error) throw error
+    res.status(201).json({ data, mensaje: 'Torneo creado correctamente' })
+  } catch (err) {
+    console.error('POST /admin/torneos', err)
+    res.status(500).json({ error: err.message || 'Error al crear torneo' })
+  }
+})
+
+// GET /api/admin/torneos
+router.get('/torneos', async (_req, res) => {
+  try {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+    const { data, error } = await supabase
+      .from('torneos')
+      .select(`
+        id, nombre, fecha_inicio, fecha_fin, modalidad, capacidad_maxima,
+        niveles_habilitados, activo,
+        sedes(nombre),
+        inscripciones_torneo(id, estado)
+      `)
+      .eq('activo', true)
+      .gte('fecha_inicio', hoy.toISOString())
+      .order('fecha_inicio', { ascending: true })
+
+    if (error) {
+      if (error.code === '42P01') return res.json({ data: [] })
+      throw error
+    }
+
+    const resultado = (data ?? []).map(t => ({
+      ...t,
+      inscriptos: (t.inscripciones_torneo ?? []).filter(i => i.estado === 'activo').length,
+    }))
+
+    res.json({ data: resultado })
+  } catch (err) {
+    console.error('GET /admin/torneos', err)
+    res.status(500).json({ error: 'Error al obtener torneos' })
+  }
+})
+
+// GET /api/admin/torneos/:id/inscriptos
+router.get('/torneos/:id/inscriptos', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('inscripciones_torneo')
+      .select(`
+        id, fecha_inscripcion, estado,
+        users!inscripciones_torneo_socio_id_fkey(id, nombre, email, telefono, nivel_id, niveles(nombre))
+      `)
+      .eq('torneo_id', req.params.id)
+      .eq('estado', 'activo')
+      .order('fecha_inscripcion', { ascending: true })
+
+    if (error) throw error
+
+    const inscriptos = (data ?? []).map(i => ({
+      id:                i.id,
+      nombre:            i.users?.nombre ?? '—',
+      email:             i.users?.email  ?? '—',
+      telefono:          i.users?.telefono ?? null,
+      nivel:             i.users?.niveles?.nombre ?? 'Sin nivel',
+      fecha_inscripcion: i.fecha_inscripcion,
+    }))
+
+    res.json({ data: inscriptos, total: inscriptos.length })
+  } catch (err) {
+    console.error('GET /admin/torneos/:id/inscriptos', err)
+    res.status(500).json({ error: 'Error al obtener inscriptos' })
+  }
+})
+
+// DELETE /api/admin/torneos/:id
+router.delete('/torneos/:id', async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('torneos')
+      .update({ activo: false })
+      .eq('id', req.params.id)
+    if (error) throw error
+    res.json({ mensaje: 'Torneo eliminado' })
+  } catch (err) {
+    console.error('DELETE /admin/torneos', err)
+    res.status(500).json({ error: 'Error al eliminar torneo' })
   }
 })
 

@@ -10,6 +10,25 @@ const formatHora = (iso) =>
 const formatFecha = (iso) =>
   new Date(iso).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
 
+// Mapeo nombre de nivel → clase CSS del Admin (reutilizadas)
+function nivelClase(nombre) {
+  if (!nombre) return 'sin-nivel'
+  const n = nombre.toLowerCase()
+  if (n === 'rojo')       return 'rojo'
+  if (n === 'intermedio') return 'intermedio'
+  if (n === 'azul')       return 'azul'
+  return 'sin-nivel'
+}
+
+function NivelBadge({ nombre }) {
+  const cls = nivelClase(nombre)
+  return (
+    <span className={`badge-nivel ${cls}`} style={{ fontSize: 12 }}>
+      {nombre ?? 'Sin nivel asignado todavía'}
+    </span>
+  )
+}
+
 function TurnoCardPerfil({ inscripcion, pasado }) {
   const turno = inscripcion.turnos
   if (!turno) return null
@@ -87,6 +106,8 @@ const Perfil = () => {
   const iniciales = usuario.nombre
     ?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
 
+  const nivelNombre = usuario.nivel_nombre ?? usuario.niveles?.nombre ?? null
+
   const ahora        = new Date()
   const turnosActivos = turnos.filter(i => i.turnos && new Date(i.turnos.fecha_inicio) >= ahora)
   const turnosPasados = turnos.filter(i => i.turnos && new Date(i.turnos.fecha_inicio) <  ahora)
@@ -97,10 +118,15 @@ const Perfil = () => {
         <h2>Mi perfil</h2>
       </div>
 
+      {/* Tarjeta principal */}
       <div className="perfil-card">
         <div className="perfil-avatar">{iniciales}</div>
         <h3>{usuario.nombre}</h3>
         <p>{usuario.email}</p>
+        {/* Badge de nivel */}
+        <div style={{ marginTop: 10 }}>
+          <NivelBadge nombre={nivelNombre} />
+        </div>
       </div>
 
       <div className="perfil-seccion-header">
@@ -140,6 +166,7 @@ const Perfil = () => {
         </>
       )}
 
+      {/* Estado de cuenta */}
       <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Estado de cuenta</h4>
       <div className="cuota-card">
         <span>Cuota social</span>

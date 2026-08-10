@@ -20,6 +20,10 @@ import cors from 'cors'
 import rateLimit from 'express-rate-limit'
 import supabase from './src/config/db.js'
 
+import exportarRouter           from './rutas/exportar.js'
+import bonosRouter              from './rutas/bonos.js'
+import torneosRouter            from './rutas/torneos.js'
+import notificacionesRouter     from './rutas/notificaciones.js'
 import juegoLibreRoutes         from './rutas/JuegoLibre.js'
 import turnosRoutes             from './rutas/turnos.js'
 import clasesParticularesRoutes from './rutas/clasesParticulares.js'
@@ -96,6 +100,10 @@ export const limiterAuth = rateLimit({
 // ─── Rutas ────────────────────────────────────────────────────────────────────
 app.use('/api/auth',                limiterAuth, authRouter)
 app.use('/api/admin',               adminRouter)
+app.use('/api/admin/exportar',      exportarRouter)
+app.use('/api/bonos',               bonosRouter)
+app.use('/api/torneos',             torneosRouter)
+app.use('/api/notificaciones',      notificacionesRouter)
 
 // Sedes públicas
 app.get('/api/sedes', async (_req, res) => {
@@ -103,7 +111,6 @@ app.get('/api/sedes', async (_req, res) => {
   if (error) return res.status(500).json({ error: 'Error al obtener sedes' })
   res.json({ data: data ?? [] })
 })
-
 // Comunicados — últimos 5 para Inicio del socio (solo los últimos 5 días)
 app.get('/api/comunicados', async (_req, res) => {
   try {
