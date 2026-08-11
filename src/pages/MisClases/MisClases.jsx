@@ -1,10 +1,10 @@
 /**
- * MisClases.jsx — Panel del socio para ver su bono mensual,
- * cancelar una clase con crédito y reprogramar.
+ * MisClases.jsx — Panel del socio para ver sus clases del mes y cancelarlas.
+ * Sistema de bonos/créditos eliminado. Cancelación directa sobre SOCIO_TURNO.
  */
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useBonos } from '../../hooks/useBonos'
+import api from '../../lib/apiClient.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import './MisClases.css'
 
@@ -22,33 +22,36 @@ const formatHora = (iso) => {
   return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
 }
 
-const formatVencimiento = (iso) => {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric', timeZone: TZ })
-}
-
 export default function MisClases() {
   const navigate = useNavigate()
-  const {
-    resumen,
-    turnosDisp,
-    cargando,
-    cargandoTurnos,
-    error,
-    cargar,
-    cargarTurnosReprog,
-    cancelar,
-    reprogramar,
-  } = useBonos()
 
-  const [tab,           setTab]           = useState('clases') // 'clases' | 'creditos'
-  const [procesando,    setProcesando]    = useState(null)     // socioTurnoId o creditoId
-  const [mensaje,       setMensaje]       = useState('')
-  const [errorLocal,    setErrorLocal]    = useState('')
+  const [clases,      setClases]      = useState([])
+  const [enEspera,    setEnEspera]    = useState([])
+  const [cargando,    setCargando]    = useState(true)
+  const [error,       setError]       = useState(null)
+  const [procesando,  setProcesando]  = useState(null)
+  const [mensaje,     setMensaje]     = useState('')
+  const [errorLocal,  setErrorLocal]  = useState('')
+  const [tab,         setTab]         = useState('clases') // 'clases' | 'espera'
 
-  // Estado del modal de reprogramación
-  const [modalCredito,  setModalCredito]  = useState(null)     // crédito seleccionado
-  const [turnoReprog,   setTurnoReprog]   = useState('')
+  const cargar = useCallback(async () => {
+    setCargando(true)
+    setError(null)
+    try {
+      const [clasesRes, esperaRes] = await Promise.all([
+        api.get('/turnos').then(r => r.data.data ?? []),
+        api.get('/turnos/lista-espera/mis-solicitudes').then(r => r.data.data ?? []).catch(() => []),
+      ])
+      setClases(clasesRes)
+      setEnEspera(esperaRes)
+    } catch (err) {
+      setError(err.response?.data?.error || 'No se pudieron cargar las clases')
+    } finally {
+      setCargando(false)
+    }
+  }, [])
+
+  useEffect(() => { cargar() }, [cargar])
 
   function mostrarMensaje(msg, esError = false) {
     if (esError) setErrorLocal(msg)
@@ -56,39 +59,38 @@ export default function MisClases() {
     setTimeout(() => { setMensaje(''); setErrorLocal('') }, 4000)
   }
 
-  async function handleCancelar(socioTurnoId) {
+  async function handleCancelar(turnoId) {
     if (procesando) return
-    setProcesando(socioTurnoId)
+    setProcesando(turnoId)
     try {
-      const res = await cancelar(socioTurnoId)
-      mostrarMensaje(res.mensaje)
+      await api.delete(`/turnos/${turnoId}`)
+      mostrarMensaje('Clase cancelada correctamente.')
+      await cargar()
     } catch (err) {
-      mostrarMensaje(err.response?.data?.error || 'No se pudo cancelar', true)
+      mostrarMensaje(err.response?.data?.mensaje || 'No se pudo cancelar', true)
     } finally {
       setProcesando(null)
     }
   }
 
-  async function handleAbrirReprog(credito) {
-    setModalCredito(credito)
-    setTurnoReprog('')
-    setErrorLocal('')
-    await cargarTurnosReprog()
-  }
-
-  async function handleReprogramar() {
-    if (!turnoReprog || !modalCredito) return
-    setProcesando(modalCredito.id)
+  async function handleSalirEspera(turnoId) {
+    if (procesando) return
+    setProcesando(`espera-${turnoId}`)
     try {
-      const res = await reprogramar(modalCredito.id, parseInt(turnoReprog))
-      setModalCredito(null)
-      mostrarMensaje(res.mensaje)
+      await api.delete(`/turnos/${turnoId}/lista-espera/yo`)
+      mostrarMensaje('Saliste de la lista de espera.')
+      await cargar()
     } catch (err) {
-      mostrarMensaje(err.response?.data?.error || 'No se pudo reprogramar', true)
+      mostrarMensaje(err.response?.data?.error || 'No se pudo quitar de la lista', true)
     } finally {
       setProcesando(null)
     }
   }
+
+  // Separar clases futuras y pasadas
+  const ahora = new Date()
+  const clasesFuturas = clases.filter(c => c.turnos?.fecha_inicio && new Date(c.turnos.fecha_inicio) >= ahora)
+  const clasesPasadas = clases.filter(c => c.turnos?.fecha_inicio && new Date(c.turnos.fecha_inicio) < ahora)
 
   if (cargando) {
     return (
@@ -103,7 +105,7 @@ export default function MisClases() {
     )
   }
 
-  if (error || !resumen) {
+  if (error) {
     return (
       <div className="mis-clases">
         <header className="mc-header">
@@ -111,7 +113,7 @@ export default function MisClases() {
           <h1>Mis clases</h1>
         </header>
         <div className="mc-error">
-          <p>{error || 'No se pudo cargar el bono'}</p>
+          <p>{error}</p>
           <button className="mc-btn-primary" onClick={cargar}>Reintentar</button>
         </div>
         <BottomNav />
@@ -119,91 +121,127 @@ export default function MisClases() {
     )
   }
 
-  const { abono, clases_mensuales, tomadas, clases_detalle, creditos_disponibles, creditos, horas_min_cancelacion } = resumen
-  const creditosActivos = creditos.filter(c => !c.usado && new Date(c.fecha_vencimiento) >= new Date())
-  const creditosUsados  = creditos.filter(c => c.usado)
-
   return (
     <div className="mis-clases">
       <header className="mc-header">
         <button className="mc-volver" onClick={() => navigate(-1)}>←</button>
         <h1>Mis clases</h1>
-        <p className="mc-subtitulo">Bono mensual y reprogramaciones</p>
+        <p className="mc-subtitulo">Turnos de entrenamiento inscriptos</p>
       </header>
 
       <div className="mc-body">
         {mensaje    && <div className="mc-alerta mc-alerta--ok">✓ {mensaje}</div>}
         {errorLocal && <div className="mc-alerta mc-alerta--error">{errorLocal}</div>}
 
-        {/* ── Tarjeta resumen del bono ── */}
-        {abono ? (
-          <div className="mc-bono-card">
-            <div className="mc-bono-plan">{abono.plan_nombre}</div>
-            <div className="mc-bono-nums">
-              <div className="mc-bono-num">
-                <span className="mc-bono-val">{tomadas}</span>
-                <span className="mc-bono-lbl">Tomadas</span>
-              </div>
-              <div className="mc-bono-sep" />
-              <div className="mc-bono-num">
-                <span className="mc-bono-val">{clases_mensuales}</span>
-                <span className="mc-bono-lbl">Contratadas</span>
-              </div>
-              <div className="mc-bono-sep" />
-              <div className="mc-bono-num">
-                <span className="mc-bono-val" style={{ color: creditos_disponibles > 0 ? '#22c55e' : '#94a3b8' }}>
-                  {creditos_disponibles}
-                </span>
-                <span className="mc-bono-lbl">Créditos</span>
-              </div>
-            </div>
-            {/* Barra de progreso */}
-            <div className="mc-barra">
-              <div
-                className="mc-barra-relleno"
-                style={{ width: `${Math.min((tomadas / clases_mensuales) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="mc-bono-hint">
-              Podés cancelar hasta {horas_min_cancelacion}hs antes para obtener un crédito de reprogramación.
-            </p>
+        {/* Resumen rápido */}
+        <div className="mc-resumen-card">
+          <div className="mc-resumen-item">
+            <span className="mc-resumen-val">{clasesFuturas.length}</span>
+            <span className="mc-resumen-lbl">Próximas</span>
           </div>
-        ) : (
-          <div className="mc-sin-abono">
-            <p>No tenés un abono activo este mes.</p>
-            <p style={{ fontSize: 13, color: '#94a3b8', marginTop: 4 }}>
-              Consultá con el admin para que te asigne uno.
-            </p>
+          <div className="mc-resumen-sep" />
+          <div className="mc-resumen-item">
+            <span className="mc-resumen-val">{clasesPasadas.length}</span>
+            <span className="mc-resumen-lbl">Tomadas</span>
           </div>
-        )}
+          <div className="mc-resumen-sep" />
+          <div className="mc-resumen-item">
+            <span className="mc-resumen-val" style={{ color: enEspera.length > 0 ? '#f59e0b' : '#94a3b8' }}>
+              {enEspera.length}
+            </span>
+            <span className="mc-resumen-lbl">En espera</span>
+          </div>
+        </div>
 
-        {/* ── Tabs ── */}
+        {/* Tabs */}
         <div className="mc-tabs">
           <button
             className={`mc-tab${tab === 'clases' ? ' mc-tab--activo' : ''}`}
             onClick={() => setTab('clases')}
           >
-            Clases del mes ({(clases_detalle ?? []).length})
+            Clases ({clases.length})
           </button>
           <button
-            className={`mc-tab${tab === 'creditos' ? ' mc-tab--activo' : ''}`}
-            onClick={() => setTab('creditos')}
+            className={`mc-tab${tab === 'espera' ? ' mc-tab--activo' : ''}`}
+            onClick={() => setTab('espera')}
           >
-            Créditos ({creditosActivos.length})
+            Lista de espera ({enEspera.length})
           </button>
         </div>
 
-        {/* ── Tab: Clases del mes ── */}
+        {/* Tab: Clases */}
         {tab === 'clases' && (
           <div className="mc-lista">
-            {(clases_detalle ?? []).length === 0 ? (
-              <div className="mc-vacio">No tomaste clases este mes todavía.</div>
+            {clases.length === 0 ? (
+              <div className="mc-vacio">No tenés clases asignadas todavía.</div>
             ) : (
-              clases_detalle.map(c => {
-                const t = c.turnos
-                const esPasado = t?.fecha_inicio && new Date(t.fecha_inicio) < new Date()
+              <>
+                {clasesFuturas.length > 0 && (
+                  <>
+                    <div className="mc-seccion-titulo">Próximas</div>
+                    {clasesFuturas.map(c => {
+                      const t = c.turnos
+                      return (
+                        <div key={c.id} className="mc-clase-row">
+                          <div className="mc-clase-info">
+                            <span className="mc-clase-fecha">
+                              {formatFecha(t?.fecha_inicio)} {formatHora(t?.fecha_inicio)} hs
+                            </span>
+                            <span className="mc-clase-sede">
+                              {t?.sedes?.nombre ?? ''}
+                              {t?.users?.nombre ? ` · ${t.users.nombre}` : ''}
+                              {t?.tipo_turno?.nombre ? ` · ${t.tipo_turno.nombre}` : ''}
+                            </span>
+                          </div>
+                          <button
+                            className="mc-btn-cancelar"
+                            onClick={() => handleCancelar(t?.id)}
+                            disabled={procesando === t?.id}
+                          >
+                            {procesando === t?.id ? '...' : 'Cancelar'}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </>
+                )}
+                {clasesPasadas.length > 0 && (
+                  <>
+                    <div className="mc-seccion-titulo mc-seccion-titulo--pasadas">Historial</div>
+                    {clasesPasadas.map(c => {
+                      const t = c.turnos
+                      return (
+                        <div key={c.id} className="mc-clase-row mc-clase-row--pasada">
+                          <div className="mc-clase-info">
+                            <span className="mc-clase-fecha">
+                              {formatFecha(t?.fecha_inicio)} {formatHora(t?.fecha_inicio)} hs
+                            </span>
+                            <span className="mc-clase-sede">
+                              {t?.sedes?.nombre ?? ''}
+                              {t?.users?.nombre ? ` · ${t.users.nombre}` : ''}
+                            </span>
+                          </div>
+                          <span className="mc-badge-pasado">Finalizada</span>
+                        </div>
+                      )
+                    })}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Tab: Lista de espera */}
+        {tab === 'espera' && (
+          <div className="mc-lista">
+            {enEspera.length === 0 ? (
+              <div className="mc-vacio">No estás en ninguna lista de espera.</div>
+            ) : (
+              enEspera.map(e => {
+                const t = e.turnos
                 return (
-                  <div key={c.id} className="mc-clase-row">
+                  <div key={e.id} className="mc-clase-row">
                     <div className="mc-clase-info">
                       <span className="mc-clase-fecha">
                         {formatFecha(t?.fecha_inicio)} {formatHora(t?.fecha_inicio)} hs
@@ -212,125 +250,24 @@ export default function MisClases() {
                         {t?.sedes?.nombre ?? ''}
                         {t?.users?.nombre ? ` · ${t.users.nombre}` : ''}
                       </span>
+                      <span className="mc-espera-pos">
+                        Posición #{e.posicion ?? '—'}
+                      </span>
                     </div>
-                    {!esPasado && abono && (
-                      <button
-                        className="mc-btn-cancelar"
-                        onClick={() => handleCancelar(c.id)}
-                        disabled={procesando === c.id}
-                      >
-                        {procesando === c.id ? '...' : 'Cancelar'}
-                      </button>
-                    )}
-                    {esPasado && <span className="mc-badge-pasado">Finalizada</span>}
+                    <button
+                      className="mc-btn-cancelar"
+                      onClick={() => handleSalirEspera(t?.id)}
+                      disabled={procesando === `espera-${t?.id}`}
+                    >
+                      {procesando === `espera-${t?.id}` ? '...' : 'Salir'}
+                    </button>
                   </div>
                 )
               })
             )}
           </div>
         )}
-
-        {/* ── Tab: Créditos ── */}
-        {tab === 'creditos' && (
-          <div className="mc-lista">
-            {creditosActivos.length === 0 && creditosUsados.length === 0 ? (
-              <div className="mc-vacio">No tenés créditos este mes.</div>
-            ) : (
-              <>
-                {creditosActivos.map(c => (
-                  <div key={c.id} className="mc-credito-row">
-                    <div className="mc-credito-info">
-                      <span className="mc-credito-titulo">Crédito disponible</span>
-                      <span className="mc-credito-sub">
-                        Generado el {formatFecha(c.fecha_generado)}
-                      </span>
-                      <span className="mc-credito-vence">
-                        Vence: {formatVencimiento(c.fecha_vencimiento)}
-                      </span>
-                    </div>
-                    <button
-                      className="mc-btn-primary"
-                      style={{ padding: '8px 14px', fontSize: 13 }}
-                      onClick={() => handleAbrirReprog(c)}
-                      disabled={!!procesando}
-                    >
-                      Reprogramar
-                    </button>
-                  </div>
-                ))}
-                {creditosUsados.map(c => (
-                  <div key={c.id} className="mc-credito-row mc-credito-row--usado">
-                    <div className="mc-credito-info">
-                      <span className="mc-credito-titulo">Crédito utilizado</span>
-                      <span className="mc-credito-sub">
-                        Usado el {formatFecha(c.fecha_generado)}
-                        {c.turnos_usado?.fecha_inicio
-                          ? ` → ${formatFecha(c.turnos_usado.fecha_inicio)}`
-                          : ''}
-                      </span>
-                    </div>
-                    <span className="mc-badge-usado">Usado</span>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        )}
       </div>
-
-      {/* ── Modal de reprogramación ── */}
-      {modalCredito && (
-        <div className="mc-modal-overlay" onClick={() => setModalCredito(null)}>
-          <div className="mc-modal" onClick={e => e.stopPropagation()}>
-            <h2 className="mc-modal-titulo">Reprogramar clase</h2>
-            <p className="mc-modal-sub">Elegí el turno al que querés asistir con este crédito.</p>
-
-            {cargandoTurnos ? (
-              <div style={{ textAlign: 'center', padding: 20 }}>
-                <div className="mc-spinner" style={{ margin: '0 auto' }} />
-              </div>
-            ) : turnosDisp.length === 0 ? (
-              <p style={{ fontSize: 13, color: '#6b7280', margin: '12px 0' }}>
-                No hay turnos disponibles con cupo en este momento.
-              </p>
-            ) : (
-              <select
-                className="mc-select"
-                value={turnoReprog}
-                onChange={e => setTurnoReprog(e.target.value)}
-              >
-                <option value="">Seleccioná un turno...</option>
-                {turnosDisp.map(t => (
-                  <option key={t.id} value={t.id}>
-                    {formatFecha(t.fecha_inicio)} {formatHora(t.fecha_inicio)} hs
-                    · {t.sede} · {t.entrenador}
-                    ({t.cupo_disponible} cupo{t.cupo_disponible !== 1 ? 's' : ''})
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {errorLocal && (
-              <div className="mc-alerta mc-alerta--error" style={{ marginTop: 10 }}>
-                {errorLocal}
-              </div>
-            )}
-
-            <div className="mc-modal-acciones">
-              <button className="mc-btn-secondary" onClick={() => setModalCredito(null)}>
-                Cancelar
-              </button>
-              <button
-                className="mc-btn-primary"
-                onClick={handleReprogramar}
-                disabled={!turnoReprog || procesando === modalCredito.id}
-              >
-                {procesando === modalCredito.id ? 'Procesando...' : 'Confirmar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <BottomNav />
     </div>

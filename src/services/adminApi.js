@@ -55,3 +55,16 @@ export async function exportarExcel(tipo, params = {}) {
   })
   return response.data // Blob
 }
+
+// ── Gestión de turnos de entrenamiento (plantillas recurrentes) ───────────────
+export const getMesas               = ()         => api.get('/admin/turnos/mesas').then(r => r.data.data)
+export const getPlantillasTurnos    = ()         => api.get('/admin/turnos/plantillas').then(r => r.data.data)
+export const getDetalleTurnoAdmin   = (id)       => api.get(`/admin/turnos/${id}`).then(r => r.data.data)
+export const crearTurnoAdmin        = (body)     => api.post('/admin/turnos', body).then(r => r.data)
+export const editarTurnoAdmin       = (id, body) => api.put(`/admin/turnos/${id}`, body).then(r => r.data)
+export const bajaTurnoDefinitiva    = (id)       => api.delete(`/admin/turnos/${id}`).then(r => r.data)
+export const cancelarSemana         = (id, body) => api.post(`/admin/turnos/${id}/cancelar-semana`, body).then(r => r.data)
+export const asignarSocioTurno      = (id, body) => api.post(`/admin/turnos/${id}/socios`, body).then(r => r.data)
+export const quitarSocioTurno       = (id, socioId) => api.delete(`/admin/turnos/${id}/socios/${socioId}`).then(r => r.data)
+export const reasignarEntrenador    = (id, body) => api.patch(`/admin/turnos/${id}/entrenador`, body).then(r => r.data)
+export const getListaEsperaAdmin    = (id)       => api.get(`/admin/turnos/${id}/lista-espera`).then(r => r.data)

@@ -224,6 +224,7 @@ export default function AdminActividades() {
   const accesos = [
     { titulo: 'Nuevo juego libre', emoji: '🏓', path: '/admin/juego-libre' },
     { titulo: 'Nuevo torneo',      emoji: '🏆', path: '/admin/torneos' },
+    { titulo: 'Gestionar turnos',  emoji: '📅', path: '/admin/turnos' },
   ]
 
   return (

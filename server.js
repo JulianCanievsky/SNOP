@@ -21,7 +21,7 @@ import rateLimit from 'express-rate-limit'
 import supabase from './src/config/db.js'
 
 import exportarRouter           from './rutas/exportar.js'
-import bonosRouter              from './rutas/bonos.js'
+import adminTurnosRouter        from './rutas/adminTurnos.js'
 import torneosRouter            from './rutas/torneos.js'
 import notificacionesRouter     from './rutas/notificaciones.js'
 import juegoLibreRoutes         from './rutas/JuegoLibre.js'
@@ -101,7 +101,7 @@ export const limiterAuth = rateLimit({
 app.use('/api/auth',                limiterAuth, authRouter)
 app.use('/api/admin',               adminRouter)
 app.use('/api/admin/exportar',      exportarRouter)
-app.use('/api/bonos',               bonosRouter)
+app.use('/api/admin/turnos',        adminTurnosRouter)
 app.use('/api/torneos',             torneosRouter)
 app.use('/api/notificaciones',      notificacionesRouter)
 

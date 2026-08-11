@@ -418,3 +418,65 @@
   align-items: center;
   gap: 12px;
 }
+
+/* ── RESUMEN CARD (reemplaza bono-card) ── */
+.mc-resumen-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.mc-resumen-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.mc-resumen-val {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.mc-resumen-lbl {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.mc-resumen-sep {
+  width: 1px;
+  height: 36px;
+  background: #e5e7eb;
+}
+
+/* ── SECCIÓN TÍTULO ── */
+.mc-seccion-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #6b7280;
+  padding: 10px 16px 6px;
+  background: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.mc-seccion-titulo--pasadas { color: #9ca3af; }
+
+/* ── CLASE ROW PASADA ── */
+.mc-clase-row--pasada { opacity: .65; }
+
+/* ── LISTA DE ESPERA ── */
+.mc-espera-pos {
+  font-size: 11px;
+  color: #f59e0b;
+  font-weight: 700;
+  margin-top: 2px;
+}

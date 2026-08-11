@@ -26,6 +26,7 @@ import EnviarComunicado   from './pages/Admin/EnviarComunicado'
 import GestionNiveles     from './pages/Admin/GestionNiveles'
 import ConfigAdmin        from './pages/Admin/ConfigAdmin'
 import AdminActividades   from './pages/Admin/AdminActividades'
+import AdminTurnos        from './pages/Admin/AdminTurnos'
 import ExportarActividades from './pages/Admin/ExportarActividades'
 import CrearTorneo        from './pages/Admin/CrearTorneo'
 import SolicitudesIngreso  from './pages/Admin/SolicitudesIngreso'
@@ -114,6 +115,7 @@ function AppRoutes() {
       <Route path="/admin/niveles"       element={<RutaProtegida rolesPermitidos={[3]}><GestionNiveles /></RutaProtegida>} />
       <Route path="/admin/config"        element={<RutaProtegida rolesPermitidos={[3]}><ConfigAdmin /></RutaProtegida>} />
       <Route path="/admin/actividades"   element={<RutaProtegida rolesPermitidos={[3]}><AdminActividades /></RutaProtegida>} />
+      <Route path="/admin/turnos"        element={<RutaProtegida rolesPermitidos={[3]}><AdminTurnos /></RutaProtegida>} />
       <Route path="/admin/exportar"      element={<RutaProtegida rolesPermitidos={[3]}><ExportarActividades /></RutaProtegida>} />
       <Route path="/admin/torneos"       element={<RutaProtegida rolesPermitidos={[3]}><CrearTorneo /></RutaProtegida>} />
       <Route path="/admin/solicitudes"   element={<RutaProtegida rolesPermitidos={[3]}><SolicitudesIngreso /></RutaProtegida>} />

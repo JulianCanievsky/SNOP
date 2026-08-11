@@ -213,11 +213,22 @@ router.post('/forgot-password', async (req, res) => {
     const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
     const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`
 
-    if (process.env.RESEND_API_KEY) {
+    if (!process.env.RESEND_API_KEY) {
+      // Sin API key: en dev mostramos el link; en prod es un error de config crítico
+      if (process.env.NODE_ENV === 'production') {
+        console.error(
+          '[forgot-password] CRÍTICO: RESEND_API_KEY no configurada en producción. ' +
+          `El email de recuperación NO fue enviado a: ${usuario.email}. ` +
+          'Configurá RESEND_API_KEY en las variables de entorno de Railway.'
+        )
+      } else {
+        console.log(`\n[DEV] RESET LINK para ${usuario.email}:\n${resetLink}\n`)
+      }
+    } else {
       try {
         const { Resend } = await import('resend')
         const resend = new Resend(process.env.RESEND_API_KEY)
-        await resend.emails.send({
+        const { error: sendError } = await resend.emails.send({
           from: process.env.RESEND_FROM || 'SNOP Club <onboarding@resend.dev>',
           to: usuario.email,
           subject: 'Restablecé tu contraseña — SNOP',
@@ -235,21 +246,16 @@ router.post('/forgot-password', async (req, res) => {
             </div>
           `,
         })
+        if (sendError) {
+          // Resend devolvió un error de API (dominio, rate limit, etc.)
+          console.error('[forgot-password] Resend API error:', JSON.stringify(sendError))
+        } else {
+          console.log(`[forgot-password] Email enviado correctamente a: ${usuario.email}`)
+        }
       } catch (emailErr) {
-        console.error('Error enviando email con Resend:', emailErr)
-        // En producción, si el envío falla, lo registramos pero no exponemos el detalle al cliente
+        // Error de red, import fallido, etc.
+        console.error('[forgot-password] Excepción al enviar email:', emailErr?.message ?? emailErr)
       }
-    } else if (process.env.NODE_ENV === 'production') {
-      // RESEND_API_KEY no configurada en producción — el email NO se enviará.
-      // Esto es un error de configuración del servidor, no del usuario.
-      console.error(
-        '[forgot-password] RESEND_API_KEY no está configurada en producción. ' +
-        'El email de recuperación NO fue enviado para: ' + usuario.email +
-        '\nConfigurá RESEND_API_KEY en las variables de entorno del servidor.'
-      )
-    } else {
-      // Desarrollo local: mostrar el link en consola para pruebas sin email real
-      console.log(`\n[DEV] RESET LINK para ${usuario.email}:\n${resetLink}\n`)
     }
 
     res.json(RESPUESTA_OK)

@@ -130,7 +130,7 @@ export default function Inicio() {
     { label: 'Mis turnos',  sub: 'Ver horario',     emoji: '📅', path: '/mis-turnos' },
     { label: 'Juego libre', sub: 'Anotarme',         emoji: '🏓', path: '/juego-libre' },
     { label: 'Clases',      sub: 'Con entrenador',   emoji: '👥', path: '/clases-particulares' },
-    { label: 'Mis clases',  sub: 'Bono y créditos',  emoji: '🎫', path: '/mis-clases' },
+    { label: 'Mis clases',  sub: 'Mis turnos de entrenamiento', emoji: '🎫', path: '/mis-clases' },
     { label: 'Torneos',     sub: 'Inscribirme',       emoji: '🏆', path: '/torneos' },
     { label: 'Mi perfil',   sub: 'Cuenta y turnos',  emoji: '👤', path: '/perfil' },
   ]

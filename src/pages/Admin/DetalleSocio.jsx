@@ -9,7 +9,6 @@ import {
   asignarTurnoSocio,
   quitarTurnoSocio,
 } from '../../services/adminApi'
-import { asignarAbono, getAbonosAdmin } from '../../services/bonosApi'
 import './Admin.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -33,25 +32,19 @@ export default function DetalleSocio() {
   const { id }   = useParams()
   const navigate = useNavigate()
 
-  const [socio,           setSocio]           = useState(null)
-  const [turnos,          setTurnos]          = useState([])
-  const [niveles,         setNiveles]         = useState([])
-  const [turnosDisp,      setTurnosDisp]      = useState([])
-  const [turnoSelec,      setTurnoSelec]      = useState('')
-  const [cargando,        setCargando]        = useState(true)
-  const [guardando,       setGuardando]       = useState(false)
-  const [asignando,       setAsignando]       = useState(false)
-  const [quitando,        setQuitando]        = useState(null) // id del socio_turno que se está quitando
-  const [exito,           setExito]           = useState('')
-  const [error,           setError]           = useState('')
-
-  const [nivelId, setNivelId] = useState('')
-  const [cuota,   setCuota]   = useState(true)
-
-  // Abono
-  const [abonoActivo,      setAbonoActivo]      = useState(null)
-  const [clasesMensuales,  setClasesMensuales]  = useState(12)
-  const [guardandoAbono,   setGuardandoAbono]   = useState(false)
+  const [socio,      setSocio]      = useState(null)
+  const [turnos,     setTurnos]     = useState([])
+  const [niveles,    setNiveles]    = useState([])
+  const [turnosDisp, setTurnosDisp] = useState([])
+  const [turnoSelec, setTurnoSelec] = useState('')
+  const [cargando,   setCargando]   = useState(true)
+  const [guardando,  setGuardando]  = useState(false)
+  const [asignando,  setAsignando]  = useState(false)
+  const [quitando,   setQuitando]   = useState(null)
+  const [exito,      setExito]      = useState('')
+  const [error,      setError]      = useState('')
+  const [nivelId,    setNivelId]    = useState('')
+  const [cuota,      setCuota]      = useState(true)
 
   useEffect(() => {
     Promise.all([getSocio(id), getNiveles(), getTurnosDisponibles()])
@@ -65,14 +58,6 @@ export default function DetalleSocio() {
       })
       .catch(err => setError(err.response?.data?.error || 'Error al cargar socio'))
       .finally(() => setCargando(false))
-
-    // Cargar abono activo del socio
-    getAbonosAdmin()
-      .then(abonos => {
-        const mio = (abonos ?? []).find(a => a.users?.id === parseInt(id))
-        if (mio) { setAbonoActivo(mio); setClasesMensuales(mio.clases_mensuales) }
-      })
-      .catch(() => {})
   }, [id])
 
   async function guardar() {
@@ -80,10 +65,7 @@ export default function DetalleSocio() {
     setExito('')
     setError('')
     try {
-      await editarSocio(id, {
-        nivel_id:     nivelId || null,
-        cuota_al_dia: cuota,
-      })
+      await editarSocio(id, { nivel_id: nivelId || null, cuota_al_dia: cuota })
       setExito('Cambios guardados correctamente')
       setTimeout(() => setExito(''), 3000)
     } catch (err) {
@@ -99,10 +81,8 @@ export default function DetalleSocio() {
     setError('')
     try {
       const { data } = await asignarTurnoSocio(id, { turno_id: turnoSelec })
-      // Agregar el turno recién asignado a la lista local
       setTurnos(prev => [data, ...prev])
       setTurnoSelec('')
-      // Refrescar turnos disponibles (el cupo bajó)
       const nuevosDisp = await getTurnosDisponibles()
       setTurnosDisp(nuevosDisp ?? [])
       setExito('Turno asignado correctamente')
@@ -126,24 +106,6 @@ export default function DetalleSocio() {
       setError(err.response?.data?.error || 'Error al quitar turno')
     } finally {
       setQuitando(null)
-    }
-  }
-
-  async function handleGuardarAbono() {
-    if (!clasesMensuales || clasesMensuales < 1) return
-    setGuardandoAbono(true)
-    setError('')
-    try {
-      await asignarAbono({ user_id: parseInt(id), clases_mensuales: Number(clasesMensuales) })
-      setExito('Abono asignado correctamente')
-      setTimeout(() => setExito(''), 3000)
-      const abonos = await getAbonosAdmin()
-      const mio = (abonos ?? []).find(a => a.users?.id === parseInt(id))
-      if (mio) setAbonoActivo(mio)
-    } catch (err) {
-      setError(err.response?.data?.error || 'Error al guardar abono')
-    } finally {
-      setGuardandoAbono(false)
     }
   }
 
@@ -233,39 +195,6 @@ export default function DetalleSocio() {
           {guardando ? 'Guardando...' : 'Guardar cambios'}
         </button>
 
-        {/* ── Abono mensual ── */}
-        <div className="admin-card admin-card-body">
-          <p className="admin-label" style={{ marginBottom: 10 }}>
-            Abono mensual
-            {abonoActivo && (
-              <span style={{ marginLeft: 8, background: '#dcfce7', color: '#15803d', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999 }}>
-                Activo: {abonoActivo.clases_mensuales} clases/mes
-              </span>
-            )}
-          </p>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-              <label>Clases mensuales</label>
-              <input
-                type="number"
-                min="1"
-                max="60"
-                className="form-input"
-                value={clasesMensuales}
-                onChange={e => setClasesMensuales(e.target.value)}
-              />
-            </div>
-            <button
-              className="btn-primary"
-              style={{ width: 'auto', padding: '11px 18px', flexShrink: 0 }}
-              onClick={handleGuardarAbono}
-              disabled={guardandoAbono}
-            >
-              {guardandoAbono ? '...' : abonoActivo ? 'Actualizar' : 'Asignar'}
-            </button>
-          </div>
-        </div>
-
         {/* ── Asignar turno ── */}
         <div className="admin-card admin-card-body">
           <p className="admin-label" style={{ marginBottom: 10 }}>Asignar turno</p>
@@ -291,7 +220,6 @@ export default function DetalleSocio() {
                 className="btn-primary"
                 onClick={handleAsignar}
                 disabled={!turnoSelec || asignando}
-                style={{ marginTop: 0 }}
               >
                 {asignando ? 'Asignando...' : 'Asignar turno'}
               </button>
@@ -299,7 +227,7 @@ export default function DetalleSocio() {
           )}
         </div>
 
-        {/* ── Turnos asignados (lista completa, sin slice) ── */}
+        {/* ── Turnos asignados ── */}
         <div className="admin-card admin-card-body">
           <p className="admin-label" style={{ marginBottom: 10 }}>
             Turnos asignados ({turnos.length})
@@ -316,12 +244,9 @@ export default function DetalleSocio() {
                 <div
                   key={t.id}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 8,
-                    padding: '10px 0',
-                    borderBottom: '1px solid var(--admin-border)',
+                    display: 'flex', alignItems: 'center',
+                    justifyContent: 'space-between', gap: 8,
+                    padding: '10px 0', borderBottom: '1px solid var(--admin-border)',
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
