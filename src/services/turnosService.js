@@ -1,6 +1,7 @@
 import supabase from "../config/db.js";
-import { crearNotificacion, enviarEmail, emailListaEsperaPromovido } from "../lib/notificaciones.js";
+import { crearNotificacion, enviarEmail } from "../lib/notificaciones.js";
 
+// ─────────────────────────────────────────────────────────────────────────────
 export async function getTurnosBySocio(socioId) {
   const { data, error } = await supabase
     .from("socio_turno")
@@ -13,10 +14,6 @@ export async function getTurnosBySocio(socioId) {
         fecha_inicio,
         fecha_fin,
         duracion_min,
-        dia_semana,
-        hora_inicio,
-        hora_fin,
-        recurrente,
         tipo_turno (nombre),
         sedes (nombre, direccion),
         mesas (numero),
@@ -34,8 +31,23 @@ export async function getTurnosBySocio(socioId) {
   return data;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 export async function cancelarTurno(turnoId, socioId) {
-  // 1. Cancelar inscripción
+  // 1. Verificar el turno antes de cancelar (para saber si estaba lleno)
+  const { data: turno } = await supabase
+    .from("turnos")
+    .select("id, capacidad_maxima, dia_semana, hora_inicio, sedes(nombre), socio_turno(id, estado)")
+    .eq("id", turnoId)
+    .single();
+
+  const inscriptosAntes = turno
+    ? (turno.socio_turno ?? []).filter(s => s.estado === true).length
+    : 0;
+  const estabaTurnoLleno = turno
+    ? inscriptosAntes >= (turno.capacidad_maxima ?? 0)
+    : false;
+
+  // 2. Cancelar la inscripción
   const { data, error } = await supabase
     .from("socio_turno")
     .update({ estado: false })
@@ -45,17 +57,88 @@ export async function cancelarTurno(turnoId, socioId) {
 
   if (error) throw error;
 
-  // 2. Promover al primero en lista de espera (si existe)
-  try {
-    await promoverPrimeroEnEspera(turnoId);
-  } catch (promErr) {
-    // No bloquear la cancelación si falla la promoción
-    console.error("[lista-espera] Error al promover:", promErr);
+  // 3. Si el turno estaba lleno, avisar a todos los demás inscriptos que hay lugar
+  if (estabaTurnoLleno && turno) {
+    try {
+      await notificarLugarDisponible(turno, socioId);
+    } catch (notifErr) {
+      console.error("[cancelarTurno] Error al notificar lugar disponible:", notifErr);
+    }
   }
 
   return data;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Envía una notificación + email a todos los socios que NO están inscriptos
+ * en el turno avisando que se liberó un cupo.
+ * Para no spamear a toda la base, notificamos a socios con inscripción cancelada
+ * en ese mismo turno (que en algún momento intentaron anotarse).
+ * Si no hay ninguno, el aviso queda solo en el sistema de notificaciones.
+ */
+async function notificarLugarDisponible(turno, socioQueCancelo) {
+  const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+  const diaStr  = turno.dia_semana != null ? DIAS[turno.dia_semana] : null;
+  const horaStr = turno.hora_inicio?.slice(0, 5) ?? "";
+  const sedeStr = turno.sedes?.nombre ?? "la sede";
+
+  const fechaStr = diaStr
+    ? `${diaStr}s a las ${horaStr} hs`
+    : (turno.fecha_inicio
+        ? new Date(turno.fecha_inicio).toLocaleString("es-AR", {
+            weekday: "long", day: "numeric", month: "long",
+            hour: "2-digit", minute: "2-digit",
+            timeZone: "America/Argentina/Buenos_Aires",
+          })
+        : "próximamente");
+
+  // Socios con inscripción cancelada en este turno (excluyendo quien acaba de cancelar)
+  const { data: cancelados } = await supabase
+    .from("socio_turno")
+    .select("user_id, users!socio_turno_user_id_fkey(id, nombre, email)")
+    .eq("turno_id", turno.id)
+    .eq("estado", false)
+    .neq("user_id", socioQueCancelo);
+
+  const destinatarios = (cancelados ?? []).map(c => c.users).filter(Boolean);
+
+  for (const socio of destinatarios) {
+    await crearNotificacion({
+      user_id: socio.id,
+      titulo:  "Se liberó un lugar",
+      mensaje: `Se liberó un cupo en el turno del ${fechaStr} en ${sedeStr}. Anotate antes de que se llene.`,
+      tipo:    "lugar_disponible",
+      link:    "/mis-clases",
+    });
+
+    await enviarEmail({
+      to:      socio.email,
+      subject: "Se liberó un lugar en tu turno — SNOP",
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
+          <h2 style="color:#2563eb;margin:0 0 8px;">Se liberó un lugar</h2>
+          <p style="color:#555;margin:0 0 16px;">Hola <strong>${socio.nombre}</strong>, se liberó un cupo en el siguiente turno:</p>
+          <div style="background:#eef2ff;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+            <p style="margin:0 0 4px;font-weight:700;color:#1e293b;">${fechaStr}</p>
+            <p style="margin:0;color:#64748b;font-size:13px;">📍 ${sedeStr}</p>
+          </div>
+          <p style="color:#555;margin:0 0 20px;font-size:14px;">Anotate antes de que se llene.</p>
+          <a href="${process.env.FRONTEND_URL || "https://snop-psi.vercel.app"}/mis-clases"
+             style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:14px;">
+            Ver mis clases
+          </a>
+        </div>
+      `,
+    });
+  }
+
+  if (destinatarios.length > 0) {
+    console.log(`[lugarDisponible] Notificado a ${destinatarios.length} socio(s) del turno ${turno.id}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 export async function reconfirmarTurno(turnoId, socioId) {
   const { data, error } = await supabase
     .from("socio_turno")
@@ -66,113 +149,4 @@ export async function reconfirmarTurno(turnoId, socioId) {
 
   if (error) throw error;
   return data;
-}
-
-/**
- * Promueve automáticamente al primero de la lista de espera cuando se libera un cupo.
- * - Verifica que el turno realmente tenga cupo antes de promover.
- * - Actualiza lista_espera_turno estado → 'promovido'.
- * - Inserta en socio_turno con estado = true.
- * - Envía notificación in-app y email al socio promovido.
- * - Reordena las posiciones restantes.
- */
-export async function promoverPrimeroEnEspera(turnoId) {
-  // Obtener estado actual del turno
-  const { data: turno } = await supabase
-    .from("turnos")
-    .select("id, capacidad_maxima, dia_semana, hora_inicio, sedes(nombre), socio_turno(id, estado)")
-    .eq("id", turnoId)
-    .single();
-
-  if (!turno) return;
-
-  const inscriptosActivos = (turno.socio_turno ?? []).filter(s => s.estado === true).length;
-  if (inscriptosActivos >= turno.capacidad_maxima) return; // sigue lleno
-
-  // Primer candidato en lista de espera
-  const { data: candidatos } = await supabase
-    .from("lista_espera_turno")
-    .select("id, user_id, posicion")
-    .eq("turno_id", turnoId)
-    .eq("estado", "esperando")
-    .order("posicion", { ascending: true })
-    .limit(1);
-
-  if (!candidatos?.length) return; // lista vacía
-
-  const candidato = candidatos[0];
-
-  // Insertar en socio_turno
-  const { error: errInsc } = await supabase
-    .from("socio_turno")
-    .insert({
-      user_id:           candidato.user_id,
-      turno_id:          turnoId,
-      estado:            true,
-      fecha_inscripcion: new Date().toISOString(),
-    });
-
-  if (errInsc) {
-    if (errInsc.code === "23505") {
-      // Ya estaba inscripto (rara condición); actualizar estado igualmente
-      await supabase
-        .from("socio_turno")
-        .update({ estado: true })
-        .eq("user_id", candidato.user_id)
-        .eq("turno_id", turnoId);
-    } else {
-      throw errInsc;
-    }
-  }
-
-  // Marcar como promovido en lista de espera
-  await supabase
-    .from("lista_espera_turno")
-    .update({ estado: "promovido" })
-    .eq("id", candidato.id);
-
-  // Reordenar posiciones de los que siguen esperando
-  const { data: restantes } = await supabase
-    .from("lista_espera_turno")
-    .select("id")
-    .eq("turno_id", turnoId)
-    .eq("estado", "esperando")
-    .order("posicion", { ascending: true });
-
-  for (let i = 0; i < (restantes ?? []).length; i++) {
-    await supabase
-      .from("lista_espera_turno")
-      .update({ posicion: i + 1 })
-      .eq("id", restantes[i].id);
-  }
-
-  // Notificación al socio promovido
-  try {
-    const { data: socio } = await supabase
-      .from("users")
-      .select("nombre, email")
-      .eq("id", candidato.user_id)
-      .single();
-
-    const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-    const diaStr  = DIAS[turno.dia_semana] ?? `día ${turno.dia_semana}`;
-    const horaStr = turno.hora_inicio?.slice(0, 5) ?? "";
-    const sedeStr = turno.sedes?.nombre ?? "la sede";
-    const fechaStr = `${diaStr}s a las ${horaStr} hs`;
-
-    if (socio) {
-      await crearNotificacion({
-        user_id: candidato.user_id,
-        titulo:  "¡Conseguiste un lugar!",
-        mensaje: `Se liberó un cupo en el turno del ${fechaStr} en ${sedeStr}. Ya estás inscripto.`,
-        tipo:    "lista_espera_promovido",
-        link:    "/mis-clases",
-      });
-
-      const tmpl = emailListaEsperaPromovido({ nombre: socio.nombre, fechaTurno: fechaStr, sede: sedeStr });
-      await enviarEmail({ to: socio.email, ...tmpl });
-    }
-  } catch (notifErr) {
-    console.error("[lista-espera] Error al notificar promoción:", notifErr);
-  }
 }

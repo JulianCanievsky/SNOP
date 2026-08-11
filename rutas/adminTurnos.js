@@ -43,26 +43,25 @@ router.use(autenticar, soloAdmin)
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Verifica solapamiento de sede/mesa/horario con otros turnos activos. */
-async function verificarSolapamiento({ sede_id, mesa_id, dia_semana, hora_inicio, hora_fin, excluir_id }) {
+/** Verifica solapamiento de sede/horario con otros turnos activos. */
+async function verificarSolapamiento({ sede_id, dia_semana, hora_inicio, hora_fin, excluir_id }) {
+  // Buscamos turnos de entrenamiento (tipo_turno_id=1) en la misma sede con estado=true
+  // No filtramos por recurrente/activo porque esas columnas pueden no existir aún (migración 002)
   let query = supabase
     .from('turnos')
     .select('id, hora_inicio, hora_fin, dia_semana')
     .eq('sede_id', sede_id)
-    .eq('activo', true)
-    .eq('recurrente', true)
+    .eq('estado', true)
+    .eq('tipo_turno_id', 1)
+    .not('hora_inicio', 'is', null)  // solo turnos que ya tienen hora_inicio (post migración)
 
-  if (mesa_id) query = query.eq('mesa_id', mesa_id)
   if (excluir_id) query = query.neq('id', excluir_id)
 
   const { data: turnos } = await query
 
   for (const t of turnos ?? []) {
-    if (t.dia_semana !== dia_semana) continue
-    // Solapamiento: inicio1 < fin2 && fin1 > inicio2
-    if (hora_inicio < t.hora_fin && hora_fin > t.hora_inicio) {
-      return true
-    }
+    if (t.dia_semana == null || t.dia_semana !== dia_semana) continue
+    if (hora_inicio < t.hora_fin && hora_fin > t.hora_inicio) return true
   }
   return false
 }
@@ -102,35 +101,55 @@ router.get('/mesas', async (_req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/plantillas', async (_req, res) => {
   try {
+    // Query con solo columnas que existen antes de correr la migración 002.
+    // Los campos recurrente/activo/dia_semana/hora_inicio/hora_fin se agregan
+    // dinámicamente una vez que se corra migrations/002_turnos_recurrentes.sql.
     const { data, error } = await supabase
       .from('turnos')
       .select(`
-        id, dia_semana, hora_inicio, hora_fin, duracion_min,
-        capacidad_maxima, nivel_minimo_id, nivel_maximo_id,
-        recurrente, activo, estado,
+        id, estado, fecha_inicio, fecha_fin, duracion_min,
+        capacidad_maxima, tipo_turno_id,
+        nivel_minimo_id, nivel_maximo_id,
+        sede_id, mesa_id,
         sedes(id, nombre),
         mesas(id, numero),
         users!turnos_user_id_fkey(id, nombre),
         socio_turno(id, estado)
       `)
-      .eq('recurrente', true)
-      .eq('activo', true)
+      .eq('estado', true)
       .eq('tipo_turno_id', 1)
-      .order('dia_semana')
-      .order('hora_inicio')
+      .order('fecha_inicio', { ascending: true })
+      .limit(50)
 
-    if (error) throw error
+    if (error) {
+      console.error('GET /admin/turnos/plantillas — Supabase error:', JSON.stringify(error))
+      throw error
+    }
 
     const resultado = (data ?? []).map(t => ({
-      ...t,
-      inscriptos: (t.socio_turno ?? []).filter(s => s.estado === true).length,
+      id:              t.id,
+      // Campos nuevos: existirán después de correr migration 002. Hasta entonces = null.
+      dia_semana:      t.dia_semana   ?? null,
+      hora_inicio:     t.hora_inicio  ?? (t.fecha_inicio ? new Date(t.fecha_inicio).toTimeString().slice(0,5) : null),
+      hora_fin:        t.hora_fin     ?? (t.fecha_fin    ? new Date(t.fecha_fin).toTimeString().slice(0,5)    : null),
+      duracion_min:    t.duracion_min ?? null,
+      capacidad_maxima: t.capacidad_maxima,
+      nivel_minimo_id: t.nivel_minimo_id,
+      nivel_maximo_id: t.nivel_maximo_id,
+      recurrente:      t.recurrente   ?? false,
+      activo:          t.activo       ?? true,
+      estado:          t.estado,
+      sedes:           t.sedes,
+      mesas:           t.mesas,
+      users:           t.users,
+      inscriptos:      (t.socio_turno ?? []).filter(s => s.estado === true).length,
       cupo_disponible: (t.capacidad_maxima ?? 0) - (t.socio_turno ?? []).filter(s => s.estado === true).length,
     }))
 
     res.json({ data: resultado })
   } catch (err) {
     console.error('GET /admin/turnos/plantillas', err)
-    res.status(500).json({ error: 'Error al obtener plantillas' })
+    res.status(500).json({ error: 'Error al obtener plantillas', detalle: err?.message ?? String(err) })
   }
 })
 
@@ -142,10 +161,9 @@ router.get('/:id', async (req, res) => {
     const { data, error } = await supabase
       .from('turnos')
       .select(`
-        id, dia_semana, hora_inicio, hora_fin, duracion_min,
-        capacidad_maxima, nivel_minimo_id, nivel_maximo_id,
-        recurrente, activo, estado, tipo_turno_id,
-        fecha_inicio, fecha_fin,
+        id, estado, fecha_inicio, fecha_fin, duracion_min,
+        capacidad_maxima, tipo_turno_id,
+        nivel_minimo_id, nivel_maximo_id,
         sede_id, mesa_id,
         sedes(id, nombre),
         mesas(id, numero),
@@ -155,25 +173,47 @@ router.get('/:id', async (req, res) => {
         socio_turno(
           id, estado, fecha_inscripcion,
           users!socio_turno_user_id_fkey(id, nombre, email, nivel_id, niveles(nombre))
-        ),
-        turno_excepciones(id, fecha_excepcion, motivo, estado)
+        )
       `)
       .eq('id', req.params.id)
       .single()
 
-    if (error) return res.status(404).json({ error: 'Turno no encontrado' })
+    if (error) {
+      console.error('GET /admin/turnos/:id — Supabase error:', JSON.stringify(error))
+      return res.status(404).json({ error: 'Turno no encontrado' })
+    }
+
+    // Intentar cargar turno_excepciones por separado (tabla nueva, puede no existir aún)
+    let excepciones = []
+    try {
+      const { data: exc } = await supabase
+        .from('turno_excepciones')
+        .select('id, fecha_excepcion, motivo, estado')
+        .eq('turno_id', req.params.id)
+        .order('fecha_excepcion', { ascending: false })
+      excepciones = exc ?? []
+    } catch {
+      // tabla aún no creada — ignorar
+    }
 
     const inscriptos = (data.socio_turno ?? []).filter(s => s.estado === true)
     res.json({
       data: {
         ...data,
+        // Campos nuevos con fallback seguro
+        dia_semana:      data.dia_semana  ?? null,
+        hora_inicio:     data.hora_inicio ?? (data.fecha_inicio ? new Date(data.fecha_inicio).toTimeString().slice(0,5) : null),
+        hora_fin:        data.hora_fin    ?? (data.fecha_fin    ? new Date(data.fecha_fin).toTimeString().slice(0,5)    : null),
+        recurrente:      data.recurrente  ?? false,
+        activo:          data.activo      ?? true,
+        turno_excepciones: excepciones,
         inscriptos_count: inscriptos.length,
-        cupo_disponible: (data.capacidad_maxima ?? 0) - inscriptos.length,
+        cupo_disponible:  (data.capacidad_maxima ?? 0) - inscriptos.length,
       }
     })
   } catch (err) {
     console.error('GET /admin/turnos/:id', err)
-    res.status(500).json({ error: 'Error al obtener turno' })
+    res.status(500).json({ error: 'Error al obtener turno', detalle: err?.message ?? String(err) })
   }
 })
 
@@ -185,14 +225,13 @@ router.get('/:id', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   const {
-    sede_id, mesa_id, entrenador_id,
+    sede_id, entrenador_id,
     dia_semana, hora_inicio, hora_fin,
     duracion_min, capacidad_maxima,
     nivel_minimo_id, nivel_maximo_id,
     recurrente = true,
   } = req.body
 
-  // Validaciones mínimas
   if (!sede_id || entrenador_id == null || dia_semana == null || !hora_inicio || !hora_fin || !capacidad_maxima) {
     return res.status(400).json({
       error: 'sede_id, entrenador_id, dia_semana, hora_inicio, hora_fin y capacidad_maxima son requeridos',
@@ -220,7 +259,7 @@ router.post('/', async (req, res) => {
 
     // Verificar solapamiento (solo para plantillas recurrentes)
     if (recurrente) {
-      const solapa = await verificarSolapamiento({ sede_id, mesa_id, dia_semana, hora_inicio, hora_fin })
+      const solapa = await verificarSolapamiento({ sede_id, dia_semana, hora_inicio, hora_fin })
       if (solapa) {
         return res.status(409).json({
           error: 'Ya existe un turno recurrente en esa sede/mesa/horario. Revisá los turnos existentes.',
@@ -239,23 +278,20 @@ router.post('/', async (req, res) => {
       .insert({
         tipo_turno_id:    1,
         sede_id,
-        mesa_id:          mesa_id || null,
         user_id:          entrenador_id,
-        dia_semana,
-        hora_inicio,
-        hora_fin,
         duracion_min:     duracion_min || null,
         capacidad_maxima,
         nivel_minimo_id:  nivel_minimo_id || null,
         nivel_maximo_id:  nivel_maximo_id || null,
-        recurrente,
-        activo:           true,
         estado:           true,
-        // Fecha de la primera instancia (se recalcula on-the-fly en las consultas)
         fecha_inicio:     primeraFecha.toISOString(),
         fecha_fin:        primeraFin.toISOString(),
+        ...(dia_semana  != null ? { dia_semana }  : {}),
+        ...(hora_inicio          ? { hora_inicio } : {}),
+        ...(hora_fin              ? { hora_fin }   : {}),
+        ...(recurrente != null   ? { recurrente, activo: true } : {}),
       })
-      .select('*, sedes(nombre), mesas(numero), users!turnos_user_id_fkey(nombre)')
+      .select('*, sedes(nombre), users!turnos_user_id_fkey(nombre)')
       .single()
 
     if (error) throw error
@@ -271,7 +307,7 @@ router.post('/', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
   const {
-    sede_id, mesa_id, entrenador_id,
+    sede_id, entrenador_id,
     dia_semana, hora_inicio, hora_fin,
     duracion_min, capacidad_maxima,
     nivel_minimo_id, nivel_maximo_id,
@@ -293,7 +329,7 @@ router.put('/:id', async (req, res) => {
         return res.status(400).json({ error: 'hora_inicio debe ser anterior a hora_fin' })
       }
       const solapa = await verificarSolapamiento({
-        sede_id, mesa_id, dia_semana, hora_inicio, hora_fin,
+        sede_id, dia_semana, hora_inicio, hora_fin,
         excluir_id: req.params.id,
       })
       if (solapa) {
@@ -303,7 +339,7 @@ router.put('/:id', async (req, res) => {
 
     const campos = {}
     const permitidos = [
-      'sede_id', 'mesa_id', 'dia_semana', 'hora_inicio', 'hora_fin',
+      'sede_id', 'dia_semana', 'hora_inicio', 'hora_fin',
       'duracion_min', 'capacidad_maxima', 'nivel_minimo_id', 'nivel_maximo_id',
     ]
     for (const k of permitidos) {
@@ -327,7 +363,7 @@ router.put('/:id', async (req, res) => {
       .from('turnos')
       .update(campos)
       .eq('id', req.params.id)
-      .select('*, sedes(nombre), mesas(numero), users!turnos_user_id_fkey(nombre)')
+      .select('*, sedes(nombre), users!turnos_user_id_fkey(nombre)')
       .single()
 
     if (error) throw error
@@ -343,12 +379,20 @@ router.put('/:id', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.delete('/:id', async (req, res) => {
   try {
-    const { error } = await supabase
-      .from('turnos')
-      .update({ activo: false, estado: false })
-      .eq('id', req.params.id)
+    // Marcar estado = false (columna que siempre existe)
+    // activo = false se actualizará también si ya existe (migración 002)
+    const campos = { estado: false }
+    // Intentar también activo si existe (no falla porque Supabase ignora columnas extras... pero sí falla)
+    // Lo hacemos en dos pasos para ser seguros:
+    await supabase.from('turnos').update({ estado: false }).eq('id', req.params.id)
 
-    if (error) throw error
+    // Intentar también poner activo=false si ya existe el campo (migración 002)
+    try {
+      await supabase.from('turnos').update({ activo: false }).eq('id', req.params.id)
+    } catch {
+      // columna aún no existe, ignorar
+    }
+
     res.json({ mensaje: 'Turno dado de baja definitivamente' })
   } catch (err) {
     console.error('DELETE /admin/turnos/:id', err)
@@ -367,13 +411,12 @@ router.post('/:id/cancelar-semana', async (req, res) => {
     // Obtener el turno para conocer dia_semana y hora_inicio
     const { data: turno, error: errT } = await supabase
       .from('turnos')
-      .select('id, dia_semana, hora_inicio, recurrente, activo')
+      .select('id, dia_semana, hora_inicio, estado')
       .eq('id', req.params.id)
       .single()
 
     if (errT || !turno) return res.status(404).json({ error: 'Turno no encontrado' })
-    if (!turno.recurrente) return res.status(400).json({ error: 'Este turno no es recurrente' })
-    if (!turno.activo)     return res.status(400).json({ error: 'El turno ya está dado de baja' })
+    if (!turno.estado)  return res.status(400).json({ error: 'El turno está inactivo' })
 
     // Calcular la fecha de la próxima instancia
     const fechaProxima = proximaFecha(turno.dia_semana, turno.hora_inicio)
@@ -472,10 +515,10 @@ router.post('/:id/socios', async (req, res) => {
     // Verificar cupo
     const { data: turno } = await supabase
       .from('turnos')
-      .select('id, capacidad_maxima, activo, hora_inicio, hora_fin, dia_semana, sedes(nombre), socio_turno(id, estado)')
+      .select('id, capacidad_maxima, estado, hora_inicio, hora_fin, dia_semana, sedes(nombre), socio_turno(id, estado)')
       .eq('id', turnoId).single()
 
-    if (!turno || !turno.activo) return res.status(404).json({ error: 'Turno no encontrado o inactivo' })
+    if (!turno || !turno.estado) return res.status(404).json({ error: 'Turno no encontrado o inactivo' })
 
     const inscriptos = (turno.socio_turno ?? []).filter(s => s.estado === true).length
     if (inscriptos >= turno.capacidad_maxima) {

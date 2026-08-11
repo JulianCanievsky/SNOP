@@ -9,8 +9,8 @@ import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import {
   getPlantillasTurnos, getDetalleTurnoAdmin, crearTurnoAdmin, editarTurnoAdmin,
   bajaTurnoDefinitiva, cancelarSemana, asignarSocioTurno, quitarSocioTurno,
-  reasignarEntrenador, getListaEsperaAdmin,
-  getEntrenadores, getSedes, getMesas, getNiveles, getSocios,
+  reasignarEntrenador,
+  getEntrenadores, getSedes, getNiveles, getSocios,
 } from '../../services/adminApi'
 import './Admin.css'
 
@@ -26,9 +26,9 @@ function labelTurno(t) {
 }
 
 // ── Formulario para crear/editar turno ───────────────────────────────────────
-function FormTurno({ inicial, entrenadores, sedes, mesas, niveles, onGuardar, onCancelar, guardando }) {
+function FormTurno({ inicial, entrenadores, sedes, niveles, onGuardar, onCancelar, guardando }) {
   const [form, setForm] = useState({
-    sede_id: '', mesa_id: '', entrenador_id: '',
+    sede_id: '', entrenador_id: '',
     dia_semana: '1', hora_inicio: '', hora_fin: '',
     duracion_min: '', capacidad_maxima: '6',
     nivel_minimo_id: '', nivel_maximo_id: '',
@@ -38,18 +38,15 @@ function FormTurno({ inicial, entrenadores, sedes, mesas, niveles, onGuardar, on
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
-  const mesasFiltradas = mesas.filter(m => !form.sede_id || String(m.sede_id) === String(form.sede_id))
-
   function handleSubmit(e) {
     e.preventDefault()
     onGuardar({
-      sede_id:         Number(form.sede_id),
-      mesa_id:         form.mesa_id ? Number(form.mesa_id) : null,
-      entrenador_id:   Number(form.entrenador_id),
-      dia_semana:      Number(form.dia_semana),
-      hora_inicio:     form.hora_inicio,
-      hora_fin:        form.hora_fin,
-      duracion_min:    form.duracion_min ? Number(form.duracion_min) : null,
+      sede_id:          Number(form.sede_id),
+      entrenador_id:    Number(form.entrenador_id),
+      dia_semana:       Number(form.dia_semana),
+      hora_inicio:      form.hora_inicio,
+      hora_fin:         form.hora_fin,
+      duracion_min:     form.duracion_min ? Number(form.duracion_min) : null,
       capacidad_maxima: Number(form.capacidad_maxima),
       nivel_minimo_id:  form.nivel_minimo_id ? Number(form.nivel_minimo_id) : null,
       nivel_maximo_id:  form.nivel_maximo_id ? Number(form.nivel_maximo_id) : null,
@@ -61,16 +58,9 @@ function FormTurno({ inicial, entrenadores, sedes, mesas, niveles, onGuardar, on
     <form onSubmit={handleSubmit} className="admin-form">
       <div className="form-group">
         <label>Sede *</label>
-        <select className="form-select" value={form.sede_id} onChange={e => { set('sede_id', e.target.value); set('mesa_id', '') }} required>
+        <select className="form-select" value={form.sede_id} onChange={e => set('sede_id', e.target.value)} required>
           <option value="">Seleccioná una sede...</option>
           {sedes.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-        </select>
-      </div>
-      <div className="form-group">
-        <label>Mesa (opcional)</label>
-        <select className="form-select" value={form.mesa_id} onChange={e => set('mesa_id', e.target.value)}>
-          <option value="">Sin mesa asignada</option>
-          {mesasFiltradas.map(m => <option key={m.id} value={m.id}>Mesa {m.numero}</option>)}
         </select>
       </div>
       <div className="form-group">
@@ -139,7 +129,6 @@ export default function AdminTurnos() {
   const [turnos,       setTurnos]       = useState([])
   const [entrenadores, setEntrenadores] = useState([])
   const [sedes,        setSedes]        = useState([])
-  const [mesas,        setMesas]        = useState([])
   const [niveles,      setNiveles]      = useState([])
   const [socios,       setSocios]       = useState([])
   const [cargando,     setCargando]     = useState(true)
@@ -155,21 +144,16 @@ export default function AdminTurnos() {
   const [exito,         setExito]         = useState('')
 
   // Modales de confirmación
-  const [confirmarBaja,     setConfirmarBaja]     = useState(false)
-  const [confirmarSemana,   setConfirmarSemana]   = useState(false)
-  const [motivoSemana,      setMotivoSemana]      = useState('')
+  const [confirmarBaja,   setConfirmarBaja]   = useState(false)
+  const [confirmarSemana, setConfirmarSemana] = useState(false)
+  const [motivoSemana,    setMotivoSemana]    = useState('')
 
   // Reasignar entrenador
   const [nuevoEntId, setNuevoEntId] = useState('')
 
-  // Lista de espera
-  const [listaEspera,      setListaEspera]      = useState([])
-  const [cargandoEspera,   setCargandoEspera]   = useState(false)
-  const [tabDetalle,       setTabDetalle]        = useState('inscriptos') // 'inscriptos' | 'espera'
-
   // Asignar socio
-  const [socioAsignar,     setSocioAsignar]     = useState('')
-  const [asignando,        setAsignando]        = useState(false)
+  const [socioAsignar, setSocioAsignar] = useState('')
+  const [asignando,    setAsignando]    = useState(false)
 
   function mostrarExito(msg) {
     setExito(msg); setError('')
@@ -179,18 +163,16 @@ export default function AdminTurnos() {
   const cargarTurnos = useCallback(async () => {
     setCargando(true)
     try {
-      const [t, e, s, m, n, so] = await Promise.all([
+      const [t, e, s, n, so] = await Promise.all([
         getPlantillasTurnos(),
         getEntrenadores(),
         getSedes(),
-        getMesas(),
         getNiveles(),
         getSocios(),
       ])
       setTurnos(t ?? [])
       setEntrenadores(e ?? [])
       setSedes(s ?? [])
-      setMesas(m ?? [])
       setNiveles(n ?? [])
       setSocios(so ?? [])
     } catch (err) {
@@ -207,22 +189,12 @@ export default function AdminTurnos() {
     setEditando(false)
     setCargandoDet(true)
     setError('')
-    setTabDetalle('inscriptos')
     try {
       const data = await getDetalleTurnoAdmin(id)
       setDetalle(data)
       setNuevoEntId(String(data.users?.id ?? ''))
     } catch { setError('Error al cargar detalle del turno') }
     finally { setCargandoDet(false) }
-  }
-
-  async function cargarListaEspera(id) {
-    setCargandoEspera(true)
-    try {
-      const res = await getListaEsperaAdmin(id)
-      setListaEspera(res.data ?? [])
-    } catch { setListaEspera([]) }
-    finally { setCargandoEspera(false) }
   }
 
   async function handleCrear(body) {
@@ -352,7 +324,7 @@ export default function AdminTurnos() {
               <div><span style={{ color: 'var(--admin-muted)', fontSize: 11 }}>DÍA</span><br /><strong>{dia}</strong></div>
               <div><span style={{ color: 'var(--admin-muted)', fontSize: 11 }}>HORARIO</span><br /><strong>{hora} – {horFin} hs</strong></div>
               <div><span style={{ color: 'var(--admin-muted)', fontSize: 11 }}>SEDE</span><br /><strong>{detalle.sedes?.nombre ?? '—'}</strong></div>
-              <div><span style={{ color: 'var(--admin-muted)', fontSize: 11 }}>MESA</span><br /><strong>{detalle.mesas?.numero ? `Mesa ${detalle.mesas.numero}` : '—'}</strong></div>
+              <div><span style={{ color: 'var(--admin-muted)', fontSize: 11 }}>ENTRENADOR</span><br /><strong>{detalle.users?.nombre ?? '—'}</strong></div>
               <div><span style={{ color: 'var(--admin-muted)', fontSize: 11 }}>CUPO</span><br /><strong>{inscriptosActivos.length} / {detalle.capacidad_maxima}</strong></div>
               <div><span style={{ color: 'var(--admin-muted)', fontSize: 11 }}>NIVEL</span><br /><strong>{detalle.niveles_min?.nombre ?? '—'} → {detalle.niveles_max?.nombre ?? '—'}</strong></div>
             </div>
@@ -367,7 +339,6 @@ export default function AdminTurnos() {
               <FormTurno
                 inicial={{
                   sede_id: String(detalle.sede_id ?? ''),
-                  mesa_id: String(detalle.mesa_id ?? ''),
                   entrenador_id: String(detalle.users?.id ?? ''),
                   dia_semana: String(detalle.dia_semana ?? '1'),
                   hora_inicio: detalle.hora_inicio?.slice(0,5) ?? '',
@@ -378,7 +349,7 @@ export default function AdminTurnos() {
                   nivel_maximo_id: String(detalle.nivel_maximo_id ?? ''),
                   recurrente: detalle.recurrente ?? true,
                 }}
-                entrenadores={entrenadores} sedes={sedes} mesas={mesas} niveles={niveles}
+                entrenadores={entrenadores} sedes={sedes} niveles={niveles}
                 onGuardar={handleEditar} onCancelar={() => setEditando(false)} guardando={guardando}
               />
             </div>
@@ -399,86 +370,42 @@ export default function AdminTurnos() {
             </div>
           </div>
 
-          {/* Tabs inscriptos / lista de espera */}
-          <div className="mc-tabs" style={{ background: 'white', borderRadius: 12, padding: 4 }}>
-            <button
-              style={{ flex: 1, padding: '9px 6px', border: 'none', borderRadius: 9, fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s',
-                background: tabDetalle === 'inscriptos' ? 'var(--admin-primary)' : 'none',
-                color: tabDetalle === 'inscriptos' ? 'white' : 'var(--admin-muted)' }}
-              onClick={() => setTabDetalle('inscriptos')}>
-              Inscriptos ({inscriptosActivos.length})
-            </button>
-            <button
-              style={{ flex: 1, padding: '9px 6px', border: 'none', borderRadius: 9, fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s',
-                background: tabDetalle === 'espera' ? 'var(--admin-primary)' : 'none',
-                color: tabDetalle === 'espera' ? 'white' : 'var(--admin-muted)' }}
-              onClick={() => { setTabDetalle('espera'); cargarListaEspera(vistaDetalle) }}>
-              Lista de espera ({listaEspera.length})
-            </button>
-          </div>
-
-          {/* Tab inscriptos */}
-          {tabDetalle === 'inscriptos' && (
-            <div className="admin-card">
-              {/* Asignar socio */}
-              <div className="admin-card-body" style={{ borderBottom: '1px solid var(--admin-border)' }}>
-                <p className="admin-label" style={{ marginBottom: 8 }}>Asignar socio</p>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <select className="form-select" value={socioAsignar} onChange={e => setSocioAsignar(e.target.value)} style={{ flex: 1 }}>
-                    <option value="">Seleccioná un socio...</option>
-                    {socios.filter(s => !inscriptosActivos.some(i => i.users?.id === s.id)).map(s =>
-                      <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                  </select>
-                  <button className="btn-primary" style={{ width: 'auto', padding: '11px 14px' }}
-                    onClick={handleAsignarSocio} disabled={asignando || !socioAsignar}>
-                    {asignando ? '...' : 'Asignar'}
-                  </button>
-                </div>
+          {/* Inscriptos */}
+          <div className="admin-card">
+            <div className="admin-card-body" style={{ borderBottom: '1px solid var(--admin-border)' }}>
+              <p className="admin-label" style={{ marginBottom: 8 }}>
+                Inscriptos ({inscriptosActivos.length}/{detalle.capacidad_maxima})
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <select className="form-select" value={socioAsignar} onChange={e => setSocioAsignar(e.target.value)} style={{ flex: 1 }}>
+                  <option value="">Agregar socio...</option>
+                  {socios.filter(s => !inscriptosActivos.some(i => i.users?.id === s.id)).map(s =>
+                    <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                </select>
+                <button className="btn-primary" style={{ width: 'auto', padding: '11px 14px' }}
+                  onClick={handleAsignarSocio} disabled={asignando || !socioAsignar}>
+                  {asignando ? '...' : 'Agregar'}
+                </button>
               </div>
-              {inscriptosActivos.length === 0 ? (
-                <div className="estado-vacio" style={{ padding: '24px 16px' }}>Sin inscriptos todavía.</div>
-              ) : (
-                inscriptosActivos.map((s, idx) => (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--admin-border)' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--admin-primary-l)', color: 'var(--admin-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-                      {idx + 1}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{s.users?.nombre ?? '—'}</p>
-                      <p style={{ margin: 0, fontSize: 11, color: 'var(--admin-muted)' }}>{s.users?.niveles?.nombre ?? 'Sin nivel'}</p>
-                    </div>
-                    <button className="btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}
-                      onClick={() => handleQuitarSocio(s.users?.id)}>✕</button>
-                  </div>
-                ))
-              )}
             </div>
-          )}
-
-          {/* Tab lista de espera */}
-          {tabDetalle === 'espera' && (
-            <div className="admin-card">
-              {cargandoEspera ? (
-                <div className="estado-carga"><div className="spinner-admin" /></div>
-              ) : listaEspera.length === 0 ? (
-                <div className="estado-vacio" style={{ padding: '24px 16px' }}>Lista de espera vacía.</div>
-              ) : (
-                listaEspera.map(e => (
-                  <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--admin-border)' }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#fff8e1', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
-                      {e.posicion}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{e.nombre}</p>
-                      <p style={{ margin: 0, fontSize: 11, color: 'var(--admin-muted)' }}>{e.nivel}</p>
-                    </div>
+            {inscriptosActivos.length === 0 ? (
+              <div className="estado-vacio" style={{ padding: '24px 16px' }}>Sin inscriptos todavía.</div>
+            ) : (
+              inscriptosActivos.map((s, idx) => (
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--admin-border)' }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--admin-primary-l)', color: 'var(--admin-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+                    {idx + 1}
                   </div>
-                ))
-              )}
-            </div>
-          )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{s.users?.nombre ?? '—'}</p>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--admin-muted)' }}>{s.users?.niveles?.nombre ?? 'Sin nivel'}</p>
+                  </div>
+                  <button className="btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}
+                    onClick={() => handleQuitarSocio(s.users?.id)}>✕</button>
+                </div>
+              ))
+            )}
+          </div>
 
           {/* Excepciones existentes */}
           {(detalle.turno_excepciones ?? []).length > 0 && (
@@ -579,7 +506,7 @@ export default function AdminTurnos() {
             <p className="admin-label" style={{ marginBottom: 10 }}>Nuevo turno recurrente</p>
             <FormTurno
               inicial={{}}
-              entrenadores={entrenadores} sedes={sedes} mesas={mesas} niveles={niveles}
+              entrenadores={entrenadores} sedes={sedes} niveles={niveles}
               onGuardar={handleCrear} onCancelar={() => setMostrarForm(false)} guardando={guardando}
             />
           </div>
@@ -617,7 +544,6 @@ export default function AdminTurnos() {
                             </p>
                             <p style={{ margin: 0, fontSize: 12, color: 'var(--admin-muted)' }}>
                               {t.sedes?.nombre ?? '—'} · {t.users?.nombre ?? '—'}
-                              {t.mesas?.numero ? ` · Mesa ${t.mesas.numero}` : ''}
                             </p>
                           </div>
                           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
