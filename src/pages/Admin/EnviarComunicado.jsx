@@ -45,7 +45,7 @@ export default function EnviarComunicado() {
       setMensaje('')
       const nuevos = await getComunicados()
       setRecientes(nuevos)
-      setTimeout(() => setExito(false), 3000)
+      setTimeout(() => setExito(false), 4000)
     } catch (err) {
       setError(err.response?.data?.error || 'Error al enviar comunicado')
     } finally {
@@ -79,7 +79,7 @@ export default function EnviarComunicado() {
       </div>
 
       <div className="admin-body">
-        {exito && <div className="alerta-exito">✓ Comunicado enviado correctamente</div>}
+        {exito && <div className="alerta-exito">✓ Comunicado enviado — los destinatarios reciben notificación y email</div>}
         {error && <div className="alerta-error">{error}</div>}
 
         <form className="admin-form" onSubmit={handleSubmit}>

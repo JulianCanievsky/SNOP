@@ -228,3 +228,86 @@ export function emailTurnoCanceladoSemana({ nombre, fechaTurno, sede }) {
     `,
   }
 }
+
+export function emailTurnoSuspendido({ nombre, fechaTurno, sede, motivo }) {
+  return {
+    subject: 'Tu turno fue suspendido — SNOP',
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
+        <h2 style="color:#ef4444;margin:0 0 8px;">Turno suspendido</h2>
+        <p style="color:#555;margin:0 0 16px;">Hola <strong>${nombre}</strong>, tu turno fue suspendido:</p>
+        <div style="background:#fff0f0;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+          <p style="margin:0 0 4px;font-weight:700;color:#1e293b;">${fechaTurno}</p>
+          <p style="margin:0;color:#64748b;font-size:13px;">📍 ${sede}</p>
+          ${motivo ? `<p style="margin:8px 0 0;color:#64748b;font-size:13px;">Motivo: ${motivo}</p>` : ''}
+        </div>
+        <p style="color:#555;margin:0;font-size:14px;">Si tenés dudas, contactá al club.</p>
+      </div>
+    `,
+  }
+}
+
+export function emailTurnoQuitado({ nombre, fechaTurno, sede }) {
+  const url = getFrontendUrl()
+  return {
+    subject: 'Te dieron de baja de un turno — SNOP',
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
+        <h2 style="color:#ef4444;margin:0 0 8px;">Baja de turno</h2>
+        <p style="color:#555;margin:0 0 16px;">Hola <strong>${nombre}</strong>, fuiste dado/a de baja del siguiente turno:</p>
+        <div style="background:#fff0f0;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+          <p style="margin:0 0 4px;font-weight:700;color:#1e293b;">${fechaTurno}</p>
+          <p style="margin:0;color:#64748b;font-size:13px;">📍 ${sede}</p>
+        </div>
+        <p style="color:#555;margin:0 0 20px;font-size:14px;">Si creés que es un error, contactá al administrador del club.</p>
+        <a href="${url}/mis-clases"
+           style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:14px;">
+          Ver mis clases
+        </a>
+      </div>
+    `,
+  }
+}
+
+export function emailJuegoLibreLleno({ adminNombre, sede, fechaEvento, capacidad }) {
+  const url = getFrontendUrl()
+  return {
+    subject: 'Juego libre completo — SNOP',
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
+        <h2 style="color:#2563eb;margin:0 0 8px;">🎉 Juego libre completo</h2>
+        <p style="color:#555;margin:0 0 16px;">Hola <strong>${adminNombre}</strong>, el siguiente espacio de juego libre se llenó:</p>
+        <div style="background:#eef2ff;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+          <p style="margin:0 0 4px;font-weight:700;color:#1e293b;">${fechaEvento}</p>
+          <p style="margin:0 0 2px;color:#64748b;font-size:13px;">📍 ${sede}</p>
+          <p style="margin:0;color:#64748b;font-size:13px;">👥 ${capacidad}/${capacidad} inscriptos</p>
+        </div>
+        <a href="${url}/admin/juego-libre"
+           style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:14px;">
+          Ver en el panel
+        </a>
+      </div>
+    `,
+  }
+}
+
+export function emailNuevaSolicitudClase({ entrenadorNombre, socioNombre, fechaTurno, sede }) {
+  const url = getFrontendUrl()
+  return {
+    subject: `Nueva solicitud de clase de ${socioNombre} — SNOP`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
+        <h2 style="color:#2563eb;margin:0 0 8px;">Nueva solicitud de clase</h2>
+        <p style="color:#555;margin:0 0 16px;">Hola <strong>${entrenadorNombre}</strong>, <strong>${socioNombre}</strong> solicitó una clase particular:</p>
+        <div style="background:#eef2ff;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+          <p style="margin:0 0 4px;font-weight:700;color:#1e293b;">${fechaTurno}</p>
+          <p style="margin:0;color:#64748b;font-size:13px;">📍 ${sede}</p>
+        </div>
+        <a href="${url}/entrenador/solicitudes"
+           style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:14px;">
+          Ver solicitudes
+        </a>
+      </div>
+    `,
+  }
+}

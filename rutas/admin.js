@@ -2,7 +2,7 @@ import express from 'express'
 import bcrypt from 'bcryptjs'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
-import { crearNotificacion, enviarEmail, emailTurnoAsignado, emailSolicitudAceptada, emailSolicitudRechazada } from '../src/lib/notificaciones.js'
+import { crearNotificacion, enviarEmail, emailTurnoAsignado, emailSolicitudAceptada, emailSolicitudRechazada, emailTurnoQuitado } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
 
@@ -267,26 +267,32 @@ router.post('/comunicados', async (req, res) => {
       return res.status(400).json({ error: 'Título y mensaje son requeridos' })
     }
 
+    const dest = destinatarios || 'todos'
+
     const { data, error } = await supabase
       .from('comunicados')
       .insert({
-        titulo: titulo.trim(),
-        mensaje: mensaje.trim(),
-        destinatarios: destinatarios || 'todos',
-        enviado_por: req.userId,
-        fecha: new Date().toISOString(),
+        titulo:        titulo.trim(),
+        mensaje:       mensaje.trim(),
+        destinatarios: dest,
+        enviado_por:   req.userId,
+        fecha:         new Date().toISOString(),
       })
       .select()
       .single()
 
     if (error) {
-      // Si la tabla no existe aún, devolvemos éxito igual para no romper el flujo
       if (error.code === '42P01') {
         console.warn('Tabla comunicados no existe aún — comunicado no persistido')
         return res.status(201).json({ data: null, mensaje: 'Comunicado registrado (tabla pendiente de creación)' })
       }
       throw error
     }
+
+    // Enviar email + notificación in-app en background (no bloquea la respuesta)
+    enviarEmailComunicado({ titulo: titulo.trim(), mensaje: mensaje.trim(), destinatarios: dest })
+      .catch(err => console.error('[comunicado] error enviando emails:', err))
+
     res.status(201).json({ data, mensaje: 'Comunicado enviado' })
   } catch (err) {
     console.error(err)
@@ -732,10 +738,10 @@ router.delete('/socios/:id/turnos/:socioTurnoId', async (req, res) => {
   const { id: socioId, socioTurnoId } = req.params
 
   try {
-    // Verificar que la inscripción pertenece a este socio
+    // Verificar que la inscripción pertenece a este socio y obtener datos del turno
     const { data: insc, error: errInsc } = await supabase
       .from('socio_turno')
-      .select('id, user_id')
+      .select('id, user_id, turnos(fecha_inicio, sedes(nombre))')
       .eq('id', socioTurnoId)
       .eq('user_id', socioId)
       .single()
@@ -750,6 +756,33 @@ router.delete('/socios/:id/turnos/:socioTurnoId', async (req, res) => {
       .eq('id', socioTurnoId)
 
     if (error) throw error
+
+    // Notificar al socio
+    try {
+      const { data: socioData } = await supabase
+        .from('users').select('nombre, email').eq('id', socioId).single()
+      if (socioData && insc.turnos) {
+        const fechaStr = insc.turnos.fecha_inicio
+          ? new Date(insc.turnos.fecha_inicio).toLocaleString('es-AR', {
+              weekday: 'long', day: 'numeric', month: 'long',
+              hour: '2-digit', minute: '2-digit',
+              timeZone: 'America/Argentina/Buenos_Aires',
+            })
+          : 'próximamente'
+        const sedeStr = insc.turnos.sedes?.nombre ?? 'la sede'
+        await crearNotificacion({
+          user_id: socioId,
+          titulo:  'Te dieron de baja de un turno',
+          mensaje: `Fuiste dado/a de baja del turno del ${fechaStr} en ${sedeStr}.`,
+          tipo:    'turno_baja',
+          link:    '/mis-clases',
+        })
+        const tmpl = emailTurnoQuitado({ nombre: socioData.nombre, fechaTurno: fechaStr, sede: sedeStr })
+        await enviarEmail({ to: socioData.email, ...tmpl })
+      }
+    } catch (notifErr) {
+      console.error('Notif quitar turno socio:', notifErr)
+    }
 
     res.json({ mensaje: 'Turno desasignado correctamente' })
   } catch (err) {
@@ -1037,5 +1070,81 @@ router.delete('/torneos/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al eliminar torneo' })
   }
 })
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: enviar email + notificación in-app a los destinatarios de un comunicado
+// ─────────────────────────────────────────────────────────────────────────────
+async function enviarEmailComunicado({ titulo, mensaje, destinatarios }) {
+  // Construir filtro de usuarios según segmento
+  let query = supabase
+    .from('users')
+    .select('id, nombre, email, tipo_usuario_id, cuota_al_dia, nivel_id, niveles(nombre)')
+    .eq('activo', true)
+    .not('email', 'is', null)
+
+  if (destinatarios === 'todos') {
+    query = query.eq('tipo_usuario_id', 1).eq('estado_cuenta', 'activa')
+  } else if (destinatarios === 'entrenadores') {
+    query = query.eq('tipo_usuario_id', 2)
+  } else if (destinatarios === 'con_deuda') {
+    query = query.eq('tipo_usuario_id', 1).eq('cuota_al_dia', false).eq('estado_cuenta', 'activa')
+  } else if (destinatarios === 'nivel_rojo') {
+    const { data: nivel } = await supabase
+      .from('niveles').select('id').ilike('nombre', '%rojo%').maybeSingle()
+    if (!nivel) return
+    query = query.eq('tipo_usuario_id', 1).eq('nivel_id', nivel.id).eq('estado_cuenta', 'activa')
+  } else if (destinatarios === 'nivel_azul') {
+    const { data: nivel } = await supabase
+      .from('niveles').select('id').ilike('nombre', '%azul%').maybeSingle()
+    if (!nivel) return
+    query = query.eq('tipo_usuario_id', 1).eq('nivel_id', nivel.id).eq('estado_cuenta', 'activa')
+  }
+
+  const { data: usuarios, error } = await query
+  if (error) { console.error('[comunicado] error al obtener usuarios:', error); return }
+  if (!usuarios?.length) return
+
+  const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://snop-psi.vercel.app').replace(/\/$/, '')
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#f8f9fc;border-radius:12px;overflow:hidden;">
+      <div style="background:#2563eb;padding:24px 28px;">
+        <p style="color:rgba(255,255,255,0.75);margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Comunicado — SNOP Club</p>
+        <h2 style="color:#fff;margin:0;font-size:20px;line-height:1.3;">${titulo}</h2>
+      </div>
+      <div style="padding:28px;">
+        <p style="color:#374151;line-height:1.7;white-space:pre-line;margin:0 0 24px;font-size:15px;">${mensaje}</p>
+        <a href="${FRONTEND_URL}/comunicados"
+           style="display:inline-block;padding:13px 26px;background:#2563eb;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:14px;">
+          Ver todos los comunicados
+        </a>
+        <p style="color:#9ca3af;font-size:11px;margin-top:24px;line-height:1.5;">
+          Recibís este email porque sos parte de SNOP Club.<br>
+          Para dejar de recibirlos, contactá al administrador del club.
+        </p>
+      </div>
+    </div>
+  `
+
+  // Enviar en serie para no saturar Brevo (300 emails/día plan free)
+  let enviados = 0
+  for (const u of usuarios) {
+    try {
+      await crearNotificacion({
+        user_id: u.id,
+        titulo,
+        mensaje,
+        tipo:   'comunicado',
+        link:   '/comunicados',
+      })
+      await enviarEmail({ to: u.email, subject: `${titulo} — SNOP`, html })
+      enviados++
+    } catch (err) {
+      console.error(`[comunicado] error con usuario ${u.email}:`, err?.message)
+    }
+  }
+
+  console.log(`[comunicado] Enviado a ${enviados}/${usuarios.length} usuario(s) — segmento: ${destinatarios}`)
+}
 
 export default router

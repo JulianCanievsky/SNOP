@@ -1,6 +1,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import { crearNotificacion, enviarEmail, emailJuegoLibreLleno } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
 
@@ -136,6 +137,46 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
         .eq('socio_id', socioId)
         .eq('estado', 'activo')
       return res.status(400).json({ error: 'El evento está completo' })
+    }
+
+    // Si se llenó el cupo, avisar a todos los admins
+    if (countFinal >= evento.capacidad_maxima) {
+      try {
+        const { data: admins } = await supabase
+          .from('users')
+          .select('id, nombre, email')
+          .eq('tipo_usuario_id', 3)
+          .eq('activo', true)
+
+        const { data: sedeData } = await supabase
+          .from('sedes').select('nombre').eq('id', evento.sede_id).single()
+
+        const fechaStr = new Date(evento.fecha_inicio).toLocaleString('es-AR', {
+          weekday: 'long', day: 'numeric', month: 'long',
+          hour: '2-digit', minute: '2-digit',
+          timeZone: 'America/Argentina/Buenos_Aires',
+        })
+        const sedeStr = sedeData?.nombre ?? 'la sede'
+
+        for (const admin of admins ?? []) {
+          await crearNotificacion({
+            user_id: admin.id,
+            titulo:  'Juego libre completo',
+            mensaje: `El espacio del ${fechaStr} en ${sedeStr} se llenó (${evento.capacidad_maxima}/${evento.capacidad_maxima}).`,
+            tipo:    'juego_libre_lleno',
+            link:    '/admin/juego-libre',
+          })
+          const tmpl = emailJuegoLibreLleno({
+            adminNombre: admin.nombre,
+            sede:        sedeStr,
+            fechaEvento: fechaStr,
+            capacidad:   evento.capacidad_maxima,
+          })
+          await enviarEmail({ to: admin.email, ...tmpl })
+        }
+      } catch (notifErr) {
+        console.error('[juego-libre] notif lleno:', notifErr)
+      }
     }
 
     res.json({ mensaje: 'Inscripción confirmada' })

@@ -1,6 +1,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import { crearNotificacion, enviarEmail, emailNuevaSolicitudClase } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
 
@@ -183,20 +184,58 @@ router.post('/solicitar', autenticar, async (req, res) => {
     // Inserta la solicitud como pendiente
     const { data, error } = await supabase
       .from('socio_turno')
-     .insert({
-  turno_id,
-  user_id: socio_id,
-  estado: false,
-  fecha_inscripcion: new Date().toISOString()
-})
-      .select();
+      .insert({
+        turno_id,
+        user_id: socio_id,
+        estado: false,
+        fecha_inscripcion: new Date().toISOString()
+      })
+      .select()
 
-    if (error) throw error;
+    if (error) throw error
+
+    // Notificar al entrenador que tiene una nueva solicitud
+    try {
+      const { data: turnoData } = await supabase
+        .from('turnos')
+        .select('fecha_inicio, sedes(nombre), users!turnos_user_id_fkey(id, nombre, email)')
+        .eq('id', turno_id)
+        .single()
+      const { data: socioData } = await supabase
+        .from('users').select('nombre').eq('id', socio_id).single()
+
+      if (turnoData?.users && socioData) {
+        const fechaStr = turnoData.fecha_inicio
+          ? new Date(turnoData.fecha_inicio).toLocaleString('es-AR', {
+              weekday: 'long', day: 'numeric', month: 'long',
+              hour: '2-digit', minute: '2-digit',
+              timeZone: 'America/Argentina/Buenos_Aires',
+            })
+          : 'próximamente'
+        const sedeStr = turnoData.sedes?.nombre ?? 'la sede'
+        await crearNotificacion({
+          user_id: turnoData.users.id,
+          titulo:  'Nueva solicitud de clase',
+          mensaje: `${socioData.nombre} solicitó una clase para el ${fechaStr} en ${sedeStr}.`,
+          tipo:    'solicitud_clase',
+          link:    '/entrenador/solicitudes',
+        })
+        const tmpl = emailNuevaSolicitudClase({
+          entrenadorNombre: turnoData.users.nombre,
+          socioNombre:      socioData.nombre,
+          fechaTurno:       fechaStr,
+          sede:             sedeStr,
+        })
+        await enviarEmail({ to: turnoData.users.email, ...tmpl })
+      }
+    } catch (notifErr) {
+      console.error('[clasesParticulares] notif nueva solicitud:', notifErr)
+    }
 
     res.status(201).json({
       mensaje: 'Solicitud enviada correctamente.',
       data
-    });
+    })
 
   } catch (error) {
     console.error(error);

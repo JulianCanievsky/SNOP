@@ -25,6 +25,8 @@ import {
   enviarEmail,
   emailTurnoAsignado,
   emailTurnoCanceladoSemana,
+  emailTurnoSuspendido,
+  emailTurnoQuitado,
 } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
@@ -273,11 +275,28 @@ router.post('/', async (req, res) => {
     const primeraFin   = new Date(primeraFecha)
     primeraFin.setHours(Number(hf), Number(mf), 0, 0)
 
+    // Resolver mesa_id: usar la que viene del body o tomar la primera activa de la sede
+    let mesaId = req.body.mesa_id || null
+    if (!mesaId) {
+      const { data: mesas } = await supabase
+        .from('mesas')
+        .select('id')
+        .eq('sede_id', Number(sede_id))
+        .eq('activa', true)
+        .order('id')
+        .limit(1)
+      mesaId = mesas?.[0]?.id ?? null
+    }
+    if (!mesaId) {
+      return res.status(400).json({ error: 'No hay mesas disponibles en esa sede. Verificá que la sede tenga mesas cargadas.' })
+    }
+
     const { data, error } = await supabase
       .from('turnos')
       .insert({
         tipo_turno_id:    1,
         sede_id,
+        mesa_id:          mesaId,
         user_id:          entrenador_id,
         duracion_min:     duracion_min || null,
         capacidad_maxima,
@@ -379,18 +398,44 @@ router.put('/:id', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.delete('/:id', async (req, res) => {
   try {
-    // Marcar estado = false (columna que siempre existe)
-    // activo = false se actualizará también si ya existe (migración 002)
-    const campos = { estado: false }
-    // Intentar también activo si existe (no falla porque Supabase ignora columnas extras... pero sí falla)
-    // Lo hacemos en dos pasos para ser seguros:
-    await supabase.from('turnos').update({ estado: false }).eq('id', req.params.id)
+    // Obtener datos del turno e inscriptos antes de desactivar
+    const { data: turno } = await supabase
+      .from('turnos')
+      .select('fecha_inicio, sedes(nombre), socio_turno(users!socio_turno_user_id_fkey(id, nombre, email))')
+      .eq('id', req.params.id)
+      .single()
 
-    // Intentar también poner activo=false si ya existe el campo (migración 002)
+    await supabase.from('turnos').update({ estado: false }).eq('id', req.params.id)
     try {
       await supabase.from('turnos').update({ activo: false }).eq('id', req.params.id)
-    } catch {
-      // columna aún no existe, ignorar
+    } catch { /* columna aún no existe */ }
+
+    // Notificar a todos los inscriptos activos
+    try {
+      const inscriptos = (turno?.socio_turno ?? [])
+        .map(s => s.users).filter(Boolean)
+      const fechaStr = turno?.fecha_inicio
+        ? new Date(turno.fecha_inicio).toLocaleString('es-AR', {
+            weekday: 'long', day: 'numeric', month: 'long',
+            hour: '2-digit', minute: '2-digit',
+            timeZone: 'America/Argentina/Buenos_Aires',
+          })
+        : 'próximamente'
+      const sedeStr = turno?.sedes?.nombre ?? 'la sede'
+
+      for (const socio of inscriptos) {
+        await crearNotificacion({
+          user_id: socio.id,
+          titulo:  'Turno suspendido',
+          mensaje: `El turno del ${fechaStr} en ${sedeStr} fue suspendido.`,
+          tipo:    'turno_suspendido',
+          link:    '/mis-clases',
+        })
+        const tmpl = emailTurnoSuspendido({ nombre: socio.nombre, fechaTurno: fechaStr, sede: sedeStr })
+        await enviarEmail({ to: socio.email, ...tmpl })
+      }
+    } catch (notifErr) {
+      console.error('[admin/turnos] notif baja definitiva:', notifErr)
     }
 
     res.json({ mensaje: 'Turno dado de baja definitivamente' })
@@ -576,6 +621,13 @@ router.post('/:id/socios', async (req, res) => {
 router.delete('/:id/socios/:socioId', async (req, res) => {
   const { id: turnoId, socioId } = req.params
   try {
+    // Obtener datos del turno antes de borrar (para la notificación)
+    const { data: turno } = await supabase
+      .from('turnos')
+      .select('fecha_inicio, sedes(nombre)')
+      .eq('id', turnoId)
+      .single()
+
     const { error } = await supabase
       .from('socio_turno')
       .delete()
@@ -583,6 +635,34 @@ router.delete('/:id/socios/:socioId', async (req, res) => {
       .eq('user_id', socioId)
 
     if (error) throw error
+
+    // Notificar al socio
+    try {
+      const { data: socioData } = await supabase
+        .from('users').select('nombre, email').eq('id', socioId).single()
+      if (socioData && turno) {
+        const fechaStr = turno.fecha_inicio
+          ? new Date(turno.fecha_inicio).toLocaleString('es-AR', {
+              weekday: 'long', day: 'numeric', month: 'long',
+              hour: '2-digit', minute: '2-digit',
+              timeZone: 'America/Argentina/Buenos_Aires',
+            })
+          : 'próximamente'
+        const sedeStr = turno.sedes?.nombre ?? 'la sede'
+        await crearNotificacion({
+          user_id: socioId,
+          titulo:  'Te dieron de baja de un turno',
+          mensaje: `Fuiste dado/a de baja del turno del ${fechaStr} en ${sedeStr}.`,
+          tipo:    'turno_baja',
+          link:    '/mis-clases',
+        })
+        const tmpl = emailTurnoQuitado({ nombre: socioData.nombre, fechaTurno: fechaStr, sede: sedeStr })
+        await enviarEmail({ to: socioData.email, ...tmpl })
+      }
+    } catch (notifErr) {
+      console.error('[admin/turnos] notif quitar socio:', notifErr)
+    }
+
     res.json({ mensaje: 'Socio quitado del turno correctamente' })
   } catch (err) {
     console.error('DELETE /admin/turnos/:id/socios/:socioId', err)
