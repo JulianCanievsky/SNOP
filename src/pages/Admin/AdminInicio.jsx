@@ -21,7 +21,7 @@ export default function AdminInicio() {
   const acciones = [
     { titulo: 'Solicitudes de ingreso', sub: 'Aprobar socios nuevos',    emoji: '📋', path: '/admin/solicitudes' },
     { titulo: 'Gestionar socios',       sub: 'Ver y editar socios',      emoji: '👥', path: '/admin/socios' },
-    { titulo: 'Turnos de entrenamiento', sub: 'Plantillas recurrentes',  emoji: '📅', path: '/admin/turnos' },
+    { titulo: 'Turnos de entrenamiento', sub: 'Crear y gestionar turnos', emoji: '📅', path: '/admin/turnos' },
     { titulo: 'Crear juego libre',      sub: 'Nuevo espacio de juego',   emoji: '🏓', path: '/admin/juego-libre' },
     { titulo: 'Crear torneo',           sub: 'Torneo interno del club',  emoji: '🏆', path: '/admin/torneos' },
     { titulo: 'Enviar comunicado',      sub: 'Notificar a socios',       emoji: '📢', path: '/admin/comunicado' },

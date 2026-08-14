@@ -200,11 +200,11 @@ export default function AdminActividades() {
     try {
       let lista = []
       if (tipo === 'jl') {
-        const { data } = await getInscriptosJuegoLibre(id)
-        lista = data ?? []
+        const res = await getInscriptosJuegoLibre(id)
+        lista = res?.data ?? []
       } else if (tipo === 'tr') {
-        const { data } = await getInscriptosTorneo(id)
-        lista = data ?? []
+        const res = await getInscriptosTorneo(id)
+        lista = res?.data ?? []
       } else if (tipo === 'tu') {
         const res = await api.get(`/admin/turnos-inscriptos/${id}`).catch(() => null)
         lista = res?.data?.data ?? []
@@ -224,7 +224,6 @@ export default function AdminActividades() {
   const accesos = [
     { titulo: 'Nuevo juego libre', emoji: '🏓', path: '/admin/juego-libre' },
     { titulo: 'Nuevo torneo',      emoji: '🏆', path: '/admin/torneos' },
-    { titulo: 'Gestionar turnos',  emoji: '📅', path: '/admin/turnos' },
   ]
 
   return (
@@ -296,7 +295,7 @@ export default function AdminActividades() {
                         cargandoInscriptos={panel.cargando ?? false}
                         listaInscriptos={panel.inscriptos ?? []}
                         onVerAnotados={() => togglePanel('jl', jl.id, jl.capacidad_maxima)}
-                        onNavegar={() => navigate('/admin/juego-libre')}
+                        onNavegar={null}
                       />
                     )
                   })
@@ -326,7 +325,7 @@ export default function AdminActividades() {
                         cargandoInscriptos={panel.cargando ?? false}
                         listaInscriptos={panel.inscriptos ?? []}
                         onVerAnotados={() => togglePanel('tr', t.id, t.capacidad_maxima)}
-                        onNavegar={() => navigate('/admin/torneos')}
+                        onNavegar={null}
                       />
                     )
                   })
