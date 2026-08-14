@@ -2,6 +2,7 @@ import express from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import supabase from '../src/config/db.js'
+import { enviarEmail } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
 
@@ -213,50 +214,28 @@ router.post('/forgot-password', async (req, res) => {
     const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
     const resetLink = `${FRONTEND_URL}/reset-password?token=${resetToken}`
 
-    if (!process.env.RESEND_API_KEY) {
-      // Sin API key: en dev mostramos el link; en prod es un error de config crítico
-      if (process.env.NODE_ENV === 'production') {
-        console.error(
-          '[forgot-password] CRÍTICO: RESEND_API_KEY no configurada en producción. ' +
-          `El email de recuperación NO fue enviado a: ${usuario.email}. ` +
-          'Configurá RESEND_API_KEY en las variables de entorno de Railway.'
-        )
-      } else {
-        console.log(`\n[DEV] RESET LINK para ${usuario.email}:\n${resetLink}\n`)
-      }
-    } else {
-      try {
-        const { Resend } = await import('resend')
-        const resend = new Resend(process.env.RESEND_API_KEY)
-        const { error: sendError } = await resend.emails.send({
-          from: process.env.RESEND_FROM || 'SNOP Club <onboarding@resend.dev>',
-          to: usuario.email,
-          subject: 'Restablecé tu contraseña — SNOP',
-          html: `
-            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
-              <h2 style="color:#1256b0;margin:0 0 8px;">Restablecé tu contraseña</h2>
-              <p style="color:#555;margin:0 0 24px;">Hola <strong>${usuario.nombre}</strong>, recibimos una solicitud para restablecer tu contraseña.</p>
-              <a href="${resetLink}" style="display:inline-block;padding:14px 28px;background:#1a6fd4;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:15px;">
-                Restablecer contraseña
-              </a>
-              <p style="color:#999;font-size:12px;margin-top:24px;">
-                Este link expira en <strong>1 hora</strong>.<br>
-                Si no solicitaste este cambio, ignorá este email.
-              </p>
-            </div>
-          `,
-        })
-        if (sendError) {
-          // Resend devolvió un error de API (dominio, rate limit, etc.)
-          console.error('[forgot-password] Resend API error:', JSON.stringify(sendError))
-        } else {
-          console.log(`[forgot-password] Email enviado correctamente a: ${usuario.email}`)
-        }
-      } catch (emailErr) {
-        // Error de red, import fallido, etc.
-        console.error('[forgot-password] Excepción al enviar email:', emailErr?.message ?? emailErr)
-      }
+    // En dev sin BREVO_API_KEY, enviarEmail imprime el link en consola
+    if (!process.env.BREVO_API_KEY && process.env.NODE_ENV !== 'production') {
+      console.log(`\n[DEV] RESET LINK para ${usuario.email}:\n${resetLink}\n`)
     }
+
+    await enviarEmail({
+      to:      usuario.email,
+      subject: 'Restablecé tu contraseña — SNOP',
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
+          <h2 style="color:#1256b0;margin:0 0 8px;">Restablecé tu contraseña</h2>
+          <p style="color:#555;margin:0 0 24px;">Hola <strong>${usuario.nombre}</strong>, recibimos una solicitud para restablecer tu contraseña.</p>
+          <a href="${resetLink}" style="display:inline-block;padding:14px 28px;background:#1a6fd4;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:15px;">
+            Restablecer contraseña
+          </a>
+          <p style="color:#999;font-size:12px;margin-top:24px;">
+            Este link expira en <strong>1 hora</strong>.<br>
+            Si no solicitaste este cambio, ignorá este email.
+          </p>
+        </div>
+      `,
+    })
 
     res.json(RESPUESTA_OK)
   } catch (err) {

@@ -1,23 +1,28 @@
 /**
  * src/lib/notificaciones.js
- * Helper para crear notificaciones in-app + enviar email transaccional (Resend).
+ * Helper para crear notificaciones in-app + enviar email transaccional (Brevo).
  *
- * IMPORTANTE: RESEND_FROM y FRONTEND_URL se leen en cada llamada (no al importar)
- * para que siempre reflejen el valor real del entorno, incluso si dotenv carga
- * las variables después de que este módulo fue importado por primera vez.
+ * Proveedor: Brevo (ex Sendinblue) — plan gratuito 300 emails/día, sin dominio propio.
+ * Variables de entorno requeridas:
+ *   BREVO_API_KEY   — API key de Brevo (empieza con xkeysib-...)
+ *   BREVO_FROM_EMAIL — email del remitente verificado en Brevo (ej: snoptdm@gmail.com)
+ *   BREVO_FROM_NAME  — nombre visible del remitente (ej: SNOP Club)
+ *   FRONTEND_URL     — URL pública del frontend para los links en los emails
  */
 import supabase from '../config/db.js'
 
 // ── Helpers internos ──────────────────────────────────────────────────────────
-function getFrom() {
-  // onboarding@resend.dev es el sender de sandbox de Resend — funciona sin
-  // verificar dominio propio. Cuando tengas tu dominio verificado en Resend,
-  // seteá RESEND_FROM=SNOP Club <noreply@tudominio.com> en las variables de entorno.
-  return process.env.RESEND_FROM || 'SNOP Club <onboarding@resend.dev>'
+
+function getFromEmail() {
+  return process.env.BREVO_FROM_EMAIL || 'snoptdm@gmail.com'
+}
+
+function getFromName() {
+  return process.env.BREVO_FROM_NAME || 'SNOP Club'
 }
 
 function getFrontendUrl() {
-  return process.env.FRONTEND_URL || 'https://snop-psi.vercel.app'
+  return (process.env.FRONTEND_URL || 'https://snop-psi.vercel.app').replace(/\/$/, '')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,40 +44,52 @@ export async function crearNotificacion({ user_id, titulo, mensaje, tipo, link }
 
 // ─────────────────────────────────────────────────────────────────────────────
 /**
- * Envía un email transaccional con Resend.
- * Lanza un log de error explícito si falla — nunca falla en silencio.
+ * Envía un email transaccional con Brevo (API v3).
+ * Nunca lanza excepción — loguea el error y continúa.
  */
 export async function enviarEmail({ to, subject, html }) {
-  const apiKey = process.env.RESEND_API_KEY
+  const apiKey = process.env.BREVO_API_KEY
 
   if (!apiKey) {
     if (process.env.NODE_ENV === 'production') {
       console.error(
-        `[email] CRÍTICO: RESEND_API_KEY no configurada. ` +
+        `[email] CRÍTICO: BREVO_API_KEY no configurada. ` +
         `Email NO enviado a ${to} — Asunto: "${subject}"`
       )
     } else {
-      // Dev: imprimir en consola para poder probar sin Resend
-      console.log(`\n[DEV EMAIL] Para: ${to}\nAsunto: ${subject}\n${html.replace(/<[^>]+>/g, '').trim()}\n`)
+      // Dev sin key: imprimir en consola
+      console.log(
+        `\n[DEV EMAIL] Para: ${to}\nAsunto: ${subject}\n` +
+        `${html.replace(/<[^>]+>/g, '').trim()}\n`
+      )
     }
     return
   }
 
   try {
-    const { Resend } = await import('resend')
-    const resend = new Resend(apiKey)
-
-    const { data, error: sendError } = await resend.emails.send({
-      from:    getFrom(),
-      to,
+    const body = JSON.stringify({
+      sender:   { name: getFromName(), email: getFromEmail() },
+      to:       [{ email: to }],
       subject,
-      html,
+      htmlContent: html,
     })
 
-    if (sendError) {
-      console.error(`[email] Resend API error al enviar a ${to}:`, JSON.stringify(sendError))
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method:  'POST',
+      headers: {
+        'accept':       'application/json',
+        'content-type': 'application/json',
+        'api-key':      apiKey,
+      },
+      body,
+    })
+
+    if (!response.ok) {
+      const texto = await response.text()
+      console.error(`[email] Brevo error ${response.status} al enviar a ${to}:`, texto)
     } else {
-      console.log(`[email] Enviado correctamente a ${to} (id: ${data?.id ?? '?'})`)
+      const json = await response.json()
+      console.log(`[email] Enviado correctamente a ${to} (messageId: ${json.messageId ?? '?'})`)
     }
   } catch (err) {
     console.error(`[email] Excepción al enviar a ${to}:`, err?.message ?? err)
@@ -196,7 +213,6 @@ export function emailListaEsperaPromovido({ nombre, fechaTurno, sede }) {
 }
 
 export function emailTurnoCanceladoSemana({ nombre, fechaTurno, sede }) {
-  const url = getFrontendUrl()
   return {
     subject: 'Turno cancelado esta semana — SNOP',
     html: `
