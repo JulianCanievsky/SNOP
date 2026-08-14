@@ -10,7 +10,10 @@ import supabase from '../config/db.js'
 
 // ── Helpers internos ──────────────────────────────────────────────────────────
 function getFrom() {
-  return process.env.RESEND_FROM || 'SNOP Club <noreply@snoptdm.com>'
+  // onboarding@resend.dev es el sender de sandbox de Resend — funciona sin
+  // verificar dominio propio. Cuando tengas tu dominio verificado en Resend,
+  // seteá RESEND_FROM=SNOP Club <noreply@tudominio.com> en las variables de entorno.
+  return process.env.RESEND_FROM || 'SNOP Club <onboarding@resend.dev>'
 }
 
 function getFrontendUrl() {

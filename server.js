@@ -73,8 +73,8 @@ const corsOptions = {
 
 // Aplicar CORS antes de todo — incluyendo el handler explícito de preflight
 app.use(cors(corsOptions))
-// Responder OK a todas las peticiones OPTIONS (preflight) — sintaxis Express 5
-app.options('/*path', cors(corsOptions))
+// Responder OK a todas las peticiones OPTIONS (preflight)
+app.options('/*', cors(corsOptions))
 
 app.use(express.json())
 

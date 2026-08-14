@@ -8,7 +8,7 @@
  */
 import axios from 'axios'
 
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+export const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 /** Devuelve el token almacenado en localStorage */
 const getToken = () => localStorage.getItem('snop_token')
