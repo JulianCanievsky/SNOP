@@ -9,4 +9,5 @@ export const cancelarTorneo      = (id)  => api.delete(`/torneos/${id}/cancelar`
 export const getTorneosAdmin     = ()     => api.get('/admin/torneos').then(r => r.data.data)
 export const crearTorneo         = (body) => api.post('/admin/torneos', body).then(r => r.data)
 export const borrarTorneo        = (id)   => api.delete(`/admin/torneos/${id}`).then(r => r.data)
-export const getInscriptosTorneo = (id)   => api.get(`/admin/torneos/${id}/inscriptos`).then(r => r.data)
+export const getInscriptosTorneo = (id)              => api.get(`/admin/torneos/${id}/inscriptos`).then(r => r.data)
+export const quitarInscriptoTorneo = (torneoId, socioId) => api.delete(`/admin/torneos/${torneoId}/inscriptos/${socioId}`).then(r => r.data)

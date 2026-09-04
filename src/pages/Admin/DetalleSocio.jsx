@@ -195,6 +195,15 @@ export default function DetalleSocio() {
           {guardando ? 'Guardando...' : 'Guardar cambios'}
         </button>
 
+        {/* ── Bonos ── */}
+        <button
+          className="btn-secondary"
+          style={{ width: '100%', padding: '12px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+          onClick={() => navigate(`/admin/bonos/${id}`)}
+        >
+          🎟️ Gestionar bonos
+        </button>
+
         {/* ── Asignar turno ── */}
         <div className="admin-card admin-card-body">
           <p className="admin-label" style={{ marginBottom: 10 }}>Asignar turno</p>

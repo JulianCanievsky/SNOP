@@ -28,6 +28,7 @@ import {
   emailTurnoSuspendido,
   emailTurnoQuitado,
 } from '../src/lib/notificaciones.js'
+import { getBonoActivo } from './bonos.js'
 
 const router = express.Router()
 
@@ -554,13 +555,13 @@ router.post('/:id/socios', async (req, res) => {
   try {
     // Verificar socio
     const { data: socio } = await supabase
-      .from('users').select('id, nombre, email').eq('id', socio_id).eq('tipo_usuario_id', 1).single()
+      .from('users').select('id, nombre, email, nivel_id').eq('id', socio_id).eq('tipo_usuario_id', 1).single()
     if (!socio) return res.status(404).json({ error: 'Socio no encontrado' })
 
-    // Verificar cupo
+    // Verificar cupo y niveles del turno
     const { data: turno } = await supabase
       .from('turnos')
-      .select('id, capacidad_maxima, estado, hora_inicio, hora_fin, dia_semana, sedes(nombre), socio_turno(id, estado)')
+      .select('id, capacidad_maxima, estado, hora_inicio, hora_fin, dia_semana, nivel_minimo_id, nivel_maximo_id, sedes(nombre), socio_turno(id, estado)')
       .eq('id', turnoId).single()
 
     if (!turno || !turno.estado) return res.status(404).json({ error: 'Turno no encontrado o inactivo' })
@@ -568,6 +569,22 @@ router.post('/:id/socios', async (req, res) => {
     const inscriptos = (turno.socio_turno ?? []).filter(s => s.estado === true).length
     if (inscriptos >= turno.capacidad_maxima) {
       return res.status(400).json({ error: 'El turno no tiene cupo disponible' })
+    }
+
+    // Verificar nivel del socio dentro del rango permitido por el turno
+    if ((turno.nivel_minimo_id != null || turno.nivel_maximo_id != null) && socio.nivel_id != null) {
+      const { data: niveles } = await supabase
+        .from('niveles').select('id, orden').order('orden', { ascending: true })
+      const nivelMap   = Object.fromEntries((niveles ?? []).map(n => [n.id, n.orden]))
+      const ordenSocio = nivelMap[socio.nivel_id] ?? 0
+      const ordenMin   = turno.nivel_minimo_id != null ? (nivelMap[turno.nivel_minimo_id] ?? 0)        : null
+      const ordenMax   = turno.nivel_maximo_id != null ? (nivelMap[turno.nivel_maximo_id] ?? Infinity) : null
+      if (ordenMin != null && ordenSocio < ordenMin) {
+        return res.status(400).json({ error: 'El nivel del socio no cumple el mínimo requerido para este turno' })
+      }
+      if (ordenMax != null && ordenSocio > ordenMax) {
+        return res.status(400).json({ error: 'El nivel del socio supera el máximo permitido para este turno' })
+      }
     }
 
     // Verificar inscripción duplicada
@@ -584,6 +601,29 @@ router.post('/:id/socios', async (req, res) => {
     if (error) {
       if (error.code === '23505') return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
       throw error
+    }
+
+    // ── Descuento de crédito del bono activo (si tiene uno) ──────────────────
+    let bonoInfo = null
+    try {
+      const bono = await getBonoActivo(socio_id)
+      if (bono && bono.creditos_usados < bono.creditos_total) {
+        await supabase.from('bono_turno').insert({
+          bono_id:  bono.id,
+          turno_id: turnoId,
+          socio_id: socio_id,
+        })
+        await supabase
+          .from('bonos')
+          .update({ creditos_usados: bono.creditos_usados + 1 })
+          .eq('id', bono.id)
+        bonoInfo = {
+          bono_id:            bono.id,
+          creditos_restantes: bono.creditos_total - bono.creditos_usados - 1,
+        }
+      }
+    } catch (bonoErr) {
+      console.error('[admin/turnos/socios] error al descontar crédito:', bonoErr)
     }
 
     // Notificación al socio
@@ -607,7 +647,7 @@ router.post('/:id/socios', async (req, res) => {
       console.error('[admin/turnos] notif asignar socio:', notifErr)
     }
 
-    res.status(201).json({ data, mensaje: 'Socio asignado al turno correctamente' })
+    res.status(201).json({ data, bonoInfo, mensaje: 'Socio asignado al turno correctamente' })
   } catch (err) {
     console.error('POST /admin/turnos/:id/socios', err)
     res.status(500).json({ error: err.message || 'Error al asignar socio' })
@@ -635,6 +675,30 @@ router.delete('/:id/socios/:socioId', async (req, res) => {
       .eq('user_id', socioId)
 
     if (error) throw error
+
+    // ── Devolución de crédito al bono si corresponde ─────────────────────────
+    try {
+      const { data: uso } = await supabase
+        .from('bono_turno')
+        .select('id, bono_id')
+        .eq('turno_id', turnoId)
+        .eq('socio_id', socioId)
+        .maybeSingle()
+
+      if (uso) {
+        await supabase.from('bono_turno').delete().eq('id', uso.id)
+        const { data: bono } = await supabase
+          .from('bonos').select('creditos_usados').eq('id', uso.bono_id).single()
+        if (bono && bono.creditos_usados > 0) {
+          await supabase
+            .from('bonos')
+            .update({ creditos_usados: bono.creditos_usados - 1 })
+            .eq('id', uso.bono_id)
+        }
+      }
+    } catch (bonoErr) {
+      console.error('[admin/turnos/socios] error al devolver crédito:', bonoErr)
+    }
 
     // Notificar al socio
     try {

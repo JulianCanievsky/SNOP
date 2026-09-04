@@ -33,6 +33,7 @@ import authRouter               from './rutas/auth.js'
 import adminRouter              from './rutas/admin.js'
 import agendaRouter             from './rutas/agenda.js'
 import ratingsRouter            from './rutas/ratings.js'
+import bonosRouter              from './rutas/bonos.js'
 
 const app = express()
 
@@ -98,10 +99,12 @@ export const limiterAuth = rateLimit({
 })
 
 // ─── Rutas ────────────────────────────────────────────────────────────────────
+// IMPORTANTE: los routers más específicos van ANTES del router genérico de admin,
+// de lo contrario Express captura /api/admin/exportar y /api/admin/turnos con adminRouter.
 app.use('/api/auth',                limiterAuth, authRouter)
-app.use('/api/admin',               adminRouter)
 app.use('/api/admin/exportar',      exportarRouter)
 app.use('/api/admin/turnos',        adminTurnosRouter)
+app.use('/api/admin',               adminRouter)
 app.use('/api/torneos',             torneosRouter)
 app.use('/api/notificaciones',      notificacionesRouter)
 
@@ -163,6 +166,7 @@ app.use('/api/juego-libre',         juegoLibreRoutes)
 app.use('/api/turnos',              turnosRoutes)
 app.use('/api/agenda',              agendaRouter)
 app.use('/api/ratings',             ratingsRouter)
+app.use('/api/bonos',               bonosRouter)
 app.use('/api/clases-particulares', clasesParticularesRoutes)
 app.use('/api/perfil',              perfilRouter)
 app.use('/api/entrenador',          entrenadorRouter)

@@ -30,6 +30,7 @@ import AdminTurnos        from './pages/Admin/AdminTurnos'
 import ExportarActividades from './pages/Admin/ExportarActividades'
 import CrearTorneo        from './pages/Admin/CrearTorneo'
 import SolicitudesIngreso  from './pages/Admin/SolicitudesIngreso'
+import GestionBonos       from './pages/Admin/GestionBonos'
 
 // Entrenador
 import InicioEntrenador        from './pages/entrenador/InicioEntrenador/InicioEntrenador'
@@ -119,6 +120,7 @@ function AppRoutes() {
       <Route path="/admin/exportar"      element={<RutaProtegida rolesPermitidos={[3]}><ExportarActividades /></RutaProtegida>} />
       <Route path="/admin/torneos"       element={<RutaProtegida rolesPermitidos={[3]}><CrearTorneo /></RutaProtegida>} />
       <Route path="/admin/solicitudes"   element={<RutaProtegida rolesPermitidos={[3]}><SolicitudesIngreso /></RutaProtegida>} />
+      <Route path="/admin/bonos/:socioId" element={<RutaProtegida rolesPermitidos={[3]}><GestionBonos /></RutaProtegida>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

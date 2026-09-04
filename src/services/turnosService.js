@@ -140,6 +140,53 @@ async function notificarLugarDisponible(turno, socioQueCancelo) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 export async function reconfirmarTurno(turnoId, socioId) {
+  // 1. Obtener datos del turno: capacidad, niveles habilitados e inscriptos actuales
+  const { data: turno, error: errTurno } = await supabase
+    .from("turnos")
+    .select("id, capacidad_maxima, nivel_minimo_id, nivel_maximo_id, socio_turno(id, estado)")
+    .eq("id", turnoId)
+    .single();
+
+  if (errTurno || !turno) throw new Error("Turno no encontrado");
+
+  // 2. Verificar cupo disponible (sin contar la fila del propio socio, que ya existe con estado=false)
+  const inscriptosActivos = (turno.socio_turno ?? []).filter(
+    (s) => s.estado === true
+  ).length;
+  if (inscriptosActivos >= (turno.capacidad_maxima ?? 0)) {
+    throw new Error("El turno ya está completo. No hay cupo disponible.");
+  }
+
+  // 3. Verificar que el nivel del socio está dentro del rango permitido
+  if (turno.nivel_minimo_id != null || turno.nivel_maximo_id != null) {
+    const { data: socio, error: errSocio } = await supabase
+      .from("users")
+      .select("nivel_id")
+      .eq("id", socioId)
+      .single();
+
+    if (!errSocio && socio?.nivel_id != null) {
+      // Obtener el orden/posición de cada nivel para comparar rangos
+      const { data: niveles } = await supabase
+        .from("niveles")
+        .select("id, orden")
+        .order("orden", { ascending: true });
+
+      const nivelMap = Object.fromEntries((niveles ?? []).map((n) => [n.id, n.orden]));
+      const ordenSocio = nivelMap[socio.nivel_id] ?? 0;
+      const ordenMin   = turno.nivel_minimo_id != null ? (nivelMap[turno.nivel_minimo_id] ?? 0) : null;
+      const ordenMax   = turno.nivel_maximo_id != null ? (nivelMap[turno.nivel_maximo_id] ?? Infinity) : null;
+
+      if (ordenMin != null && ordenSocio < ordenMin) {
+        throw new Error("Tu nivel no cumple el mínimo requerido para este turno.");
+      }
+      if (ordenMax != null && ordenSocio > ordenMax) {
+        throw new Error("Tu nivel supera el máximo permitido para este turno.");
+      }
+    }
+  }
+
+  // 4. Reactivar la inscripción
   const { data, error } = await supabase
     .from("socio_turno")
     .update({ estado: true })

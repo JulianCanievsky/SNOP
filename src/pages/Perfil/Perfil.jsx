@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { usePerfil } from '../../hooks/usePerfil'
+import { getMiBono } from '../../services/bonosApi'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import './Perfil.css'
 
@@ -69,6 +70,13 @@ const Perfil = () => {
   const { user, logout } = useAuth()
   const { perfil, cargando, cargarPerfil } = usePerfil()
   const [mostrarHistorial, setMostrarHistorial] = useState(false)
+  const [bono, setBono] = useState(undefined) // undefined = cargando, null = sin bono
+
+  useEffect(() => {
+    getMiBono()
+      .then(data => setBono(data ?? null))
+      .catch(() => setBono(null))
+  }, [])
 
   if (cargando) {
     return (
@@ -176,6 +184,60 @@ const Perfil = () => {
           {usuario.cuota_al_dia ? 'Pagado' : 'Pendiente'}
         </span>
       </div>
+
+      {/* Bono activo */}
+      {bono !== undefined && (
+        <>
+          <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Bono de créditos</h4>
+          {bono === null ? (
+            <div className="cuota-card" style={{ color: '#9ca3af', fontSize: 14 }}>
+              Sin bono activo
+            </div>
+          ) : (
+            <div className="bono-card">
+              {/* Tipo + vencimiento */}
+              <div className="bono-card-header">
+                <span className={`bono-tipo-badge bono-tipo-${bono.tipo}`}>
+                  {{ mensual: 'Mensual', trimestral: 'Trimestral', personalizado: 'Personalizado' }[bono.tipo] ?? bono.tipo}
+                </span>
+                <span className="bono-vencimiento">
+                  Vence {new Date(`${bono.fecha_vencimiento}T12:00:00`).toLocaleDateString('es-AR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    timeZone: 'America/Argentina/Buenos_Aires',
+                  })}
+                </span>
+              </div>
+
+              {/* Créditos grandes */}
+              <div className="bono-creditos-bloque">
+                <span className="bono-creditos-num">{bono.creditos_disponibles}</span>
+                <span className="bono-creditos-label">
+                  de {bono.creditos_total} crédito{bono.creditos_total !== 1 ? 's' : ''} disponibles
+                </span>
+              </div>
+
+              {/* Barra de progreso */}
+              <div className="bono-barra-fondo">
+                <div
+                  className="bono-barra-fill"
+                  style={{
+                    width: `${Math.min((bono.creditos_usados / bono.creditos_total) * 100, 100)}%`,
+                    background: bono.creditos_disponibles === 0
+                      ? '#ef4444'
+                      : bono.creditos_disponibles <= 2
+                        ? '#f59e0b'
+                        : '#2563eb',
+                  }}
+                />
+              </div>
+
+              {bono.notas && (
+                <p className="bono-notas">{bono.notas}</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
       <button className="btn-logout" onClick={logout}>
         Cerrar sesión

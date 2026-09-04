@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSedes } from '../../services/adminApi'
-import { crearTorneo, getTorneosAdmin, borrarTorneo, getInscriptosTorneo } from '../../services/torneosApi'
+import { crearTorneo, getTorneosAdmin, borrarTorneo, getInscriptosTorneo, quitarInscriptoTorneo } from '../../services/torneosApi'
 import './Admin.css'
 
 const NIVEL_STYLE = {
@@ -22,9 +22,10 @@ export default function CrearTorneo() {
   const [error,      setError]      = useState('')
 
   // Modal inscriptos
-  const [modalId,       setModalId]       = useState(null)
-  const [inscriptos,    setInscriptos]    = useState([])
-  const [cargandoModal, setCargandoModal] = useState(false)
+  const [modalId,        setModalId]        = useState(null)
+  const [inscriptos,     setInscriptos]     = useState([])
+  const [cargandoModal,  setCargandoModal]  = useState(false)
+  const [quitando,       setQuitando]       = useState(null) // id de inscripto siendo eliminado
 
   const [form, setForm] = useState({
     nombre:              '',
@@ -107,6 +108,23 @@ export default function CrearTorneo() {
       setInscriptos(data ?? [])
     } catch { setInscriptos([]) }
     finally { setCargandoModal(false) }
+  }
+
+  async function quitarInscripto(torneoId, socioId, nombre) {
+    if (!window.confirm(`¿Quitar a ${nombre} del torneo?`)) return
+    setQuitando(socioId)
+    try {
+      await quitarInscriptoTorneo(torneoId, socioId)
+      setInscriptos(prev => prev.filter(i => i.id !== socioId && i.nombre !== nombre))
+      // Refrescar conteo en la lista de publicados
+      setPublicados(prev => prev.map(p =>
+        p.id === torneoId ? { ...p, inscriptos: Math.max(0, (p.inscriptos ?? 1) - 1) } : p
+      ))
+    } catch (err) {
+      alert(err.response?.data?.error || 'No se pudo quitar al inscripto')
+    } finally {
+      setQuitando(null)
+    }
   }
 
   const TZ = 'America/Argentina/Buenos_Aires'
@@ -272,7 +290,7 @@ export default function CrearTorneo() {
                               {inscriptos.map((insc, idx) => (
                                 <div key={insc.id} className="inscripto-row">
                                   <div className="inscripto-num">{idx + 1}</div>
-                                  <div className="inscripto-info">
+                                  <div className="inscripto-info" style={{ flex: 1 }}>
                                     <span className="inscripto-nombre">{insc.nombre}</span>
                                     <span className="inscripto-email">{insc.email}</span>
                                     {insc.telefono && <span className="inscripto-email">{insc.telefono}</span>}
@@ -282,6 +300,14 @@ export default function CrearTorneo() {
                                       {insc.nivel}
                                     </span>
                                     <span style={{ fontSize: 10, color: '#9ca3af' }}>{formatFechaInsc(insc.fecha_inscripcion)}</span>
+                                    <button
+                                      className="btn-danger"
+                                      style={{ padding: '3px 10px', fontSize: 11, marginTop: 2 }}
+                                      disabled={quitando === insc.socio_id}
+                                      onClick={() => quitarInscripto(p.id, insc.socio_id, insc.nombre)}
+                                    >
+                                      {quitando === insc.socio_id ? '...' : 'Quitar'}
+                                    </button>
                                   </div>
                                 </div>
                               ))}
