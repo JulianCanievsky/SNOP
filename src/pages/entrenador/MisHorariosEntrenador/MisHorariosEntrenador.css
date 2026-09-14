@@ -221,3 +221,14 @@
   font-weight: 600;
   text-align: center;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .mis-horarios-e          { background: var(--app-bg); }
+[data-theme="dark"] .mis-horarios-e-header   { background: #1a3a6b; }
+[data-theme="dark"] .horarios-semana         { background: var(--app-card); }
+[data-theme="dark"] .dia-horarios-fila       { border-bottom-color: var(--app-card-border); }
+[data-theme="dark"] .dia-nombre              { color: var(--app-text-muted); }
+[data-theme="dark"] .slot-chip               { background: #22263a; color: #8b95a5; }
+[data-theme="dark"] .agregar-disp-card       { background: var(--app-card); }
+[data-theme="dark"] .form-select             { background: #22263a; border-color: var(--app-card-border); color: var(--app-text); }
+[data-theme="dark"] .sin-horarios            { background: var(--app-card); color: var(--app-text-sub); }

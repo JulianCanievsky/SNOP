@@ -98,3 +98,14 @@
 .btn-splash-secondary:active {
   transform: translateY(0);
 }
+
+/* ── DARK MODE — el gradiente azul queda bien en oscuro, solo ajustamos los botones ── */
+[data-theme="dark"] .btn-splash-primary {
+  background: #e2e8f0;
+  color: #1a3a6b;
+}
+
+[data-theme="dark"] .btn-splash-secondary {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.35);
+}

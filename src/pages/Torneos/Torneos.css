@@ -333,3 +333,19 @@
 .tor-btn-cancelar-det:disabled { opacity: .5; cursor: not-allowed; }
 
 .tor-btn-lleno { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .torneos-container    { background: var(--app-bg); }
+[data-theme="dark"] .tor-card             { background: var(--app-card); border-color: var(--app-card-border); box-shadow: none; }
+[data-theme="dark"] .tor-nombre           { color: var(--app-text); }
+[data-theme="dark"] .tor-fecha            { color: var(--app-text-muted); }
+[data-theme="dark"] .tor-info             { color: var(--app-text-muted); }
+[data-theme="dark"] .tor-avatar           { border-color: var(--app-card); }
+[data-theme="dark"] .tor-detalle-container{ background: var(--app-bg); }
+[data-theme="dark"] .tor-detalle-card     { background: var(--app-card); box-shadow: none; }
+[data-theme="dark"] .tor-detalle-val      { color: var(--app-text); }
+[data-theme="dark"] .tor-detalle-meta     { color: var(--app-text-muted); }
+[data-theme="dark"] .tor-detalle-sep      { background: var(--app-card-border); }
+[data-theme="dark"] .tor-anotados         { background: var(--app-card); }
+[data-theme="dark"] .tor-avatar-nombre    { color: var(--app-text-muted); }
+[data-theme="dark"] .tor-btn-lleno        { background: #22263a; color: #64748b; }

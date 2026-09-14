@@ -790,3 +790,33 @@
 }
 
 .solicitud-row:last-child { border-bottom: none; }
+
+/* ── DARK MODE ──────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --admin-primary:   #6366f1;
+  --admin-primary-d: #4f46e5;
+  --admin-primary-l: #1e2040;
+  --admin-primary-m: #818cf8;
+  --admin-bg:        #0f1117;
+  --admin-white:     #1a1d27;
+  --admin-border:    #2a2d3a;
+  --admin-text:      #e2e8f0;
+  --admin-muted:     #8b95a5;
+  --admin-red:       #f87171;
+  --admin-red-bg:    #2d1515;
+  --admin-green:     #4ade80;
+  --admin-green-bg:  #142414;
+  --admin-yellow:    #fbbf24;
+  --admin-yellow-bg: #2a2000;
+}
+
+[data-theme="dark"] .socio-row:hover      { background: #22263a; }
+[data-theme="dark"] .nivel-btn:not(.sel)  { color: var(--admin-muted); background: var(--admin-white); border-color: var(--admin-border); }
+[data-theme="dark"] .filtro-pill          { background: var(--admin-white); color: var(--admin-muted); border-color: var(--admin-border); }
+[data-theme="dark"] .radio-option         { background: var(--admin-white); color: var(--admin-text); }
+[data-theme="dark"] .radio-option.sel     { background: var(--admin-primary-l); color: var(--admin-primary); }
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-textarea        { background: #22263a; border-color: var(--admin-border); color: var(--admin-text); }
+[data-theme="dark"] .badge-nivel.sin-nivel { background: #2a2d3a; color: #8b95a5; }
+[data-theme="dark"] .inscriptos-panel     { background: var(--admin-primary-l); }

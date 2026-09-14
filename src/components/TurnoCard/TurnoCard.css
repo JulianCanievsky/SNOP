@@ -188,3 +188,16 @@
   from { transform: translateY(20px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .turno-card       { background: var(--app-card); border-color: var(--app-card-border); box-shadow: none; }
+[data-theme="dark"] .turno-header h3  { color: var(--app-text); }
+[data-theme="dark"] .horario          { background: #22263a; }
+[data-theme="dark"] .horario-texto strong { color: var(--app-text); }
+[data-theme="dark"] .horario-texto p  { color: var(--app-text-sub); }
+[data-theme="dark"] .info             { color: var(--app-text-muted); }
+[data-theme="dark"] .modal            { background: var(--app-card); }
+[data-theme="dark"] .modal h3         { color: var(--app-text); }
+[data-theme="dark"] .modal p          { color: var(--app-text-muted); }
+[data-theme="dark"] .modal-btn-secundario { background: var(--app-card); border-color: var(--app-card-border); color: var(--app-text); }
+[data-theme="dark"] .modal-btn-secundario:hover { background: #22263a; }

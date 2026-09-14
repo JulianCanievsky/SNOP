@@ -190,3 +190,19 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .detalle-alumno-e              { background: var(--app-bg); }
+[data-theme="dark"] .detalle-alumno-e-header       { background: #1a3a6b; }
+[data-theme="dark"] .alumno-perfil-card            { background: var(--app-card); }
+[data-theme="dark"] .alumno-perfil-card h2         { color: var(--app-text); }
+[data-theme="dark"] .alumno-perfil-card .email     { color: var(--app-text-sub); }
+[data-theme="dark"] .alumno-avatar-grande          { background: #1a2e50; color: #60a5fa; }
+[data-theme="dark"] .turnos-asignados-card         { background: var(--app-card); }
+[data-theme="dark"] .card-seccion-titulo           { color: var(--app-text-sub); }
+[data-theme="dark"] .turno-asignado-item           { border-bottom-color: var(--app-card-border); }
+[data-theme="dark"] .turno-asignado-item svg       { color: var(--app-text-muted); }
+[data-theme="dark"] .turno-asignado-texto          { color: var(--app-text); }
+[data-theme="dark"] .cambiar-nivel-card            { background: var(--app-card); }
+[data-theme="dark"] .nivel-descripcion             { color: var(--app-text-sub); }
+[data-theme="dark"] .nivel-opcion-btn              { background: var(--app-card); border-color: var(--app-card-border); color: var(--app-text-muted); }

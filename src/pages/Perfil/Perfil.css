@@ -353,3 +353,51 @@
   color: #94a3b8;
   font-style: italic;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .perfil-container            { background: var(--app-bg); }
+[data-theme="dark"] .perfil-header               { background: #1a3a6b; }
+[data-theme="dark"] .perfil-card                 { background: var(--app-card); }
+[data-theme="dark"] .perfil-card h3              { color: var(--app-text); }
+[data-theme="dark"] .perfil-card p               { color: var(--app-text-muted); }
+[data-theme="dark"] .turno-card                  { background: var(--app-card); }
+[data-theme="dark"] .turno-card strong           { color: var(--app-text); }
+[data-theme="dark"] .turno-card p                { color: var(--app-text-muted); }
+[data-theme="dark"] .turno-card-perfil           { background: var(--app-card); border-color: var(--app-card-border); }
+[data-theme="dark"] .turno-card-perfil-fecha     { color: var(--app-text); }
+[data-theme="dark"] .turno-card-perfil-horario   { background: #22263a; }
+[data-theme="dark"] .turno-card-perfil-horario strong { color: var(--app-text); }
+[data-theme="dark"] .turno-card-perfil-info      { color: var(--app-text-muted); }
+[data-theme="dark"] .cuota-card                  { background: var(--app-card); color: var(--app-text); }
+[data-theme="dark"] .bono-card                   { background: var(--app-card); border-color: #1e3a6b; }
+[data-theme="dark"] .bono-creditos-label         { color: var(--app-text-muted); }
+[data-theme="dark"] .bono-barra-fondo            { background: #2a2d3a; }
+[data-theme="dark"] .bono-vencimiento            { color: var(--app-text-sub); }
+[data-theme="dark"] .btn-logout                  { background: var(--app-card); border-color: #3b5fc0; color: #7da8f5; }
+[data-theme="dark"] .btn-logout:hover            { background: #1e2540; }
+[data-theme="dark"] .badge-nivel.sin-nivel       { background: #2a2d3a; color: #8b95a5; }
+
+/* ── BOTÓN TEMA ── */
+.btn-tema {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid #2f6fe4;
+  background: white;
+  color: #2f6fe4;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: background 0.15s;
+  margin-bottom: 0;
+  font-family: inherit;
+}
+
+.btn-tema:hover { background: #eff6ff; }
+
+[data-theme="dark"] .btn-tema {
+  background: var(--app-card);
+  border-color: #3b5fc0;
+  color: #7da8f5;
+}
+[data-theme="dark"] .btn-tema:hover { background: #1e2540; }

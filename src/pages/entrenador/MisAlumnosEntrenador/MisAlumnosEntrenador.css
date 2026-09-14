@@ -167,3 +167,16 @@
   font-size: 14px;
   margin: 16px;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .mis-alumnos-e         { background: var(--app-bg); }
+[data-theme="dark"] .mis-alumnos-e-header  { background: #1a3a6b; }
+[data-theme="dark"] .filtros-nivel         { background: var(--app-card); border-bottom-color: var(--app-card-border); }
+[data-theme="dark"] .filtro-btn            { background: var(--app-card); border-color: var(--app-card-border); color: var(--app-text-muted); }
+[data-theme="dark"] .alumno-item           { background: var(--app-card); border-bottom-color: var(--app-card-border); }
+[data-theme="dark"] .alumno-item:hover     { background: #22263a; }
+[data-theme="dark"] .alumno-nombre         { color: var(--app-text); }
+[data-theme="dark"] .alumno-turno          { color: var(--app-text-sub); }
+[data-theme="dark"] .alumno-avatar         { background: #1a2e50; color: #60a5fa; }
+[data-theme="dark"] .nivel-default         { background: #22263a; color: #8b95a5; }
+[data-theme="dark"] .sin-alumnos           { background: var(--app-card); color: var(--app-text-sub); }

@@ -480,3 +480,31 @@
   font-weight: 700;
   margin-top: 2px;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .mis-clases        { background: var(--app-bg); }
+[data-theme="dark"] .mc-header         { background: #1a3a6b; }
+[data-theme="dark"] .mc-bono-card,
+[data-theme="dark"] .mc-sin-abono,
+[data-theme="dark"] .mc-resumen-card   { background: var(--app-card); box-shadow: none; }
+[data-theme="dark"] .mc-bono-val,
+[data-theme="dark"] .mc-resumen-val    { color: var(--app-text); }
+[data-theme="dark"] .mc-bono-sep,
+[data-theme="dark"] .mc-resumen-sep,
+[data-theme="dark"] .mc-barra         { background: #2a2d3a; }
+[data-theme="dark"] .mc-tabs          { background: var(--app-card); box-shadow: none; }
+[data-theme="dark"] .mc-lista         { background: var(--app-card); box-shadow: none; }
+[data-theme="dark"] .mc-clase-row,
+[data-theme="dark"] .mc-credito-row   { border-bottom-color: var(--app-card-border); }
+[data-theme="dark"] .mc-clase-fecha,
+[data-theme="dark"] .mc-credito-titulo { color: var(--app-text); }
+[data-theme="dark"] .mc-clase-sede,
+[data-theme="dark"] .mc-credito-sub   { color: var(--app-text-muted); }
+[data-theme="dark"] .mc-badge-pasado,
+[data-theme="dark"] .mc-badge-usado   { background: #22263a; color: #64748b; }
+[data-theme="dark"] .mc-seccion-titulo { background: #16192a; color: var(--app-text-muted); border-bottom-color: var(--app-card-border); }
+[data-theme="dark"] .mc-modal         { background: var(--app-card); }
+[data-theme="dark"] .mc-modal-titulo  { color: var(--app-text); }
+[data-theme="dark"] .mc-modal-sub     { color: var(--app-text-muted); }
+[data-theme="dark"] .mc-select        { background: #22263a; border-color: var(--app-card-border); color: var(--app-text); }
+[data-theme="dark"] .mc-btn-secondary:hover { background: #1a2540; }

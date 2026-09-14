@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/ThemeContext'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getConfig } from '../../services/adminApi'
 import './Admin.css'
@@ -8,6 +9,7 @@ import './Admin.css'
 export default function ConfigAdmin() {
   const navigate   = useNavigate()
   const { logout } = useAuth()
+  const { dark, toggleTheme } = useTheme()
 
   const [config,   setConfig]   = useState(null)
   const [cargando, setCargando] = useState(true)
@@ -92,6 +94,16 @@ export default function ConfigAdmin() {
                 </div>
               </div>
             )}
+
+            {/* Tema */}
+            <button
+              className="btn-secondary"
+              style={{ width: '100%', padding: '13px', textAlign: 'center' }}
+              onClick={toggleTheme}
+              aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            >
+              {dark ? '☀️ Modo claro' : '🌙 Modo oscuro'}
+            </button>
 
             {/* Cerrar sesión */}
             <button className="btn-secondary" onClick={handleLogout}>

@@ -678,3 +678,25 @@
 
   .clases-body { padding: 32px 48px; }
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] {
+  --snop-gris-bg:    #0f1117;
+  --snop-gris-borde: #2a2d3a;
+  --snop-texto:      #e2e8f0;
+  --snop-texto-muted:#8b95a5;
+  --snop-blanco:     #1a1d27;
+  --snop-verde:      #4ade80;
+  --snop-verde-bg:   #142414;
+  --viola-light:     #1e1a40;
+}
+[data-theme="dark"] .tarjeta-entrenador   { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
+[data-theme="dark"] .confirmar-perfil-card { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
+[data-theme="dark"] .turno-resumen-card   { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
+[data-theme="dark"] .chip-turno           { background: var(--viola-light); border-color: #3a2a70; color: #a78bfa; }
+[data-theme="dark"] .leyenda-turnos       { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
+[data-theme="dark"] .leyenda-item         { color: var(--snop-texto-muted); }
+[data-theme="dark"] .solicitud-card       { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
+[data-theme="dark"] .solicitud-fecha      { color: var(--snop-texto); }
+[data-theme="dark"] .solicitud-hora       { color: var(--snop-texto-muted); }
+[data-theme="dark"] .solicitud-detalle    { color: var(--snop-texto-muted); }

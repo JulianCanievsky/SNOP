@@ -769,13 +769,17 @@ router.get('/perfil', async (req, res) => {
 })
 
 // ─── GET /comunicados ─────────────────────────────────────────────────────────
-// Comunicados dirigidos a entrenadores o a todos
+// Comunicados dirigidos a entrenadores o a todos (solo últimos 5 días)
 router.get('/comunicados', async (req, res) => {
   try {
+    const hace5Dias = new Date()
+    hace5Dias.setDate(hace5Dias.getDate() - 5)
+
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
       .in('destinatarios', ['entrenadores', 'todos'])
+      .gte('fecha', hace5Dias.toISOString())
       .order('fecha', { ascending: false })
 
     if (error) {

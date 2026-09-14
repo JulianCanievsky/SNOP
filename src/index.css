@@ -15,6 +15,21 @@
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
+  /* ── SNOP app-wide tokens (socio) ── */
+  --app-bg:          #f1f5f9;
+  --app-card:        #ffffff;
+  --app-card-border: #e2e8f0;
+  --app-text:        #1a1a1a;
+  --app-text-muted:  #64748b;
+  --app-text-sub:    #94a3b8;
+  --app-header-bg:   #2563eb;
+  --app-nav-bg:      #ffffff;
+  --app-nav-border:  #e5e7eb;
+  --app-nav-hover:   #f1f5f9;
+  --app-input-bg:    #f8f9fc;
+  --app-input-border:#dde2ef;
+  --app-login-card:  #ffffff;
+
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
@@ -30,24 +45,34 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* ── DARK MODE ── */
+[data-theme="dark"] {
+  --text: #9ca3af;
+  --text-h: #f3f4f6;
+  --bg: #0f1117;
+  --border: #2e303a;
+  --code-bg: #1f2028;
+  --accent: #c084fc;
+  --accent-bg: rgba(192, 132, 252, 0.15);
+  --accent-border: rgba(192, 132, 252, 0.5);
+  --social-bg: rgba(47, 48, 58, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  /* ── SNOP app-wide dark tokens ── */
+  --app-bg:          #0f1117;
+  --app-card:        #1a1d27;
+  --app-card-border: #2a2d3a;
+  --app-text:        #e2e8f0;
+  --app-text-muted:  #8b95a5;
+  --app-text-sub:    #64748b;
+  --app-header-bg:   #1a3a6b;
+  --app-nav-bg:      #1a1d27;
+  --app-nav-border:  #2a2d3a;
+  --app-nav-hover:   #22263a;
+  --app-input-bg:    #22263a;
+  --app-input-border:#3a3d4e;
+  --app-login-card:  #1a1d27;
 }
 
 body {

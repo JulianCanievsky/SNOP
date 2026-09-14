@@ -164,3 +164,12 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .registro-card    { background: var(--app-login-card); }
+[data-theme="dark"] .form-group label { color: #9ca3af; }
+[data-theme="dark"] .form-input       { background: #22263a; border-color: #3a3d4e; color: #e2e8f0; }
+[data-theme="dark"] .form-input:focus { background: #2a2d3a; border-color: #6366f1; }
+[data-theme="dark"] .info-box         { background: #1a2e50; border-color: #1d4ed8; color: #93c5fd; }
+[data-theme="dark"] .error-box        { background: #2d1515; border-color: #7f1d1d; color: #fca5a5; }
+[data-theme="dark"] .success-box      { background: #142414; border-color: #166534; color: #86efac; }

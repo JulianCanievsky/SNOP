@@ -263,3 +263,20 @@
   margin: 0;
   line-height: 1.4;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .perfil-e              { background: var(--app-bg); }
+[data-theme="dark"] .perfil-e-header       { background: #1a3a6b; }
+[data-theme="dark"] .perfil-e-card         { background: var(--app-card); }
+[data-theme="dark"] .perfil-e-card h2      { color: var(--app-text); }
+[data-theme="dark"] .perfil-e-info-card    { background: var(--app-card); }
+[data-theme="dark"] .info-fila             { border-bottom-color: var(--app-card-border); }
+[data-theme="dark"] .info-clave            { color: var(--app-text-muted); }
+[data-theme="dark"] .info-valor            { color: var(--app-text); }
+[data-theme="dark"] .btn-logout-e          { background: var(--app-card); border-color: var(--app-card-border); color: var(--app-text-muted); }
+[data-theme="dark"] .btn-logout-e:hover    { background: #22263a; }
+[data-theme="dark"] .perfil-e-rating-card  { background: var(--app-card); }
+[data-theme="dark"] .rating-valor          { color: var(--app-text); }
+[data-theme="dark"] .rating-recientes      { border-top-color: var(--app-card-border); }
+[data-theme="dark"] .resena-comentario     { color: var(--app-text-muted); }
+[data-theme="dark"] .rating-dist-barra-bg  { background: #2a2d3a; }

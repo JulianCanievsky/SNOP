@@ -256,3 +256,20 @@
   color: #94a3b8;
   text-transform: capitalize;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .inicio-e            { background: var(--app-bg); }
+[data-theme="dark"] .inicio-e-header     { background: #1a3a6b; }
+[data-theme="dark"] .contador-card       { background: var(--app-card); }
+[data-theme="dark"] .contador-label      { color: var(--app-text-muted); }
+[data-theme="dark"] .solicitud-item      { background: var(--app-card); }
+[data-theme="dark"] .sol-nombre          { color: var(--app-text); }
+[data-theme="dark"] .sol-detalle         { color: var(--app-text-muted); }
+[data-theme="dark"] .sol-avatar          { background: #1a2e50; color: #60a5fa; }
+[data-theme="dark"] .acceso-card-e       { background: var(--app-card); }
+[data-theme="dark"] .acceso-card-e:hover { background: #22263a; }
+[data-theme="dark"] .acceso-label-e      { color: var(--app-text); }
+[data-theme="dark"] .sin-solicitudes     { background: var(--app-card); color: var(--app-text-sub); }
+[data-theme="dark"] .comunicado-item-e   { background: var(--app-card); border-color: var(--app-card-border); }
+[data-theme="dark"] .comunicado-titulo-e { color: var(--app-text); }
+[data-theme="dark"] .comunicado-mensaje-e{ color: var(--app-text-muted); }

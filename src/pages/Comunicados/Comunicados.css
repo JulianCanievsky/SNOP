@@ -127,3 +127,10 @@
   font-weight: 500;
   text-transform: capitalize;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .comunicados-page  { background: var(--app-bg); }
+[data-theme="dark"] .com-item          { background: var(--app-card); box-shadow: none; }
+[data-theme="dark"] .com-item-titulo   { color: var(--app-text); }
+[data-theme="dark"] .com-item-mensaje  { color: var(--app-text-muted); }
+[data-theme="dark"] .com-item-fecha    { color: var(--app-text-sub); }

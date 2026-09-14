@@ -187,3 +187,9 @@
   font-size: 11px;
   font-weight: 500;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .mis-turnos   { background: var(--app-bg); }
+[data-theme="dark"] .header       { background: #1a3a6b; }
+[data-theme="dark"] .bottom-nav   { background: var(--app-nav-bg); border-top-color: var(--app-nav-border); }
+[data-theme="dark"] .nav-item:hover { background: var(--app-nav-hover); }

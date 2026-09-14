@@ -190,3 +190,13 @@
   color: #94a3b8;
   font-size: 14px;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .solicitudes-e        { background: var(--app-bg); }
+[data-theme="dark"] .solicitudes-e-header { background: #1a3a6b; }
+[data-theme="dark"] .solicitud-card       { background: var(--app-card); }
+[data-theme="dark"] .sol-card-nombre      { color: var(--app-text); }
+[data-theme="dark"] .sol-card-detalle     { color: var(--app-text-sub); }
+[data-theme="dark"] .sol-card-avatar      { background: #1a2e50; color: #60a5fa; }
+[data-theme="dark"] .nivel-default        { background: #22263a; color: #8b95a5; }
+[data-theme="dark"] .sin-solicitudes-e    { background: var(--app-card); color: var(--app-text-sub); }

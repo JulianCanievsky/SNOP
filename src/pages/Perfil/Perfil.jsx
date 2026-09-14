@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/ThemeContext'
 import { usePerfil } from '../../hooks/usePerfil'
 import { getMiBono } from '../../services/bonosApi'
 import BottomNav from '../../components/BottomNav/BottomNav'
@@ -68,6 +69,7 @@ function TurnoCardPerfil({ inscripcion, pasado }) {
 
 const Perfil = () => {
   const { user, logout } = useAuth()
+  const { dark, toggleTheme } = useTheme()
   const { perfil, cargando, cargarPerfil } = usePerfil()
   const [mostrarHistorial, setMostrarHistorial] = useState(false)
   const [bono, setBono] = useState(undefined) // undefined = cargando, null = sin bono
@@ -238,6 +240,14 @@ const Perfil = () => {
           )}
         </>
       )}
+
+      <button
+        className="btn-tema"
+        onClick={toggleTheme}
+        aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+      >
+        {dark ? '☀️ Modo claro' : '🌙 Modo oscuro'}
+      </button>
 
       <button className="btn-logout" onClick={logout}>
         Cerrar sesión

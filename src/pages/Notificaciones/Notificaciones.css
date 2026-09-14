@@ -155,3 +155,14 @@
 }
 
 @keyframes notif-spin { to { transform: rotate(360deg); } }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .notif-page          { background: var(--app-bg); }
+[data-theme="dark"] .notif-item          { background: var(--app-card); border-bottom-color: var(--app-card-border); }
+[data-theme="dark"] .notif-item[role="button"]:hover { background: #22263a; }
+[data-theme="dark"] .notif-item--nueva   { background: #1a2340; }
+[data-theme="dark"] .notif-item--nueva:hover { background: #1e2a50; }
+[data-theme="dark"] .notif-ico           { background: #22263a; }
+[data-theme="dark"] .notif-titulo        { color: var(--app-text); }
+[data-theme="dark"] .notif-mensaje       { color: var(--app-text-muted); }
+[data-theme="dark"] .notif-fecha         { color: var(--app-text-sub); }

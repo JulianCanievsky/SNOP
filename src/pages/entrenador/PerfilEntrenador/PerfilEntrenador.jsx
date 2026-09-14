@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../../context/AuthContext'
+import { useTheme } from '../../../context/ThemeContext'
 import { usePerfilEntrenador } from '../../../hooks/useEntrenador'
 import api from '../../../lib/apiClient.js'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
@@ -25,6 +26,7 @@ function BarraRating({ label, valor, total }) {
 
 export default function PerfilEntrenador() {
   const { user, logout } = useAuth()
+  const { dark, toggleTheme } = useTheme()
   const { perfil, cargando } = usePerfilEntrenador()
   const [ratingDetalle, setRatingDetalle] = useState(null)
 
@@ -141,6 +143,14 @@ export default function PerfilEntrenador() {
         </div>
 
         {/* Logout */}
+        <button
+          className="btn-logout-e"
+          onClick={toggleTheme}
+          aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+        >
+          {dark ? '☀️ Modo claro' : '🌙 Modo oscuro'}
+        </button>
+
         <button className="btn-logout-e" onClick={handleLogout}>
           Cerrar sesión
         </button>

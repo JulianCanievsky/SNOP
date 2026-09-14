@@ -414,3 +414,22 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .inicio               { background: var(--app-bg); }
+[data-theme="dark"] .inicio-header        { background: #1a3a6b; }
+[data-theme="dark"] .proximo-turno        { background: var(--app-card); }
+[data-theme="dark"] .proximo-turno.turno-siguiente { background: rgba(26,45,80,0.65); }
+[data-theme="dark"] .proximo-turno-fecha  { color: var(--app-text); }
+[data-theme="dark"] .proximo-turno-hora   { color: var(--app-text-muted); }
+[data-theme="dark"] .acceso-card          { background: var(--app-card); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+[data-theme="dark"] .acceso-label         { color: var(--app-text); }
+[data-theme="dark"] .acceso-sub           { color: var(--app-text-sub); }
+[data-theme="dark"] .novedades-lista      { background: var(--app-card); }
+[data-theme="dark"] .novedad-item         { border-bottom-color: var(--app-card-border); }
+[data-theme="dark"] .novedad-titulo       { color: var(--app-text); }
+[data-theme="dark"] .novedad-sub          { color: var(--app-text-muted); }
+[data-theme="dark"] .bottom-nav           { background: var(--app-nav-bg); border-top-color: var(--app-nav-border); }
+[data-theme="dark"] .nav-item:hover       { background: var(--app-nav-hover); }
+[data-theme="dark"] .turno-jl-disponible  { background: rgba(60,45,10,0.9); border-color: #b45309; }
+[data-theme="dark"] .jl-cupo-texto        { color: #fbbf24; }

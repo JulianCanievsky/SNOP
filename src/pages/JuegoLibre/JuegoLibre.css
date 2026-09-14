@@ -795,3 +795,25 @@
   color: #2563eb;
 }
 
+
+/* ── DARK MODE ── */
+[data-theme="dark"] {
+  --snop-gris-bg:    #0f1117;
+  --snop-gris-borde: #2a2d3a;
+  --snop-texto:      #e2e8f0;
+  --snop-texto-muted:#8b95a5;
+  --snop-blanco:     #1a1d27;
+  --snop-azul-light: #1a2e50;
+  --snop-verde-bg:   #142414;
+}
+[data-theme="dark"] .jl-filtros          { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
+[data-theme="dark"] .filtro-select,
+[data-theme="dark"] .filtro-fecha        { background: #22263a; border-color: #3a3d4e; color: var(--snop-texto); }
+[data-theme="dark"] .tarjeta-evento      { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
+[data-theme="dark"] .barra-capacidad     { background: #2a2d3a; }
+[data-theme="dark"] .btn-lleno           { background: #22263a; color: var(--snop-texto-muted); }
+[data-theme="dark"] .bottom-nav          { background: var(--app-nav-bg); border-top-color: var(--app-nav-border); }
+[data-theme="dark"] .detalle-card        { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
+[data-theme="dark"] .anotados-seccion    { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
+[data-theme="dark"] .info-club-card      { background: #142414; border-color: #166534; }
+[data-theme="dark"] .detalle-container   { background: var(--snop-gris-bg); }

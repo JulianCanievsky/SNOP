@@ -233,3 +233,12 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .login-card         { background: var(--app-login-card); }
+[data-theme="dark"] .form-group label   { color: #9ca3af; }
+[data-theme="dark"] .form-input         { background: #22263a; border-color: #3a3d4e; color: #e2e8f0; }
+[data-theme="dark"] .form-input:focus   { background: #2a2d3a; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+[data-theme="dark"] .form-input::placeholder { color: #4b5563; }
+[data-theme="dark"] .login-footer       { color: #6b7280; }
+[data-theme="dark"] .error-box          { background: #2d1515; border-color: #7f1d1d; color: #fca5a5; }
