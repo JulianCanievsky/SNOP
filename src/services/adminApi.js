@@ -27,10 +27,10 @@ export const enviarComunicado = (body)   => api.post('/admin/comunicados', body)
 // Config
 export const getConfig        = ()       => api.get('/admin/config').then(r => r.data.data)
 
-// Turnos (asignación admin)
-export const getTurnosDisponibles    = ()                       => api.get('/admin/turnos').then(r => r.data.data)
-export const asignarTurnoSocio       = (socioId, body)          => api.post(`/admin/socios/${socioId}/turnos`, body).then(r => r.data)
-export const quitarTurnoSocio        = (socioId, socioTurnoId)  => api.delete(`/admin/socios/${socioId}/turnos/${socioTurnoId}`).then(r => r.data)
+// Turnos (asignación admin) — rutas en adminTurnos.js (montado en /api/admin/turnos)
+export const getTurnosDisponibles    = ()                       => api.get('/admin/turnos/disponibles').then(r => r.data.data)
+export const asignarTurnoSocio       = (socioId, body)          => api.post(`/admin/turnos/asignar/${socioId}`, body).then(r => r.data)
+export const quitarTurnoSocio        = (socioId, socioTurnoId)  => api.delete(`/admin/turnos/asignar/${socioId}/${socioTurnoId}`).then(r => r.data)
 
 // Solicitudes de ingreso
 export const getSolicitudes          = ()    => api.get('/admin/solicitudes').then(r => r.data.data)

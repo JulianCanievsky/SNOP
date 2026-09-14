@@ -25,8 +25,8 @@ router.get('/entrenadores', async (req, res) => {
     if (error) throw error
 
     // Inicio del día de hoy para no excluir turnos de hoy que aún no pasaron
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
+    const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoy   = new Date(`${hoyAR}T00:00:00-03:00`)
     const desdeHoy = hoy.toISOString()
 
     const entrenadoresConTurnos = await Promise.all(
@@ -111,8 +111,8 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
       });
     }
 
-    const hoyDet = new Date()
-    hoyDet.setHours(0, 0, 0, 0)
+    const hoyDetAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoyDet   = new Date(`${hoyDetAR}T00:00:00-03:00`)
 
     const { data: turnos } = await supabase
       .from('turnos')

@@ -206,7 +206,7 @@ export default function AdminActividades() {
         const res = await getInscriptosTorneo(id)
         lista = res?.data ?? []
       } else if (tipo === 'tu') {
-        const res = await api.get(`/admin/turnos-inscriptos/${id}`).catch(() => null)
+        const res = await api.get(`/admin/turnos/${id}/inscriptos`).catch(() => null)
         lista = res?.data?.data ?? []
       }
       setPaneles(prev => ({ ...prev, [key]: { abierto: true, cargando: false, inscriptos: lista } }))

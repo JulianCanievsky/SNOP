@@ -10,16 +10,16 @@ router.use(autenticar)
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
+/** Inicio del día actual en Argentina (UTC-3) como ISO string */
 function inicioDelDia() {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d.toISOString()
+  const ahoraAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+  return new Date(`${ahoraAR}T00:00:00-03:00`).toISOString()
 }
 
+/** Fin del día actual en Argentina (UTC-3) como ISO string */
 function finDelDia() {
-  const d = new Date()
-  d.setHours(23, 59, 59, 999)
-  return d.toISOString()
+  const ahoraAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+  return new Date(`${ahoraAR}T23:59:59-03:00`).toISOString()
 }
 
 // ─── GET /resumen-hoy ─────────────────────────────────────────────────────────
@@ -81,10 +81,9 @@ router.get('/mis-clases', async (req, res) => {
   try {
     const entrenadorId = req.userId
 
-    const desde = new Date()
-    desde.setHours(0, 0, 0, 0)
-    const hasta = new Date(desde)
-    hasta.setDate(hasta.getDate() + 7)
+    const desdeAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const desde   = new Date(`${desdeAR}T00:00:00-03:00`)
+    const hasta   = new Date(desde.getTime() + 7 * 24 * 60 * 60 * 1000) // +7 días exactos
 
     const { data: turnos, error } = await supabase
       .from('turnos')
@@ -326,8 +325,8 @@ router.get('/mis-horarios', async (req, res) => {
   try {
     const entrenadorId = req.userId
 
-    const desde = new Date()
-    desde.setHours(0, 0, 0, 0)
+    const desdeAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const desde   = new Date(`${desdeAR}T00:00:00-03:00`)
 
     const { data: turnos, error } = await supabase
       .from('turnos')
@@ -397,11 +396,16 @@ router.post('/mis-horarios', async (req, res) => {
 
     const hoy = new Date()
     const diff = (diaNum - hoy.getDay() + 7) % 7 || 7
-    const fechaBase = new Date(hoy)
-    fechaBase.setDate(hoy.getDate() + diff)
 
-    const [hh, mm] = hora.split(':').map(Number)
-    fechaBase.setHours(hh, mm, 0, 0)
+    // Obtener fecha del próximo día correcto en Argentina con offset -03:00 explícito
+    const hoyAR = new Date(hoy.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }))
+    const fechaBaseAR = new Date(hoyAR)
+    fechaBaseAR.setDate(hoyAR.getDate() + diff)
+    const yyyy = fechaBaseAR.getFullYear()
+    const mmes = String(fechaBaseAR.getMonth() + 1).padStart(2, '0')
+    const dd   = String(fechaBaseAR.getDate()).padStart(2, '0')
+    const fechaBase = new Date(`${yyyy}-${mmes}-${dd}T${hora}:00-03:00`)
+
     const fechaFin = new Date(fechaBase.getTime() + duracionFinal * 60 * 1000)
 
     // Buscar una mesa disponible en la sede (mesa_id es NOT NULL en la tabla)

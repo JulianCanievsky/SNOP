@@ -30,9 +30,10 @@ router.get('/stats', async (_req, res) => {
       supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario_id', 1).eq('activo', true).eq('cuota_al_dia', false),
     ])
 
-    // Turnos hoy
-    const hoyInicio = new Date(); hoyInicio.setHours(0, 0, 0, 0)
-    const hoyFin    = new Date(); hoyFin.setHours(23, 59, 59, 999)
+    // Turnos hoy — usando hora argentina (UTC-3)
+    const hoyAR     = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoyInicio = new Date(`${hoyAR}T00:00:00-03:00`)
+    const hoyFin    = new Date(`${hoyAR}T23:59:59-03:00`)
     const { count: turnosHoy } = await supabase
       .from('turnos')
       .select('id', { count: 'exact', head: true })
@@ -410,7 +411,10 @@ router.post('/juego-libre', async (req, res) => {
 // JUEGO LIBRE PUBLICADOS — GET /api/admin/juego-libre
 router.get('/juego-libre', async (_req, res) => {
   try {
-    const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+    const hoy = new Date()
+    const hoyAR = hoy.toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoyInicioDia = new Date(`${hoyAR}T00:00:00-03:00`)
+
     const { data, error } = await supabase
       .from('juego_libre')
       .select(`
@@ -418,7 +422,7 @@ router.get('/juego-libre', async (_req, res) => {
         inscripciones_juego_libre(id, estado)
       `)
       .eq('activo', true)
-      .gte('fecha_inicio', hoy.toISOString())
+      .gte('fecha_inicio', hoyInicioDia.toISOString())
       .order('fecha_inicio', { ascending: true })
       .limit(10)
 
@@ -493,49 +497,7 @@ router.get('/juego-libre/:id/inscriptos', async (req, res) => {
   }
 })
 
-// ─────────────────────────────────────────────
-// TODOS LOS TURNOS — GET /api/admin/turnos/todos
-// Lista TODOS los turnos futuros (incluyendo completos) para el panel de actividades
-// ─────────────────────────────────────────────
-router.get('/turnos/todos', async (_req, res) => {
-  try {
-    const desde = new Date()
-    desde.setHours(0, 0, 0, 0)
-
-    const { data: turnos, error } = await supabase
-      .from('turnos')
-      .select(`
-        id, fecha_inicio, fecha_fin, capacidad_maxima, tipo_turno_id,
-        sedes ( id, nombre ),
-        users!turnos_user_id_fkey ( id, nombre ),
-        socio_turno ( id, estado )
-      `)
-      .eq('tipo_turno_id', 1)
-      .eq('estado', true)
-      .gte('fecha_inicio', desde.toISOString())
-      .order('fecha_inicio', { ascending: true })
-      .limit(30)
-
-    if (error) throw error
-
-    const resultado = (turnos ?? []).map(t => ({
-      id:              t.id,
-      fecha_inicio:    t.fecha_inicio,
-      fecha_fin:       t.fecha_fin,
-      tipo_turno_id:   t.tipo_turno_id,
-      sede:            t.sedes?.nombre ?? '—',
-      entrenador:      t.users?.nombre ?? '—',
-      capacidad_maxima: t.capacidad_maxima,
-      inscriptos:      (t.socio_turno ?? []).filter(s => s.estado === true).length,
-      cupo_disponible: (t.capacidad_maxima ?? 0) - (t.socio_turno ?? []).filter(s => s.estado === true).length,
-    }))
-
-    res.json({ data: resultado })
-  } catch (err) {
-    console.error('GET /admin/turnos/todos', err)
-    res.status(500).json({ error: 'Error al obtener turnos' })
-  }
-})
+// NOTA: GET /turnos/todos fue movido a rutas/adminTurnos.js para evitar colisión con /:id wildcard.
 
 // ─────────────────────────────────────────────
 // INSCRIPTOS TURNO — GET /api/admin/turnos-inscriptos/:turnoId
@@ -570,305 +532,12 @@ router.get('/turnos-inscriptos/:turnoId', async (req, res) => {
   }
 })
 
-// ─────────────────────────────────────────────
-// TURNOS DISPONIBLES — GET /api/admin/turnos
-// Lista turnos futuros con cupo disponible para poblar el selector en DetalleSocio
-// ─────────────────────────────────────────────
-router.get('/turnos', async (_req, res) => {
-  try {
-    const desde = new Date()
-    desde.setHours(0, 0, 0, 0)
-
-    const { data: turnos, error } = await supabase
-      .from('turnos')
-      .select(`
-        id,
-        fecha_inicio,
-        fecha_fin,
-        capacidad_maxima,
-        tipo_turno_id,
-        sedes ( id, nombre ),
-        users ( id, nombre ),
-        socio_turno ( id )
-      `)
-      .gte('fecha_inicio', desde.toISOString())
-      .eq('estado', true)
-      .order('fecha_inicio', { ascending: true })
-
-    if (error) throw error
-
-    // Filtrar turnos con cupo disponible
-    const disponibles = (turnos ?? [])
-      .map(t => ({
-        id:              t.id,
-        fecha_inicio:    t.fecha_inicio,
-        fecha_fin:       t.fecha_fin,
-        tipo_turno_id:   t.tipo_turno_id,
-        sede:            t.sedes?.nombre ?? '—',
-        entrenador:      t.users?.nombre ?? '—',
-        capacidad_maxima: t.capacidad_maxima,
-        inscriptos:      t.socio_turno?.length ?? 0,
-        cupo_disponible: (t.capacidad_maxima ?? 0) - (t.socio_turno?.length ?? 0),
-      }))
-      .filter(t => t.cupo_disponible > 0)
-
-    res.json({ data: disponibles })
-  } catch (err) {
-    console.error('GET /admin/turnos', err)
-    res.status(500).json({ error: 'Error al obtener turnos disponibles' })
-  }
-})
-
-// ─────────────────────────────────────────────
-// ASIGNAR TURNO A SOCIO — POST /api/admin/socios/:id/turnos
-// Body: { turno_id }
-// ─────────────────────────────────────────────
-router.post('/socios/:id/turnos', async (req, res) => {
-  const socioId  = req.params.id
-  const { turno_id } = req.body
-
-  if (!turno_id) {
-    return res.status(400).json({ error: 'turno_id es requerido' })
-  }
-
-  try {
-    // Verificar que el socio existe
-    const { data: socio, error: errSocio } = await supabase
-      .from('users')
-      .select('id, nombre')
-      .eq('id', socioId)
-      .eq('tipo_usuario_id', 1)
-      .single()
-
-    if (errSocio || !socio) {
-      return res.status(404).json({ error: 'Socio no encontrado' })
-    }
-
-    // Verificar que el turno existe, tiene cupo y el nivel del socio está dentro del rango
-    const { data: turno, error: errTurno } = await supabase
-      .from('turnos')
-      .select('id, capacidad_maxima, nivel_minimo_id, nivel_maximo_id, socio_turno(id)')
-      .eq('id', turno_id)
-      .single()
-
-    if (errTurno || !turno) {
-      return res.status(404).json({ error: 'Turno no encontrado' })
-    }
-
-    const inscriptos = turno.socio_turno?.length ?? 0
-    if (inscriptos >= turno.capacidad_maxima) {
-      return res.status(400).json({ error: 'El turno no tiene cupo disponible' })
-    }
-
-    // Verificar nivel del socio dentro del rango permitido
-    if (turno.nivel_minimo_id != null || turno.nivel_maximo_id != null) {
-      const { data: socioNivel } = await supabase
-        .from('users').select('nivel_id').eq('id', socioId).single()
-      if (socioNivel?.nivel_id != null) {
-        const { data: niveles } = await supabase
-          .from('niveles').select('id, orden').order('orden', { ascending: true })
-        const nivelMap   = Object.fromEntries((niveles ?? []).map(n => [n.id, n.orden]))
-        const ordenSocio = nivelMap[socioNivel.nivel_id] ?? 0
-        const ordenMin   = turno.nivel_minimo_id != null ? (nivelMap[turno.nivel_minimo_id] ?? 0)        : null
-        const ordenMax   = turno.nivel_maximo_id != null ? (nivelMap[turno.nivel_maximo_id] ?? Infinity) : null
-        if (ordenMin != null && ordenSocio < ordenMin) {
-          return res.status(400).json({ error: 'El nivel del socio no cumple el mínimo requerido para este turno' })
-        }
-        if (ordenMax != null && ordenSocio > ordenMax) {
-          return res.status(400).json({ error: 'El nivel del socio supera el máximo permitido para este turno' })
-        }
-      }
-    }
-
-    // Verificar que el socio no está ya inscripto
-    const { data: yaInscripto } = await supabase
-      .from('socio_turno')
-      .select('id')
-      .eq('user_id', socioId)
-      .eq('turno_id', turno_id)
-      .maybeSingle()
-
-    if (yaInscripto) {
-      return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
-    }
-
-    // Insertar con estado = true (confirmado directo, no requiere aprobación del entrenador)
-    const { data, error } = await supabase
-      .from('socio_turno')
-      .insert({
-        user_id:           socioId,
-        turno_id,
-        estado:            true,
-        fecha_inscripcion: new Date().toISOString(),
-      })
-      .select(`
-        id,
-        estado,
-        turnos ( id, fecha_inicio, fecha_fin, sedes(nombre), mesas(numero) )
-      `)
-      .single()
-
-    if (error) {
-      if (error.code === '23505') {
-        return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
-      }
-      throw error
-    }
-
-    // ── Descuento de crédito del bono activo (si tiene uno) ──────────────────
-    let bonoInfo = null
-    try {
-      const bono = await getBonoActivo(socioId)
-      if (bono && bono.creditos_usados < bono.creditos_total) {
-        // Registrar uso en bono_turno
-        await supabase.from('bono_turno').insert({
-          bono_id:  bono.id,
-          turno_id: turno_id,
-          socio_id: socioId,
-        })
-        // Incrementar créditos_usados
-        await supabase
-          .from('bonos')
-          .update({ creditos_usados: bono.creditos_usados + 1 })
-          .eq('id', bono.id)
-        bonoInfo = {
-          bono_id:              bono.id,
-          creditos_restantes:   bono.creditos_total - bono.creditos_usados - 1,
-        }
-      }
-    } catch (bonoErr) {
-      // El bono no es crítico — si falla, el turno igual queda asignado
-      console.error('[admin/socios/turnos] error al descontar crédito:', bonoErr)
-    }
-
-    // Notificación in-app + email al socio
-    try {
-      const fechaTurnoStr = data.turnos?.fecha_inicio
-        ? new Date(data.turnos.fecha_inicio).toLocaleString('es-AR', {
-            weekday: 'long', day: 'numeric', month: 'long',
-            hour: '2-digit', minute: '2-digit',
-          })
-        : 'próximamente'
-      const sedeStr = data.turnos?.sedes?.nombre ?? 'la sede'
-
-      // Obtener email del socio
-      const { data: socioData } = await supabase
-        .from('users').select('nombre, email').eq('id', socioId).single()
-
-      if (socioData) {
-        await crearNotificacion({
-          user_id: socioId,
-          titulo:  'Nuevo turno asignado',
-          mensaje: `Tenés un turno el ${fechaTurnoStr} en ${sedeStr}.`,
-          tipo:    'turno_asignado',
-          link:    '/mis-turnos',
-        })
-        const tmpl = emailTurnoAsignado({ nombre: socioData.nombre, fechaTurno: fechaTurnoStr, sede: sedeStr })
-        await enviarEmail({ to: socioData.email, ...tmpl })
-      }
-    } catch (notifErr) {
-      console.error('Notif turno asignado:', notifErr)
-    }
-
-    res.status(201).json({ data, bonoInfo, mensaje: 'Turno asignado correctamente' })
-  } catch (err) {
-    console.error('POST /admin/socios/:id/turnos', err)
-    res.status(500).json({ error: 'Error al asignar turno' })
-  }
-})
-
-// ─────────────────────────────────────────────
-// QUITAR TURNO A SOCIO — DELETE /api/admin/socios/:id/turnos/:turnoId
-// turnoId es el id de la fila en socio_turno (no el id del turno)
-// ─────────────────────────────────────────────
-router.delete('/socios/:id/turnos/:socioTurnoId', async (req, res) => {
-  const { id: socioId, socioTurnoId } = req.params
-
-  try {
-    // Verificar que la inscripción pertenece a este socio y obtener datos del turno
-    const { data: insc, error: errInsc } = await supabase
-      .from('socio_turno')
-      .select('id, user_id, turno_id, turnos(id, tipo_turno_id, fecha_inicio, sedes(nombre))')
-      .eq('id', socioTurnoId)
-      .eq('user_id', socioId)
-      .single()
-
-    if (errInsc || !insc) {
-      return res.status(404).json({ error: 'Inscripción no encontrada' })
-    }
-
-    const { error } = await supabase
-      .from('socio_turno')
-      .delete()
-      .eq('id', socioTurnoId)
-
-    if (error) throw error
-
-    // ── Devolución de crédito al bono si era turno de entrenamiento ──────────
-    if (insc.turnos?.tipo_turno_id === 1 || insc.turno_id) {
-      try {
-        // Buscar si este turno estaba descontado de algún bono del socio
-        const { data: uso } = await supabase
-          .from('bono_turno')
-          .select('id, bono_id')
-          .eq('turno_id', insc.turno_id)
-          .eq('socio_id', socioId)
-          .maybeSingle()
-
-        if (uso) {
-          // Eliminar el uso y decrementar el contador
-          await supabase.from('bono_turno').delete().eq('id', uso.id)
-          await supabase.rpc('decrementar_credito_bono', { p_bono_id: uso.bono_id })
-            .catch(async () => {
-              // Si el RPC no existe aún, hacemos el update manual
-              const { data: bono } = await supabase
-                .from('bonos').select('creditos_usados').eq('id', uso.bono_id).single()
-              if (bono && bono.creditos_usados > 0) {
-                await supabase
-                  .from('bonos')
-                  .update({ creditos_usados: bono.creditos_usados - 1 })
-                  .eq('id', uso.bono_id)
-              }
-            })
-        }
-      } catch (bonoErr) {
-        console.error('[admin/socios/turnos] error al devolver crédito:', bonoErr)
-      }
-    }
-
-    // Notificar al socio
-    try {
-      const { data: socioData } = await supabase
-        .from('users').select('nombre, email').eq('id', socioId).single()
-      if (socioData && insc.turnos) {
-        const fechaStr = insc.turnos.fecha_inicio
-          ? new Date(insc.turnos.fecha_inicio).toLocaleString('es-AR', {
-              weekday: 'long', day: 'numeric', month: 'long',
-              hour: '2-digit', minute: '2-digit',
-              timeZone: 'America/Argentina/Buenos_Aires',
-            })
-          : 'próximamente'
-        const sedeStr = insc.turnos.sedes?.nombre ?? 'la sede'
-        await crearNotificacion({
-          user_id: socioId,
-          titulo:  'Te dieron de baja de un turno',
-          mensaje: `Fuiste dado/a de baja del turno del ${fechaStr} en ${sedeStr}.`,
-          tipo:    'turno_baja',
-          link:    '/mis-clases',
-        })
-        const tmpl = emailTurnoQuitado({ nombre: socioData.nombre, fechaTurno: fechaStr, sede: sedeStr })
-        await enviarEmail({ to: socioData.email, ...tmpl })
-      }
-    } catch (notifErr) {
-      console.error('Notif quitar turno socio:', notifErr)
-    }
-
-    res.json({ mensaje: 'Turno desasignado correctamente' })
-  } catch (err) {
-    console.error('DELETE /admin/socios/:id/turnos/:socioTurnoId', err)
-    res.status(500).json({ error: 'Error al quitar turno' })
-  }
-})
+// NOTA: GET /turnos (disponibles), POST /socios/:id/turnos y DELETE /socios/:id/turnos/:id
+// fueron movidos a rutas/adminTurnos.js para evitar colisión con el router montado en /api/admin/turnos.
+// Nuevas rutas:
+//   GET    /api/admin/turnos/disponibles
+//   POST   /api/admin/turnos/asignar/:socioId
+//   DELETE /api/admin/turnos/asignar/:socioId/:socioTurnoId
 
 // ─────────────────────────────────────────────
 // SOLICITUDES DE INGRESO — GET /api/admin/solicitudes
@@ -1074,7 +743,9 @@ router.post('/torneos', async (req, res) => {
 // GET /api/admin/torneos
 router.get('/torneos', async (_req, res) => {
   try {
-    const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+    const hoyAR2 = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoy = new Date(`${hoyAR2}T00:00:00-03:00`)
+
     const { data, error } = await supabase
       .from('torneos')
       .select(`

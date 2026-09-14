@@ -16,7 +16,8 @@ router.use(autenticar)
 router.get('/', async (req, res) => {
   const socioId = req.userId
   try {
-    const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
+    const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoy = new Date(`${hoyAR}T00:00:00-03:00`)
 
     const { data: torneos, error } = await supabase
       .from('torneos')

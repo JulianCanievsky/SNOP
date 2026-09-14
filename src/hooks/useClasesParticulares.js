@@ -41,11 +41,9 @@ export const useClasesParticulares = () => {
     return data.data
   }
 
-  const enviarSolicitud = async ({ entrenador_id, turno_id, mensaje }) => {
+  const enviarSolicitud = async ({ turno_id }) => {
     const { data } = await api.post('/clases-particulares/solicitar', {
-      entrenador_id,
       turno_id,
-      mensaje,
     })
     await obtenerSolicitudes()
     await cargarEntrenadores()
