@@ -232,3 +232,173 @@
 [data-theme="dark"] .agregar-disp-card       { background: var(--app-card); }
 [data-theme="dark"] .form-select             { background: #22263a; border-color: var(--app-card-border); color: var(--app-text); }
 [data-theme="dark"] .sin-horarios            { background: var(--app-card); color: var(--app-text-sub); }
+
+/* ── MINI CALENDARIO ─────────────────────────────────────────── */
+.cal-wrap {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 14px 12px 10px;
+  margin-bottom: 16px;
+  border: 1.5px solid #e2e8f0;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cal-nav-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.cal-nav-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #2563eb;
+  cursor: pointer;
+  padding: 2px 10px;
+  border-radius: 8px;
+  line-height: 1;
+  transition: background 0.12s;
+  font-family: inherit;
+}
+
+.cal-nav-btn:hover { background: #eff6ff; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-header {
+  margin-bottom: 4px;
+}
+
+.cal-dia-lbl {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 2px 0;
+}
+
+.cal-dia {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+  font-family: inherit;
+  padding: 0;
+}
+
+.cal-dia:hover:not(:disabled):not(.cal-dia--sel) { background: #e0e7ff; color: #2563eb; }
+
+.cal-dia--pasado {
+  color: #cbd5e1;
+  cursor: default;
+}
+
+.cal-dia--hoy {
+  font-weight: 800;
+  color: #2563eb;
+  border: 1.5px solid #2563eb;
+  border-radius: 8px;
+}
+
+.cal-dia--sel {
+  background: #2563eb !important;
+  color: #fff !important;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.cal-fecha-sel-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+  text-align: center;
+  margin: 10px 0 2px;
+  text-transform: capitalize;
+}
+
+/* ── HORA INPUT ── */
+.form-input-time {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #1e293b;
+  background: white;
+  appearance: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-input-time:focus { border-color: #2563eb; }
+
+/* ── CHIPS DE DURACIÓN ── */
+.dur-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dur-chip {
+  padding: 7px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 999px;
+  background: white;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+
+.dur-chip:hover { border-color: #2563eb; color: #2563eb; }
+
+.dur-chip--sel {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+  font-weight: 600;
+}
+
+/* ── ERROR INLINE ── */
+.form-error {
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 0 0 10px;
+}
+
+/* ── DARK MODE ── */
+[data-theme="dark"] .cal-wrap         { background: #16192a; border-color: var(--app-card-border); }
+[data-theme="dark"] .cal-nav-titulo   { color: var(--app-text); }
+[data-theme="dark"] .cal-dia          { color: var(--app-text); }
+[data-theme="dark"] .cal-dia--pasado  { color: #3a3d4e; }
+[data-theme="dark"] .cal-dia:hover:not(:disabled):not(.cal-dia--sel) { background: #1a2e50; color: #60a5fa; }
+[data-theme="dark"] .cal-fecha-sel-label { color: #60a5fa; }
+[data-theme="dark"] .form-input-time  { background: #22263a; border-color: var(--app-card-border); color: var(--app-text); }
+[data-theme="dark"] .dur-chip         { background: var(--app-card); border-color: var(--app-card-border); color: var(--app-text-muted); }
+[data-theme="dark"] .dur-chip:hover   { border-color: #6366f1; color: #818cf8; }

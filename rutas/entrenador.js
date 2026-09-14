@@ -375,38 +375,30 @@ router.get('/sedes', async (req, res) => {
 router.post('/mis-horarios', async (req, res) => {
   try {
     const entrenadorId = req.userId
-    const { dia, hora, sede_id, duracion_min } = req.body
+    const { fecha, hora, sede_id, duracion_min } = req.body
 
-    if (!dia || !hora || !sede_id) {
-      return res.status(400).json({ error: 'dia, hora y sede_id son requeridos' })
+    if (!fecha || !hora || !sede_id) {
+      return res.status(400).json({ error: 'fecha, hora y sede_id son requeridos' })
+    }
+
+    // Validar formato fecha YYYY-MM-DD
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      return res.status(400).json({ error: 'Formato de fecha inválido, usá YYYY-MM-DD' })
+    }
+
+    // Validar que la fecha no sea en el pasado (hora argentina)
+    const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    if (fecha < hoyAR) {
+      return res.status(400).json({ error: 'No podés agregar horarios en fechas pasadas' })
     }
 
     // Validar duración — default 60 min si no se envía
     const durMin = Number(duracion_min)
     const duracionFinal = [30, 45, 60, 90, 120].includes(durMin) ? durMin : 60
 
-    const DIAS = {
-      lunes: 1, martes: 2, miercoles: 3, miércoles: 3,
-      jueves: 4, viernes: 5, sabado: 6, sábado: 6, domingo: 0,
-    }
-    const diaNum = DIAS[dia.toLowerCase()]
-    if (diaNum === undefined) {
-      return res.status(400).json({ error: 'Día inválido' })
-    }
-
-    const hoy = new Date()
-    const diff = (diaNum - hoy.getDay() + 7) % 7 || 7
-
-    // Obtener fecha del próximo día correcto en Argentina con offset -03:00 explícito
-    const hoyAR = new Date(hoy.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }))
-    const fechaBaseAR = new Date(hoyAR)
-    fechaBaseAR.setDate(hoyAR.getDate() + diff)
-    const yyyy = fechaBaseAR.getFullYear()
-    const mmes = String(fechaBaseAR.getMonth() + 1).padStart(2, '0')
-    const dd   = String(fechaBaseAR.getDate()).padStart(2, '0')
-    const fechaBase = new Date(`${yyyy}-${mmes}-${dd}T${hora}:00-03:00`)
-
-    const fechaFin = new Date(fechaBase.getTime() + duracionFinal * 60 * 1000)
+    // Construir fecha/hora con offset -03:00 explícito (hora argentina)
+    const fechaBase = new Date(`${fecha}T${hora}:00-03:00`)
+    const fechaFin  = new Date(fechaBase.getTime() + duracionFinal * 60 * 1000)
 
     // Buscar una mesa disponible en la sede (mesa_id es NOT NULL en la tabla)
     const { data: mesas } = await supabase

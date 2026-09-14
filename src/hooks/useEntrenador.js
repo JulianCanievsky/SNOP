@@ -152,10 +152,10 @@ export function useMisHorarios() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  const agregarHorario = async ({ dia, hora, sede_id, duracion_min }) => {
+  const agregarHorario = async ({ fecha, hora, sede_id, duracion_min }) => {
     try {
       setGuardando(true)
-      await api.post('/entrenador/mis-horarios', { dia, hora, sede_id, duracion_min })
+      await api.post('/entrenador/mis-horarios', { fecha, hora, sede_id, duracion_min })
       await cargar()
     } finally {
       setGuardando(false)
