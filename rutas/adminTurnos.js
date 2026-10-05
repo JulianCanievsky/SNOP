@@ -46,17 +46,18 @@ router.use(autenticar, soloAdmin)
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Verifica solapamiento de sede/horario con otros turnos activos. */
+/**
+ * Verifica solapamiento de sede/horario con otros turnos RECURRENTES activos.
+ * Retorna el id del turno conflictivo o null si no hay solapamiento.
+ */
 async function verificarSolapamiento({ sede_id, dia_semana, hora_inicio, hora_fin, excluir_id }) {
-  // Buscamos turnos de entrenamiento (tipo_turno_id=1) en la misma sede con estado=true
-  // No filtramos por recurrente/activo porque esas columnas pueden no existir aún (migración 002)
   let query = supabase
     .from('turnos')
-    .select('id, hora_inicio, hora_fin, dia_semana')
+    .select('id, hora_inicio, hora_fin, dia_semana, user_id')
     .eq('sede_id', sede_id)
     .eq('estado', true)
     .eq('tipo_turno_id', 1)
-    .not('hora_inicio', 'is', null)  // solo turnos que ya tienen hora_inicio (post migración)
+    .not('hora_inicio', 'is', null)
 
   if (excluir_id) query = query.neq('id', excluir_id)
 
@@ -64,9 +65,12 @@ async function verificarSolapamiento({ sede_id, dia_semana, hora_inicio, hora_fi
 
   for (const t of turnos ?? []) {
     if (t.dia_semana == null || t.dia_semana !== dia_semana) continue
-    if (hora_inicio < t.hora_fin && hora_fin > t.hora_inicio) return true
+    // Solo considerar solapamiento si hay superposición horaria real
+    if (hora_inicio < t.hora_fin && hora_fin > t.hora_inicio) {
+      return t.id // retornar el id del conflicto (truthy)
+    }
   }
-  return false
+  return null
 }
 
 /** Calcula la próxima fecha concreta (ISO) para un turno recurrente dado su dia_semana y hora.
@@ -578,23 +582,37 @@ router.get('/:id', async (req, res) => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/admin/turnos — crear turno / plantilla recurrente
-// Body: { sede_id, mesa_id?, entrenador_id, dia_semana, hora_inicio, hora_fin,
+// POST /api/admin/turnos — crear turno (recurrente o puntual)
+// Body: { sede_id, mesa_id?, entrenador_id,
+//         dia_semana,   hora_inicio, hora_fin,     ← recurrente (todos los X)
+//         fecha_especifica?,                        ← puntual (YYYY-MM-DD, ignora dia_semana)
 //         duracion_min?, capacidad_maxima, nivel_minimo_id?, nivel_maximo_id?,
 //         recurrente? (default true) }
+// Cuando fecha_especifica está presente → turno puntual (recurrente=false)
+// ─────────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   const {
     sede_id, entrenador_id,
     dia_semana, hora_inicio, hora_fin,
+    fecha_especifica,          // YYYY-MM-DD — si viene, es turno puntual
     duracion_min, capacidad_maxima,
     nivel_minimo_id, nivel_maximo_id,
     recurrente = true,
   } = req.body
 
-  if (!sede_id || entrenador_id == null || dia_semana == null || !hora_inicio || !hora_fin || !capacidad_maxima) {
+  // fecha_especifica presente → forzar puntual
+  const esPuntual   = !!fecha_especifica || recurrente === false
+  const esRecurrente = !esPuntual
+
+  // dia_semana requerido solo para recurrentes; para puntuales lo inferimos de la fecha
+  const diaSemanaFinal = fecha_especifica != null
+    ? new Date(`${fecha_especifica}T12:00:00-03:00`).getDay()
+    : (dia_semana != null ? Number(dia_semana) : null)
+
+  if (!sede_id || entrenador_id == null || diaSemanaFinal == null || !hora_inicio || !hora_fin || !capacidad_maxima) {
     return res.status(400).json({
-      error: 'sede_id, entrenador_id, dia_semana, hora_inicio, hora_fin y capacidad_maxima son requeridos',
+      error: 'sede_id, entrenador_id, fecha (o dia_semana), hora_inicio, hora_fin y capacidad_maxima son requeridos',
     })
   }
 
@@ -617,21 +635,31 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'El usuario seleccionado no es un entrenador' })
     }
 
-    // Verificar solapamiento (solo para plantillas recurrentes)
-    if (recurrente) {
-      const solapa = await verificarSolapamiento({ sede_id, dia_semana, hora_inicio, hora_fin })
-      if (solapa) {
+    // Verificar solapamiento solo para turnos recurrentes
+    if (esRecurrente) {
+      const conflictoId = await verificarSolapamiento({
+        sede_id, dia_semana: diaSemanaFinal, hora_inicio, hora_fin,
+      })
+      if (conflictoId) {
         return res.status(409).json({
-          error: 'Ya existe un turno recurrente en esa sede/mesa/horario. Revisá los turnos existentes.',
+          error: `Ya existe un turno recurrente en esa sede y horario (turno id: ${conflictoId}). Revisá los turnos existentes o crealo como turno puntual.`,
+          turno_conflicto_id: conflictoId,
         })
       }
     }
 
-    // Calcular fecha_inicio / fecha_fin para la primera instancia (on-the-fly)
-    const primeraFecha = proximaFecha(dia_semana, hora_inicio)
-    // Construir fecha_fin con offset -03:00 explícito (misma fecha que primeraFecha en AR)
-    const fechaAR = primeraFecha.toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-    const primeraFin = new Date(`${fechaAR}T${hora_fin}:00-03:00`)
+    // ── Calcular fecha_inicio y fecha_fin ─────────────────────────────────────
+    let primeraFecha, primeraFin
+    if (fecha_especifica) {
+      // Turno puntual: usar la fecha exacta elegida
+      primeraFecha = new Date(`${fecha_especifica}T${hora_inicio}:00-03:00`)
+      primeraFin   = new Date(`${fecha_especifica}T${hora_fin}:00-03:00`)
+    } else {
+      // Turno recurrente: calcular el próximo día de semana
+      primeraFecha = proximaFecha(diaSemanaFinal, hora_inicio)
+      const fechaAR = primeraFecha.toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+      primeraFin = new Date(`${fechaAR}T${hora_fin}:00-03:00`)
+    }
 
     // Resolver mesa_id: usar la que viene del body o tomar la primera activa de la sede.
     // Si la sede no tiene mesas configuradas, se continúa con mesa_id = null (campo opcional).
@@ -666,10 +694,12 @@ router.post('/', async (req, res) => {
         estado:           true,
         fecha_inicio:     primeraFecha.toISOString(),
         fecha_fin:        primeraFin.toISOString(),
-        ...(dia_semana  != null ? { dia_semana }  : {}),
-        ...(hora_inicio          ? { hora_inicio } : {}),
-        ...(hora_fin              ? { hora_fin }   : {}),
-        ...(recurrente != null   ? { recurrente, activo: true } : {}),
+        ...(diaSemanaFinal != null ? { dia_semana: diaSemanaFinal } : {}),
+        ...(hora_inicio            ? { hora_inicio }               : {}),
+        ...(hora_fin               ? { hora_fin }                  : {}),
+        // recurrente=true solo si realmente es plantilla semanal
+        recurrente: esRecurrente,
+        activo:     true,
       })
       .select('*, sedes(nombre), users!turnos_user_id_fkey(nombre)')
       .single()

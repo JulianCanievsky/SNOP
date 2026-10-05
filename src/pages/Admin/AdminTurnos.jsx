@@ -25,23 +25,78 @@ function labelTurno(t) {
   return `${dia} ${hora} hs · ${sede} · ${ent}`
 }
 
+// ── Helpers de fecha ─────────────────────────────────────────────────────────
+function hoyAR() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
+}
+
+function nombreDiaDeStr(fechaStr) {
+  if (!fechaStr) return ''
+  const d = new Date(`${fechaStr}T12:00:00-03:00`)
+  return DIAS[d.getDay()]
+}
+
+// ── Modal de confirmación recurrente vs puntual ───────────────────────────────
+function ModalRecurrencia({ fecha, onRecurrente, onPuntual, onCancelar }) {
+  const dia = nombreDiaDeStr(fecha)
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', display:'flex', alignItems:'flex-end', zIndex:400 }}>
+      <div style={{ background:'white', width:'100%', borderRadius:'20px 20px 0 0', padding:'28px 20px 40px' }}>
+        <h3 style={{ margin:'0 0 8px', fontSize:18, color:'#1e293b' }}>¿Cómo crear el turno?</h3>
+        <p style={{ margin:'0 0 20px', fontSize:14, color:'#64748b' }}>
+          Elegiste el <strong>{fecha}</strong> ({dia})
+        </p>
+        <button
+          onClick={onRecurrente}
+          style={{ display:'block', width:'100%', padding:'15px 16px', marginBottom:10,
+            background:'#4f46e5', color:'white', border:'none', borderRadius:12,
+            fontSize:15, fontWeight:700, cursor:'pointer', textAlign:'left', fontFamily:'inherit' }}
+        >
+          🔁 Todos los {dia}s
+          <span style={{ display:'block', fontSize:12, fontWeight:400, opacity:.85, marginTop:2 }}>
+            Se crea como turno recurrente semanal
+          </span>
+        </button>
+        <button
+          onClick={onPuntual}
+          style={{ display:'block', width:'100%', padding:'15px 16px', marginBottom:10,
+            background:'#f8fafc', color:'#1e293b', border:'2px solid #e2e8f0', borderRadius:12,
+            fontSize:15, fontWeight:700, cursor:'pointer', textAlign:'left', fontFamily:'inherit' }}
+        >
+          📅 Solo el {fecha}
+          <span style={{ display:'block', fontSize:12, fontWeight:400, color:'#64748b', marginTop:2 }}>
+            Turno único, no se repite
+          </span>
+        </button>
+        <button
+          onClick={onCancelar}
+          style={{ display:'block', width:'100%', padding:'12px', marginTop:4,
+            background:'none', border:'none', color:'#94a3b8', fontSize:14, cursor:'pointer', fontFamily:'inherit' }}
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Formulario para crear/editar turno ───────────────────────────────────────
 function FormTurno({ inicial, entrenadores, sedes, niveles, onGuardar, onCancelar, guardando }) {
   const [form, setForm] = useState({
     sede_id: '', entrenador_id: '',
-    dia_semana: '1', hora_inicio: '', hora_fin: '',
+    fecha: '',           // datepicker — reemplaza dia_semana al crear
+    hora_inicio: '', hora_fin: '',
     duracion_min: '', capacidad_maxima: '6',
     nivel_minimo_id: '', nivel_maximo_id: '',
-    recurrente: true,
     ...inicial,
   })
+  const [mostrarModal, setMostrarModal] = useState(false)
+  const [bodyPendiente, setBodyPendiente] = useState(null)
 
+  const esEdicion = !!inicial?.dia_semana  // en edición no hay datepicker
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
-  function handleSubmit(e) {
-    e.preventDefault()
-
-    // Calcular duración automáticamente si no se completó manualmente
+  function buildBody(recurrente) {
     let durMin = form.duracion_min ? Number(form.duracion_min) : null
     if (!durMin && form.hora_inicio && form.hora_fin) {
       const [hI, mI] = form.hora_inicio.split(':').map(Number)
@@ -49,85 +104,153 @@ function FormTurno({ inicial, entrenadores, sedes, niveles, onGuardar, onCancela
       const diff = (hF * 60 + mF) - (hI * 60 + mI)
       if (diff > 0) durMin = diff
     }
-
-    onGuardar({
+    const base = {
       sede_id:          Number(form.sede_id),
       entrenador_id:    Number(form.entrenador_id),
-      dia_semana:       Number(form.dia_semana),
       hora_inicio:      form.hora_inicio,
       hora_fin:         form.hora_fin,
       duracion_min:     durMin,
       capacidad_maxima: Number(form.capacidad_maxima),
       nivel_minimo_id:  form.nivel_minimo_id ? Number(form.nivel_minimo_id) : null,
       nivel_maximo_id:  form.nivel_maximo_id ? Number(form.nivel_maximo_id) : null,
-      recurrente:       form.recurrente,
-    })
+    }
+    if (esEdicion) {
+      // edición: mantiene dia_semana original
+      return { ...base, dia_semana: Number(form.dia_semana), recurrente: form.recurrente ?? true }
+    }
+    if (recurrente) {
+      // nuevo recurrente: solo dia_semana (inferido de la fecha)
+      const dia = new Date(`${form.fecha}T12:00:00-03:00`).getDay()
+      return { ...base, dia_semana: dia, recurrente: true }
+    }
+    // nuevo puntual: fecha exacta
+    return { ...base, fecha_especifica: form.fecha, recurrente: false }
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    if (esEdicion) {
+      onGuardar(buildBody(null))
+      return
+    }
+    // Para creación: mostrar modal de recurrente vs puntual
+    setMostrarModal(true)
+  }
+
+  function confirmarRecurrente() {
+    setMostrarModal(false)
+    onGuardar(buildBody(true))
+  }
+
+  function confirmarPuntual() {
+    setMostrarModal(false)
+    onGuardar(buildBody(false))
   }
 
   return (
-    <form onSubmit={handleSubmit} className="admin-form">
-      <div className="form-group">
-        <label>Sede *</label>
-        <select className="form-select" value={form.sede_id} onChange={e => set('sede_id', e.target.value)} required>
-          <option value="">Seleccioná una sede...</option>
-          {sedes.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-        </select>
-      </div>
-      <div className="form-group">
-        <label>Entrenador *</label>
-        <select className="form-select" value={form.entrenador_id} onChange={e => set('entrenador_id', e.target.value)} required>
-          <option value="">Seleccioná un entrenador...</option>
-          {entrenadores.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
-        </select>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+    <>
+      <form onSubmit={handleSubmit} className="admin-form">
         <div className="form-group">
-          <label>Día de la semana *</label>
-          <select className="form-select" value={form.dia_semana} onChange={e => set('dia_semana', e.target.value)} required>
-            {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+          <label>Sede *</label>
+          <select className="form-select" value={form.sede_id} onChange={e => set('sede_id', e.target.value)} required>
+            <option value="">Seleccioná una sede...</option>
+            {sedes.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
           </select>
         </div>
         <div className="form-group">
-          <label>Capacidad máx. *</label>
-          <input type="number" min="1" max="30" className="form-input" value={form.capacidad_maxima}
-            onChange={e => set('capacidad_maxima', e.target.value)} required />
-        </div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <div className="form-group">
-          <label>Hora inicio *</label>
-          <input type="time" className="form-input" value={form.hora_inicio}
-            onChange={e => set('hora_inicio', e.target.value)} required />
-        </div>
-        <div className="form-group">
-          <label>Hora fin *</label>
-          <input type="time" className="form-input" value={form.hora_fin}
-            onChange={e => set('hora_fin', e.target.value)} required />
-        </div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <div className="form-group">
-          <label>Nivel mínimo</label>
-          <select className="form-select" value={form.nivel_minimo_id} onChange={e => set('nivel_minimo_id', e.target.value)}>
-            <option value="">Sin límite</option>
-            {niveles.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
+          <label>Entrenador *</label>
+          <select className="form-select" value={form.entrenador_id} onChange={e => set('entrenador_id', e.target.value)} required>
+            <option value="">Seleccioná un entrenador...</option>
+            {entrenadores.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
           </select>
         </div>
-        <div className="form-group">
-          <label>Nivel máximo</label>
-          <select className="form-select" value={form.nivel_maximo_id} onChange={e => set('nivel_maximo_id', e.target.value)}>
-            <option value="">Sin límite</option>
-            {niveles.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
-          </select>
+
+        {/* Fecha — solo para crear. En edición se muestra dia_semana */}
+        {esEdicion ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="form-group">
+              <label>Día de la semana *</label>
+              <select className="form-select" value={form.dia_semana} onChange={e => set('dia_semana', e.target.value)} required>
+                {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Capacidad máx. *</label>
+              <input type="number" min="1" max="30" className="form-input" value={form.capacidad_maxima}
+                onChange={e => set('capacidad_maxima', e.target.value)} required />
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label>Fecha del turno *</label>
+              <input
+                type="date"
+                className="form-input"
+                value={form.fecha}
+                min={hoyAR()}
+                onChange={e => set('fecha', e.target.value)}
+                required
+              />
+              {form.fecha && (
+                <p style={{ margin:'4px 0 0', fontSize:12, color:'#6b7280' }}>
+                  {nombreDiaDeStr(form.fecha)} — elegirás si se repite todos los {nombreDiaDeStr(form.fecha)}s al guardar
+                </p>
+              )}
+            </div>
+            <div className="form-group">
+              <label>Capacidad máx. *</label>
+              <input type="number" min="1" max="30" className="form-input" value={form.capacidad_maxima}
+                onChange={e => set('capacidad_maxima', e.target.value)} required />
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="form-group">
+            <label>Hora inicio *</label>
+            <input type="time" className="form-input" value={form.hora_inicio}
+              onChange={e => set('hora_inicio', e.target.value)} required />
+          </div>
+          <div className="form-group">
+            <label>Hora fin *</label>
+            <input type="time" className="form-input" value={form.hora_fin}
+              onChange={e => set('hora_fin', e.target.value)} required />
+          </div>
         </div>
-      </div>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button type="button" className="btn-secondary" onClick={onCancelar} style={{ flex: 1 }}>Cancelar</button>
-        <button type="submit" className="btn-primary" disabled={guardando} style={{ flex: 1 }}>
-          {guardando ? 'Guardando...' : 'Guardar turno'}
-        </button>
-      </div>
-    </form>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="form-group">
+            <label>Nivel mínimo</label>
+            <select className="form-select" value={form.nivel_minimo_id} onChange={e => set('nivel_minimo_id', e.target.value)}>
+              <option value="">Sin límite</option>
+              {niveles.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Nivel máximo</label>
+            <select className="form-select" value={form.nivel_maximo_id} onChange={e => set('nivel_maximo_id', e.target.value)}>
+              <option value="">Sin límite</option>
+              {niveles.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" className="btn-secondary" onClick={onCancelar} style={{ flex: 1 }}>Cancelar</button>
+          <button type="submit" className="btn-primary" disabled={guardando} style={{ flex: 1 }}>
+            {guardando ? 'Guardando...' : 'Guardar turno'}
+          </button>
+        </div>
+      </form>
+
+      {mostrarModal && (
+        <ModalRecurrencia
+          fecha={form.fecha}
+          onRecurrente={confirmarRecurrente}
+          onPuntual={confirmarPuntual}
+          onCancelar={() => setMostrarModal(false)}
+        />
+      )}
+    </>
   )
 }
 
