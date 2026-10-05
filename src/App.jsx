@@ -41,6 +41,7 @@ import DetalleAlumnoEntrenador from './pages/entrenador/DetalleAlumnoEntrenador/
 import MisHorariosEntrenador   from './pages/entrenador/MisHorariosEntrenador/MisHorariosEntrenador'
 import SolicitudesEntrenador   from './pages/entrenador/SolicitudesEntrenador/SolicitudesEntrenador'
 import PerfilEntrenador        from './pages/entrenador/PerfilEntrenador/PerfilEntrenador'
+import PerfilPublicoEntrenador from './pages/entrenador/PerfilPublicoEntrenador/PerfilPublicoEntrenador'
 
 // Rutas protegidas: redirige al inicio correcto si no hay sesión o el rol no coincide
 function RutaProtegida({ children, rolesPermitidos }) {
@@ -97,6 +98,7 @@ function AppRoutes() {
       <Route path="/mis-clases"         element={<RutaProtegida rolesPermitidos={[1]}><MisClases /></RutaProtegida>} />
       <Route path="/torneos"             element={<RutaProtegida rolesPermitidos={[1]}><Torneos /></RutaProtegida>} />
       <Route path="/notificaciones"      element={<RutaProtegida rolesPermitidos={[1]}><Notificaciones /></RutaProtegida>} />
+      <Route path="/entrenadores/:entrenadorId" element={<RutaProtegida rolesPermitidos={[1]}><PerfilPublicoEntrenador /></RutaProtegida>} />
 
       {/* Entrenador (tipo_usuario_id = 2) */}
       <Route path="/entrenador/inicio"          element={<RutaProtegida rolesPermitidos={[2]}><InicioEntrenador /></RutaProtegida>} />

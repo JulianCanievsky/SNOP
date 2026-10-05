@@ -508,3 +508,90 @@
 [data-theme="dark"] .mc-modal-sub     { color: var(--app-text-muted); }
 [data-theme="dark"] .mc-select        { background: #22263a; border-color: var(--app-card-border); color: var(--app-text); }
 [data-theme="dark"] .mc-btn-secondary:hover { background: #1a2540; }
+
+/* ── FILA CANCELADA / ESPERA ─────────────────────────────────── */
+.mc-clase-row--cancelada {
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mc-clase-row--cancelada .mc-clase-info { flex-direction: column; }
+
+.mc-clase-acciones {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.mc-badge-lugar {
+  font-size: 11px;
+  font-weight: 700;
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 2px 8px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.mc-badge-lleno {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ef4444;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 999px;
+  padding: 2px 8px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.mc-btn-reconfirmar {
+  flex: 1;
+  padding: 9px 14px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, opacity .15s;
+}
+
+.mc-btn-reconfirmar:hover:not(:disabled) { background: #1d4ed8; }
+.mc-btn-reconfirmar:disabled { opacity: .5; cursor: not-allowed; }
+
+.mc-btn-espera {
+  flex: 1;
+  padding: 9px 14px;
+  background: #fffbeb;
+  color: #d97706;
+  border: 2px solid #fbbf24;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, opacity .15s;
+}
+
+.mc-btn-espera:hover:not(:disabled) { background: #fef3c7; }
+.mc-btn-espera:disabled { opacity: .5; cursor: not-allowed; }
+
+.mc-seccion-titulo--espera {
+  color: #d97706;
+  background: #fffbeb;
+  border-bottom-color: #fde68a;
+}
+
+/* Dark mode para filas canceladas */
+[data-theme="dark"] .mc-clase-row--cancelada { background: #1f1a0a; border-left-color: #d97706; }
+[data-theme="dark"] .mc-btn-espera { background: #2a2210; border-color: #d97706; color: #fbbf24; }
+[data-theme="dark"] .mc-btn-espera:hover:not(:disabled) { background: #3a2e10; }
+[data-theme="dark"] .mc-seccion-titulo--espera { background: #1f1a0a; color: #d97706; border-bottom-color: #44340a; }

@@ -40,13 +40,23 @@ function FormTurno({ inicial, entrenadores, sedes, niveles, onGuardar, onCancela
 
   function handleSubmit(e) {
     e.preventDefault()
+
+    // Calcular duración automáticamente si no se completó manualmente
+    let durMin = form.duracion_min ? Number(form.duracion_min) : null
+    if (!durMin && form.hora_inicio && form.hora_fin) {
+      const [hI, mI] = form.hora_inicio.split(':').map(Number)
+      const [hF, mF] = form.hora_fin.split(':').map(Number)
+      const diff = (hF * 60 + mF) - (hI * 60 + mI)
+      if (diff > 0) durMin = diff
+    }
+
     onGuardar({
       sede_id:          Number(form.sede_id),
       entrenador_id:    Number(form.entrenador_id),
       dia_semana:       Number(form.dia_semana),
       hora_inicio:      form.hora_inicio,
       hora_fin:         form.hora_fin,
-      duracion_min:     form.duracion_min ? Number(form.duracion_min) : null,
+      duracion_min:     durMin,
       capacidad_maxima: Number(form.capacidad_maxima),
       nivel_minimo_id:  form.nivel_minimo_id ? Number(form.nivel_minimo_id) : null,
       nivel_maximo_id:  form.nivel_maximo_id ? Number(form.nivel_maximo_id) : null,

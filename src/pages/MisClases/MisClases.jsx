@@ -1,5 +1,7 @@
 /**
- * MisClases.jsx — Panel del socio: ver clases inscriptas y cancelarlas.
+ * MisClases.jsx — Panel del socio: ver clases inscriptas, cancelarlas,
+ * reconfirmar cuando se libera un cupo, y unirse a lista de espera.
+ *
  * Cuando se cancela un turno que estaba lleno, el sistema notifica
  * automáticamente a otros socios que se liberó un lugar.
  */
@@ -23,15 +25,18 @@ const formatHora = (iso) => {
   return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
 }
 
+const esFutura = (iso) => iso && new Date(iso) >= new Date()
+
 export default function MisClases() {
   const navigate = useNavigate()
 
-  const [clases,     setClases]     = useState([])
-  const [cargando,   setCargando]   = useState(true)
-  const [error,      setError]      = useState(null)
-  const [procesando, setProcesando] = useState(null)
-  const [mensaje,    setMensaje]    = useState('')
-  const [errorLocal, setErrorLocal] = useState('')
+  const [clases,       setClases]       = useState([])
+  const [canceladas,   setCanceladas]   = useState([])
+  const [cargando,     setCargando]     = useState(true)
+  const [error,        setError]        = useState(null)
+  const [procesando,   setProcesando]   = useState(null) // turnoId en proceso
+  const [mensaje,      setMensaje]      = useState('')
+  const [errorLocal,   setErrorLocal]   = useState('')
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -39,6 +44,8 @@ export default function MisClases() {
     try {
       const res = await api.get('/turnos')
       setClases(res.data.data ?? [])
+      // El endpoint también devuelve las inscripciones canceladas (para reconfirmar)
+      setCanceladas(res.data.cancelados ?? [])
     } catch (err) {
       setError(err.response?.data?.error || 'No se pudieron cargar las clases')
     } finally {
@@ -51,7 +58,7 @@ export default function MisClases() {
   function mostrarMensaje(msg, esError = false) {
     if (esError) setErrorLocal(msg)
     else setMensaje(msg)
-    setTimeout(() => { setMensaje(''); setErrorLocal('') }, 4000)
+    setTimeout(() => { setMensaje(''); setErrorLocal('') }, 4500)
   }
 
   async function handleCancelar(turnoId) {
@@ -68,9 +75,42 @@ export default function MisClases() {
     }
   }
 
-  const ahora = new Date()
+  async function handleReconfirmar(turnoId) {
+    if (procesando) return
+    setProcesando(turnoId)
+    try {
+      await api.patch(`/turnos/${turnoId}/reconfirmar`)
+      mostrarMensaje('¡Listo! Volviste a anotarte en el turno.')
+      await cargar()
+    } catch (err) {
+      mostrarMensaje(err.response?.data?.mensaje || 'No hay cupo disponible en este momento', true)
+    } finally {
+      setProcesando(null)
+    }
+  }
+
+  async function handleUnirseListaEspera(turnoId) {
+    if (procesando) return
+    setProcesando(turnoId)
+    try {
+      await api.post(`/turnos/${turnoId}/lista-espera`)
+      mostrarMensaje('Te anotaste en la lista de espera. Te avisamos si se libera un lugar.')
+      await cargar()
+    } catch (err) {
+      mostrarMensaje(err.response?.data?.mensaje || 'No se pudo agregar a la lista de espera', true)
+    } finally {
+      setProcesando(null)
+    }
+  }
+
+  const ahora   = new Date()
   const futuras  = clases.filter(c => c.turnos?.fecha_inicio && new Date(c.turnos.fecha_inicio) >= ahora)
   const pasadas  = clases.filter(c => c.turnos?.fecha_inicio && new Date(c.turnos.fecha_inicio) < ahora)
+
+  // Canceladas futuras: turnos futuros donde el socio estuvo inscripto pero canceló
+  const canceladasFuturas = canceladas.filter(
+    c => c.turnos?.fecha_inicio && esFutura(c.turnos.fecha_inicio)
+  )
 
   if (cargando) {
     return (
@@ -132,10 +172,11 @@ export default function MisClases() {
         </div>
 
         <div className="mc-lista">
-          {clases.length === 0 ? (
+          {clases.length === 0 && canceladasFuturas.length === 0 ? (
             <div className="mc-vacio">No tenés clases asignadas todavía.</div>
           ) : (
             <>
+              {/* ── Próximas clases activas ─────────────────────────────── */}
               {futuras.length > 0 && (
                 <>
                   <div className="mc-seccion-titulo">Próximas</div>
@@ -165,6 +206,57 @@ export default function MisClases() {
                   })}
                 </>
               )}
+
+              {/* ── Turnos donde el socio canceló y puede reconfirmar ──── */}
+              {canceladasFuturas.length > 0 && (
+                <>
+                  <div className="mc-seccion-titulo mc-seccion-titulo--espera">
+                    Cupos liberados — podés reconfirmar
+                  </div>
+                  {canceladasFuturas.map(c => {
+                    const t       = c.turnos
+                    const hayLugar = c.cupo_disponible > 0
+                    return (
+                      <div key={c.id} className={`mc-clase-row mc-clase-row--cancelada`}>
+                        <div className="mc-clase-info">
+                          <span className="mc-clase-fecha">
+                            {formatFecha(t?.fecha_inicio)} {formatHora(t?.fecha_inicio)} hs
+                          </span>
+                          <span className="mc-clase-sede">
+                            {t?.sedes?.nombre ?? ''}
+                            {t?.users?.nombre ? ` · ${t.users.nombre}` : ''}
+                          </span>
+                          {hayLugar
+                            ? <span className="mc-badge-lugar">🟢 Hay lugar</span>
+                            : <span className="mc-badge-lleno">🔴 Lleno</span>
+                          }
+                        </div>
+                        <div className="mc-clase-acciones">
+                          {hayLugar ? (
+                            <button
+                              className="mc-btn-reconfirmar"
+                              onClick={() => handleReconfirmar(t?.id)}
+                              disabled={procesando === t?.id}
+                            >
+                              {procesando === t?.id ? '...' : 'Reconfirmar'}
+                            </button>
+                          ) : (
+                            <button
+                              className="mc-btn-espera"
+                              onClick={() => handleUnirseListaEspera(t?.id)}
+                              disabled={procesando === t?.id}
+                            >
+                              {procesando === t?.id ? '...' : 'Lista de espera'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </>
+              )}
+
+              {/* ── Historial ───────────────────────────────────────────── */}
               {pasadas.length > 0 && (
                 <>
                   <div className="mc-seccion-titulo mc-seccion-titulo--pasadas">Historial</div>

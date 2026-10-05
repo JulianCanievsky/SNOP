@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useClasesParticulares } from '../../hooks/useClasesParticulares'
 import ConfirmarClase from '../../components/TurnoCard/ConfirmarClase'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
 import { useRating } from '../../hooks/useRating'
-import { useEffect } from 'react'
 import './ClasesParticulares.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -41,6 +41,9 @@ const Estrellas = ({ rating, total }) => {
 
 const TarjetaEntrenador = ({ entrenador, solicitudes, onReservar }) => {
   const [turnoSeleccionado, setTurnoSeleccionado] = useState(null)
+  const navigate = useNavigate()
+
+  const irAlPerfil = () => navigate(`/entrenadores/${entrenador.id}`)
 
   const yaReservado =
     turnoSeleccionado &&
@@ -54,9 +57,17 @@ const TarjetaEntrenador = ({ entrenador, solicitudes, onReservar }) => {
   return (
     <div className="tarjeta-entrenador">
       <div className="entrenador-info">
-        <AvatarEntrenador nombre={entrenador.nombre} foto_url={entrenador.foto_url} />
+        <button
+          className="entrenador-avatar-btn"
+          onClick={irAlPerfil}
+          aria-label={`Ver perfil de ${entrenador.nombre}`}
+        >
+          <AvatarEntrenador nombre={entrenador.nombre} foto_url={entrenador.foto_url} />
+        </button>
         <div className="entrenador-datos">
-          <p className="entrenador-nombre">{entrenador.nombre}</p>
+          <button className="entrenador-nombre-btn" onClick={irAlPerfil}>
+            {entrenador.nombre}
+          </button>
           <div className="entrenador-meta">
             <Estrellas rating={entrenador.rating} total={entrenador.total_ratings} />
             <span className="entrenador-tipo">· {entrenador.tipo_usuario || 'Entrenador'}</span>
@@ -67,7 +78,7 @@ const TarjetaEntrenador = ({ entrenador, solicitudes, onReservar }) => {
       <div className="turnos-seccion">
         <p className="turnos-label">Horarios disponibles:</p>
         {entrenador.turnos_disponibles.slice(0, 4).map(turno => {
-          const solicitado = solicitudes.some(s => s.turnos.id === turno.id)
+          const solicitado = solicitudes.some(s => s.turnos?.id === turno.id)
           return (
             <button
               key={turno.id}
@@ -241,25 +252,25 @@ const ClasesParticulares = () => {
               {solicitudes.map(s => (
                 <div key={s.id} className="solicitud-card">
                   <div className="solicitud-fecha">
-                    {new Date(s.turnos.fecha_inicio).toLocaleDateString('es-AR', {
+                    {s.turnos?.fecha_inicio && new Date(s.turnos.fecha_inicio).toLocaleDateString('es-AR', {
                       weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ,
                     })}
                   </div>
                   <div className="solicitud-hora">
-                    {new Date(s.turnos.fecha_inicio).toLocaleTimeString('es-AR', {
+                    {s.turnos?.fecha_inicio && new Date(s.turnos.fecha_inicio).toLocaleTimeString('es-AR', {
                       hour: '2-digit', minute: '2-digit', timeZone: TZ,
                     })}
-                    {s.turnos.fecha_fin && (
+                    {s.turnos?.fecha_fin && (
                       <> — {new Date(s.turnos.fecha_fin).toLocaleTimeString('es-AR', {
                         hour: '2-digit', minute: '2-digit', timeZone: TZ,
                       })} hs</>
                     )}
-                    {s.turnos.duracion_min && ` · ${s.turnos.duracion_min} min`}
+                    {s.turnos?.duracion_min && ` · ${s.turnos.duracion_min} min`}
                   </div>
-                  {(s.turnos.users?.nombre || s.turnos.sedes?.nombre) && (
+                  {(s.turnos?.users?.nombre || s.turnos?.sedes?.nombre) && (
                     <div className="solicitud-detalle">
-                      {s.turnos.users?.nombre && <span>👨‍🏫 {s.turnos.users.nombre}</span>}
-                      {s.turnos.sedes?.nombre && <span>📍 {s.turnos.sedes.nombre}</span>}
+                      {s.turnos?.users?.nombre && <span>👨‍🏫 {s.turnos.users.nombre}</span>}
+                      {s.turnos?.sedes?.nombre && <span>📍 {s.turnos.sedes.nombre}</span>}
                     </div>
                   )}
                   <div className={`estado-solicitud ${s.estado ? 'confirmado' : 'pendiente'}`}>

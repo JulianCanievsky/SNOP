@@ -134,6 +134,39 @@
   margin: 0 0 4px;
 }
 
+/* Nombre/avatar como botón para ir al perfil */
+.entrenador-avatar-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  transition: opacity 0.15s;
+}
+
+.entrenador-avatar-btn:hover { opacity: 0.82; }
+
+.entrenador-nombre-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--viola);
+  margin: 0 0 4px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s;
+}
+
+.entrenador-nombre-btn:hover {
+  text-decoration-color: var(--viola);
+}
+
 .entrenador-meta {
   display: flex;
   align-items: center;

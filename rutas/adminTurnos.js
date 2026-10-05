@@ -633,20 +633,23 @@ router.post('/', async (req, res) => {
     const fechaAR = primeraFecha.toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
     const primeraFin = new Date(`${fechaAR}T${hora_fin}:00-03:00`)
 
-    // Resolver mesa_id: usar la que viene del body o tomar la primera activa de la sede
+    // Resolver mesa_id: usar la que viene del body o tomar la primera activa de la sede.
+    // Si la sede no tiene mesas configuradas, se continúa con mesa_id = null (campo opcional).
     let mesaId = req.body.mesa_id || null
     if (!mesaId) {
-      const { data: mesas } = await supabase
-        .from('mesas')
-        .select('id')
-        .eq('sede_id', Number(sede_id))
-        .eq('activa', true)
-        .order('id')
-        .limit(1)
-      mesaId = mesas?.[0]?.id ?? null
-    }
-    if (!mesaId) {
-      return res.status(400).json({ error: 'No hay mesas disponibles en esa sede. Verificá que la sede tenga mesas cargadas.' })
+      try {
+        const { data: mesas } = await supabase
+          .from('mesas')
+          .select('id')
+          .eq('sede_id', Number(sede_id))
+          .eq('activa', true)
+          .order('id')
+          .limit(1)
+        mesaId = mesas?.[0]?.id ?? null
+      } catch {
+        // La tabla mesas puede no existir aún — continuar sin mesa
+        mesaId = null
+      }
     }
 
     const { data, error } = await supabase

@@ -1,0 +1,361 @@
+/* ── PerfilPublicoEntrenador ─────────────────────────────────── */
+
+.ppe-page {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding-bottom: 88px;
+  font-family: inherit;
+}
+
+/* Header */
+.ppe-header {
+  background: #6B4EE6;
+  padding: 20px 20px 22px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+}
+
+.ppe-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+}
+
+.ppe-volver {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.9);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Contenido */
+.ppe-contenido {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Card base */
+.ppe-card {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+/* Card avatar */
+.ppe-card-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px 20px;
+  gap: 6px;
+}
+
+.ppe-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #6B4EE6;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.ppe-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ppe-nombre {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  text-align: center;
+}
+
+.ppe-rol {
+  font-size: 13px;
+  color: #6B4EE6;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ppe-clases-dadas {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Sección título */
+.ppe-seccion-titulo {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 12px 16px 6px;
+  margin: 0;
+}
+
+/* Rating */
+.ppe-rating-resumen {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 8px 16px 16px;
+}
+
+.ppe-rating-numero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 72px;
+}
+
+.ppe-rating-valor {
+  font-size: 40px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.ppe-estrellas-vis {
+  display: flex;
+  gap: 1px;
+}
+
+.ppe-estrella {
+  font-size: 14px;
+  color: #d1d5db;
+}
+
+.ppe-estrella.llena {
+  color: #f59e0b;
+}
+
+.ppe-rating-total {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.ppe-rating-dist {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ppe-rating-dist-fila {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ppe-rating-dist-label {
+  font-size: 11px;
+  color: #94a3b8;
+  width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.ppe-rating-dist-barra-bg {
+  flex: 1;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ppe-rating-dist-barra-fill {
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.ppe-rating-dist-count {
+  font-size: 11px;
+  color: #94a3b8;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+/* Reseñas */
+.ppe-resenas {
+  border-top: 1px solid #f1f5f9;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ppe-resenas-titulo {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.ppe-resena {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ppe-resena-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ppe-resena-estrellas {
+  font-size: 13px;
+  color: #f59e0b;
+  letter-spacing: -1px;
+}
+
+.ppe-resena-socio {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.ppe-resena-comentario {
+  font-size: 13px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Turnos */
+.ppe-turnos-lista {
+  padding: 4px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ppe-turno-item {
+  padding: 12px 14px;
+  background: #f8f9fc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.ppe-turno-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ppe-turno-dia {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  text-transform: capitalize;
+}
+
+.ppe-turno-hora {
+  font-size: 13px;
+  color: #6B4EE6;
+  font-weight: 500;
+}
+
+.ppe-turno-sede {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* CTA */
+.ppe-btn-reservar {
+  width: 100%;
+  padding: 15px;
+  background: #6B4EE6;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.ppe-btn-reservar:hover { background: #5538cc; }
+
+.ppe-btn-secondary {
+  padding: 10px 24px;
+  background: white;
+  color: #6B4EE6;
+  border: 2px solid #6B4EE6;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Estados */
+.ppe-cargando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 20px;
+  color: #94a3b8;
+}
+
+.ppe-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #6B4EE6;
+  border-radius: 50%;
+  animation: ppe-spin 0.7s linear infinite;
+}
+
+@keyframes ppe-spin { to { transform: rotate(360deg); } }
+
+.ppe-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 20px;
+  color: #ef4444;
+  text-align: center;
+}
+
+/* Dark mode */
+[data-theme="dark"] .ppe-page            { background: var(--app-bg); }
+[data-theme="dark"] .ppe-header          { background: #3b2080; }
+[data-theme="dark"] .ppe-card            { background: var(--app-card); border-color: var(--app-card-border); }
+[data-theme="dark"] .ppe-nombre          { color: var(--app-text); }
+[data-theme="dark"] .ppe-rating-valor    { color: var(--app-text); }
+[data-theme="dark"] .ppe-turno-item      { background: #22263a; border-color: var(--app-card-border); }
+[data-theme="dark"] .ppe-turno-dia       { color: var(--app-text); }
+[data-theme="dark"] .ppe-resenas         { border-top-color: var(--app-card-border); }
+[data-theme="dark"] .ppe-resena-comentario { color: var(--app-text-muted); }
+[data-theme="dark"] .ppe-rating-dist-barra-bg { background: #2a2d3a; }

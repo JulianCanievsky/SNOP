@@ -5,11 +5,17 @@ import BottomNav from '../../components/BottomNav/BottomNav'
 import './Notificaciones.css'
 
 const TIPO_ICONO = {
-  turno_asignado:   '📅',
-  solicitud_club:   '🏛️',
-  clase_confirmada: '✅',
-  clase_rechazada:  '❌',
-  torneo:           '🏆',
+  turno_asignado:         '📅',
+  turno_baja:             '❌',
+  turno_cancelado_semana: '📋',
+  turno_suspendido:       '⚠️',
+  solicitud_club:         '🏛️',
+  solicitud_clase:        '📩',
+  clase_confirmada:       '✅',
+  clase_rechazada:        '❌',
+  torneo:                 '🏆',
+  lugar_disponible:       '🟢',
+  comunicado:             '📢',
 }
 
 const formatFecha = (iso) => {
