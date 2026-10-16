@@ -5,6 +5,8 @@ import ConfirmarClase from '../../components/TurnoCard/ConfirmarClase'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
 import { useRating } from '../../hooks/useRating'
+import { ToastContainer } from '../../components/ui/Toast'
+import { useToast } from '../../hooks/useToast'
 import './ClasesParticulares.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -117,6 +119,7 @@ const ClasesParticulares = () => {
   } = useClasesParticulares()
 
   const { turnoActual, enviando: enviandoRating, cargarPendientes, enviarRating, omitirRating } = useRating()
+  const { toasts, showToast, removeToast } = useToast()
 
   const [reserva,     setReserva]     = useState(null)
   const [enviando,    setEnviando]    = useState(false)
@@ -146,7 +149,7 @@ const ClasesParticulares = () => {
       await cargarEntrenadores()
       await obtenerSolicitudes()
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al enviar la solicitud')
+      showToast(err.response?.data?.error || 'Error al enviar la solicitud', 'error')
     } finally {
       setEnviando(false)
     }
@@ -299,8 +302,7 @@ const ClasesParticulares = () => {
         )}
       </div>
       <BottomNav />
-
-      {/* Rating post-clase — bottom sheet si hay clases particulares sin calificar */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       {turnoActual && (
         <RatingEntrenador
           turno={turnoActual}

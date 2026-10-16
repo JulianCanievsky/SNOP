@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useMisHorarios } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import { ToastContainer } from '../../../components/ui/Toast'
+import { useToast } from '../../../hooks/useToast'
 import './MisHorariosEntrenador.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -61,6 +63,7 @@ function pad2(n) { return String(n).padStart(2, '0') }
 
 export default function MisHorariosEntrenador() {
   const { horarios, sedes, cargando, guardando, agregarHorario, cancelarHorario } = useMisHorarios()
+  const { toasts, showToast, removeToast } = useToast()
 
   // Estado del calendario
   const hoyAR     = new Date().toLocaleString('en-CA', { timeZone: TZ }).slice(0, 10)
@@ -114,13 +117,11 @@ export default function MisHorariosEntrenador() {
       setCancelando(turnoId)
       await cancelarHorario(turnoId)
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al cancelar')
+      showToast(err.response?.data?.error || 'Error al cancelar', 'error')
     } finally {
       setCancelando(null)
     }
   }
-
-  // Label de la fecha seleccionada
   const labelFechaSel = fechaSel
     ? new Date(`${fechaSel}T12:00:00`).toLocaleDateString('es-AR', {
         weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ,
@@ -290,6 +291,6 @@ export default function MisHorariosEntrenador() {
       </div>
 
       <BottomNavEntrenador />
-    </div>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />    </div>
   )
 }

@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useJuegoLibre } from './useJuegoLibre'
 import DetalleJuegoLibre from './DetalleJuegoLibre'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import { getSedesPublicas } from '../../services/adminApi'
-import { useEffect } from 'react'
+import { ToastContainer } from '../../components/ui/Toast'
+import { useToast } from '../../hooks/useToast'
 import './JuegoLibre.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -100,6 +101,7 @@ const TarjetaEvento = ({ evento, onAnotarme, onCancelar }) => {
 
 const JuegoLibre = () => {
   const { eventos, cargando, error, cargarEventos, inscribirse, cancelarInscripcion } = useJuegoLibre()
+  const { toasts, showToast, removeToast } = useToast()
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
   const [filtroSede, setFiltroSede] = useState('')
   const [filtroFecha, setFiltroFecha] = useState('')
@@ -120,7 +122,7 @@ const JuegoLibre = () => {
       setEventoSeleccionado(null)
       await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha })
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al inscribirse')
+      showToast(err.response?.data?.error || 'Error al inscribirse', 'error')
     } finally {
       setProcesando(false)
     }
@@ -134,7 +136,7 @@ const JuegoLibre = () => {
       setEventoSeleccionado(null)
       await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha })
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al cancelar')
+      showToast(err.response?.data?.error || 'Error al cancelar', 'error')
     } finally {
       setProcesando(false)
     }
@@ -216,6 +218,7 @@ const JuegoLibre = () => {
         ))}
       </div>
       <BottomNav />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSedes } from '../../services/adminApi'
 import { crearTorneo, getTorneosAdmin, borrarTorneo, getInscriptosTorneo, quitarInscriptoTorneo } from '../../services/torneosApi'
+import { ToastContainer } from '../../components/ui/Toast'
+import { useToast } from '../../hooks/useToast'
 import './Admin.css'
 
 const NIVEL_STYLE = {
@@ -13,6 +15,7 @@ const NIVEL_STYLE = {
 
 export default function CrearTorneo() {
   const navigate = useNavigate()
+  const { toasts, showToast, removeToast } = useToast()
 
   const [sedes,      setSedes]      = useState([])
   const [publicados, setPublicados] = useState([])
@@ -95,7 +98,7 @@ export default function CrearTorneo() {
       setPublicados(prev => prev.filter(p => p.id !== id))
       if (modalId === id) setModalId(null)
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al eliminar')
+      showToast(err.response?.data?.error || 'Error al eliminar', 'error')
     }
   }
 
@@ -121,7 +124,7 @@ export default function CrearTorneo() {
         p.id === torneoId ? { ...p, inscriptos: Math.max(0, (p.inscriptos ?? 1) - 1) } : p
       ))
     } catch (err) {
-      alert(err.response?.data?.error || 'No se pudo quitar al inscripto')
+      showToast(err.response?.data?.error || 'No se pudo quitar al inscripto', 'error')
     } finally {
       setQuitando(null)
     }
@@ -325,6 +328,7 @@ export default function CrearTorneo() {
       </div>
 
       <AdminBottomNav />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }

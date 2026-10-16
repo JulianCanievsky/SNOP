@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import './TurnoCard.css'
+import { ToastContainer } from '../ui/Toast'
+import { useToast } from '../../hooks/useToast'
 
 // Configuración visual por tipo de evento
 const TIPO_CONFIG = {
@@ -29,6 +31,7 @@ export default function TurnoCard({ evento, onCancelar }) {
   const [mostrarModal, setMostrarModal] = useState(false)
   const [cancelando,   setCancelando]   = useState(false)
   const [cancelado,    setCancelado]    = useState(false)
+  const { toasts, showToast, removeToast } = useToast()
 
   if (!evento?.fecha_inicio) return null
 
@@ -54,7 +57,7 @@ export default function TurnoCard({ evento, onCancelar }) {
       setCancelado(true)
       setMostrarModal(false)
     } catch {
-      alert('No se pudo cancelar. Intentá de nuevo.')
+      showToast('No se pudo cancelar. Intentá de nuevo.', 'error')
     } finally {
       setCancelando(false)
     }
@@ -64,6 +67,7 @@ export default function TurnoCard({ evento, onCancelar }) {
 
   return (
     <>
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <div className="turno-card">
         {/* HEADER: fecha + badge tipo */}
         <div className="turno-header">
@@ -114,7 +118,16 @@ export default function TurnoCard({ evento, onCancelar }) {
               Estás por cancelar{' '}
               <strong>{cfg.label.toLowerCase()}</strong> del{' '}
               <strong>{fechaTexto}</strong> a las <strong>{horaInicio} hs</strong>.
-              Esta acción no se puede deshacer.
+            </p>
+            <p style={{ marginTop: 8, fontSize: 13, color: '#64748b' }}>
+              {evento.tipo !== 'juego_libre' && evento.tipo !== 'torneo' ? (
+                <>
+                  Si cancelás con <strong>24 hs o más de anticipación</strong>, la clase no se pierde y generás un crédito de recupero.{' '}
+                  Si cancelás con menos de 24 hs, la clase se pierde sin crédito.
+                </>
+              ) : (
+                'Esta acción no se puede deshacer.'
+              )}
             </p>
             <div className="modal-acciones">
               <button

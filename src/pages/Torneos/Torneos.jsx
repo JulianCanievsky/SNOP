@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { getTorneos, inscribirTorneo, cancelarTorneo } from '../../services/torneosApi'
 import DetalleTorneo from './DetalleTorneo'
 import BottomNav from '../../components/BottomNav/BottomNav'
+import { ToastContainer } from '../../components/ui/Toast'
+import { useToast } from '../../hooks/useToast'
 import './Torneos.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -76,6 +78,7 @@ const TarjetaTorneo = ({ torneo, onVer, onCancelar }) => {
 export default function Torneos() {
   const navigate = useNavigate()
   const [torneos,    setTorneos]    = useState([])
+  const { toasts, showToast, removeToast } = useToast()
   const [cargando,   setCargando]   = useState(true)
   const [error,      setError]      = useState(null)
   const [seleccionado, setSeleccionado] = useState(null)
@@ -104,7 +107,7 @@ export default function Torneos() {
       setSeleccionado(null)
       await cargar()
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al inscribirse')
+      showToast(err.response?.data?.error || 'Error al inscribirse', 'error')
     } finally {
       setProcesando(false)
     }
@@ -118,7 +121,7 @@ export default function Torneos() {
       setSeleccionado(null)
       await cargar()
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al cancelar')
+      showToast(err.response?.data?.error || 'Error al cancelar', 'error')
     } finally {
       setProcesando(false)
     }
@@ -175,6 +178,7 @@ export default function Torneos() {
       </div>
 
       <BottomNav />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }

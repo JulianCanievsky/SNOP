@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSocios, editarSocio, getNivelesStats, getNiveles } from '../../services/adminApi'
+import { ToastContainer } from '../../components/ui/Toast'
+import { useToast } from '../../hooks/useToast'
 import './Admin.css'
 
 function NivelBadge({ nombre }) {
@@ -18,6 +20,7 @@ function NivelBadge({ nombre }) {
 
 export default function GestionNiveles() {
   const navigate = useNavigate()
+  const { toasts, showToast, removeToast } = useToast()
   const [socios,   setSocios]   = useState([])
   const [niveles,  setNiveles]  = useState([])
   const [stats,    setStats]    = useState({})
@@ -53,7 +56,7 @@ export default function GestionNiveles() {
           : s
       ))
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al cambiar nivel')
+      showToast(err.response?.data?.error || 'Error al cambiar nivel', 'error')
     } finally {
       setEditando(null)
     }
@@ -140,6 +143,7 @@ export default function GestionNiveles() {
       </div>
 
       <AdminBottomNav />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }

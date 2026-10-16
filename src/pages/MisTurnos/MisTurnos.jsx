@@ -5,6 +5,8 @@ import { getAgenda, cancelarTurno, cancelarJuegoLibre, cancelarTorneo } from '..
 import BottomNav from '../../components/BottomNav/BottomNav'
 import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
 import { useRating } from '../../hooks/useRating'
+import { ToastContainer } from '../../components/ui/Toast'
+import { useToast } from '../../hooks/useToast'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -24,6 +26,7 @@ export default function MisTurnos() {
   const [diaSeleccionado, setDiaSeleccionado] = useState(0)
 
   const { turnoActual, enviando, cargarPendientes, enviarRating, omitirRating } = useRating()
+  const { toasts, showToast, removeToast } = useToast()
 
   useEffect(() => {
     async function cargar() {
@@ -90,7 +93,7 @@ export default function MisTurnos() {
       setAgenda(prev => prev.filter(e => e.id !== evento.id))
     } catch (err) {
       console.error(err)
-      alert('No se pudo cancelar. Intentá de nuevo.')
+      showToast(err?.response?.data?.mensaje || err?.response?.data?.error || 'No se pudo cancelar. Intentá de nuevo.', 'error')
     }
   }
 
@@ -136,6 +139,8 @@ export default function MisTurnos() {
       </main>
 
       <BottomNav />
+
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       {/* Rating post-turno — aparece como bottom sheet si hay algo para calificar */}
       {turnoActual && (

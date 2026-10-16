@@ -8,12 +8,15 @@ import {
   borrarJuegoLibre,
   getInscriptosJuegoLibre,
 } from '../../services/adminApi'
+import { ToastContainer } from '../../components/ui/Toast'
+import { useToast } from '../../hooks/useToast'
 import './Admin.css'
 
 const MESAS_POR_NIVEL = 4
 
 export default function CrearJuegoLibre() {
   const navigate = useNavigate()
+  const { toasts, showToast, removeToast } = useToast()
 
   const [sedes,      setSedes]      = useState([])
   const [publicados, setPublicados] = useState([])
@@ -92,7 +95,7 @@ export default function CrearJuegoLibre() {
       setPublicados(prev => prev.filter(p => p.id !== id))
       if (modalEventoId === id) setModalEventoId(null)
     } catch (err) {
-      alert(err.response?.data?.error || 'Error al eliminar')
+      showToast(err.response?.data?.error || 'Error al eliminar', 'error')
     }
   }
 
@@ -302,6 +305,7 @@ export default function CrearJuegoLibre() {
       </div>
 
       <AdminBottomNav />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }

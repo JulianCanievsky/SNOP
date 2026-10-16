@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../lib/apiClient.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import { getNoLeidas } from '../../services/notificacionesApi.js'
+import { ToastContainer } from '../../components/ui/Toast'
+import { useToast } from '../../hooks/useToast'
 import './Inicio.css'
 
 const STORAGE_KEY = 'snop_comunicado_leido'
@@ -43,6 +45,7 @@ const TIPO_BADGE_STYLE = {
 export default function Inicio() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { toasts, showToast, removeToast } = useToast()
 
   const [proximasActividades, setProximasActividades] = useState([])
   const [juegoLibreDisponible, setJuegoLibreDisponible] = useState(null)
@@ -120,7 +123,7 @@ export default function Inicio() {
       // Refrescar para que aparezca en agenda
       await cargarDatos()
     } catch (err) {
-      alert(err.response?.data?.error || 'No se pudo inscribir. Intentá de nuevo.')
+      showToast(err.response?.data?.error || 'No se pudo inscribir. Intentá de nuevo.', 'error')
     } finally {
       setInscribiendose(false)
     }
@@ -307,6 +310,7 @@ export default function Inicio() {
       </section>
 
       <BottomNav />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }
