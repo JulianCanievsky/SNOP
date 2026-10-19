@@ -63,6 +63,7 @@ router.get('/resumen-hoy', async (req, res) => {
     }
 
     res.json({
+      ok: true,
       data: {
         clases_hoy: clasesHoy?.length || 0,
         clases_quedan: quedan,
@@ -71,7 +72,7 @@ router.get('/resumen-hoy', async (req, res) => {
     })
   } catch (err) {
     console.error('GET /resumen-hoy', err)
-    res.status(500).json({ error: 'Error al obtener resumen del día' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener resumen del día' })
   }
 })
 
@@ -112,10 +113,10 @@ router.get('/mis-clases', async (req, res) => {
 
     if (error) throw error
 
-    res.json({ data: turnos || [] })
+    res.json({ ok: true, data: turnos || [] })
   } catch (err) {
     console.error('GET /mis-clases', err)
-    res.status(500).json({ error: 'Error al obtener clases' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener clases' })
   }
 })
 
@@ -133,7 +134,7 @@ router.patch('/clases/:turnoId/cancelar', async (req, res) => {
       .single()
 
     if (errVerif || !turno) {
-      return res.status(403).json({ error: 'Turno no encontrado o sin permiso' })
+      return res.status(403).json({ ok: false, mensaje: 'Turno no encontrado o sin permiso' })
     }
 
     const { error } = await supabase
@@ -143,10 +144,10 @@ router.patch('/clases/:turnoId/cancelar', async (req, res) => {
 
     if (error) throw error
 
-    res.json({ message: 'Turno cancelado' })
+    res.json({ ok: true, mensaje: 'Turno cancelado' })
   } catch (err) {
     console.error('PATCH /clases/:id/cancelar', err)
-    res.status(500).json({ error: 'Error al cancelar turno' })
+    res.status(500).json({ ok: false, mensaje: 'Error al cancelar turno' })
   }
 })
 
@@ -166,7 +167,7 @@ router.get('/mis-alumnos', async (req, res) => {
     const turnoIds = (turnosEntrenador || []).map((t) => t.id)
 
     if (turnoIds.length === 0) {
-      return res.json({ data: [] })
+      return res.json({ ok: true, data: [] })
     }
 
     // estado=true → confirmados
@@ -220,10 +221,10 @@ router.get('/mis-alumnos', async (req, res) => {
       }
     }
 
-    res.json({ data: Array.from(alumnosMap.values()) })
+    res.json({ ok: true, data: Array.from(alumnosMap.values()) })
   } catch (err) {
     console.error('GET /mis-alumnos', err)
-    res.status(500).json({ error: 'Error al obtener alumnos' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener alumnos' })
   }
 })
 
@@ -249,7 +250,7 @@ router.get('/alumnos/:alumnoId', async (req, res) => {
       .eq('estado', true)
 
     if (!insc || insc.length === 0) {
-      return res.status(403).json({ error: 'Alumno no asignado a este entrenador' })
+      return res.status(403).json({ ok: false, mensaje: 'Alumno no asignado a este entrenador' })
     }
 
     const { data: alumno, error } = await supabase
@@ -269,10 +270,10 @@ router.get('/alumnos/:alumnoId', async (req, res) => {
         sede: t.sedes?.nombre,
       }))
 
-    res.json({ data: { ...alumno, turnos: turnosAlumno } })
+    res.json({ ok: true, data: { ...alumno, turnos: turnosAlumno } })
   } catch (err) {
     console.error('GET /alumnos/:id', err)
-    res.status(500).json({ error: 'Error al obtener alumno' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener alumno' })
   }
 })
 
@@ -284,7 +285,7 @@ router.patch('/alumnos/:alumnoId/nivel', async (req, res) => {
     const { nivel_id } = req.body
 
     if (!nivel_id) {
-      return res.status(400).json({ error: 'nivel_id requerido' })
+      return res.status(400).json({ ok: false, mensaje: 'nivel_id requerido' })
     }
 
     const { data: turnosEntrenador } = await supabase
@@ -303,7 +304,7 @@ router.patch('/alumnos/:alumnoId/nivel', async (req, res) => {
       .limit(1)
 
     if (!insc || insc.length === 0) {
-      return res.status(403).json({ error: 'Sin permiso para editar este alumno' })
+      return res.status(403).json({ ok: false, mensaje: 'Sin permiso para editar este alumno' })
     }
 
     const { error } = await supabase
@@ -313,10 +314,10 @@ router.patch('/alumnos/:alumnoId/nivel', async (req, res) => {
 
     if (error) throw error
 
-    res.json({ message: 'Nivel actualizado' })
+    res.json({ ok: true, mensaje: 'Nivel actualizado' })
   } catch (err) {
     console.error('PATCH /alumnos/:id/nivel', err)
-    res.status(500).json({ error: 'Error al actualizar nivel' })
+    res.status(500).json({ ok: false, mensaje: 'Error al actualizar nivel' })
   }
 })
 
@@ -347,10 +348,10 @@ router.get('/mis-horarios', async (req, res) => {
 
     if (error) throw error
 
-    res.json({ data: turnos || [] })
+    res.json({ ok: true, data: turnos || [] })
   } catch (err) {
     console.error('GET /mis-horarios', err)
-    res.status(500).json({ error: 'Error al obtener horarios' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener horarios' })
   }
 })
 
@@ -364,10 +365,10 @@ router.get('/sedes', async (req, res) => {
       .order('nombre')
 
     if (error) throw error
-    res.json({ data: data || [] })
+    res.json({ ok: true, data: data || [] })
   } catch (err) {
     console.error('GET /sedes', err)
-    res.status(500).json({ error: 'Error al obtener sedes' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener sedes' })
   }
 })
 
@@ -378,18 +379,18 @@ router.post('/mis-horarios', async (req, res) => {
     const { fecha, hora, sede_id, duracion_min } = req.body
 
     if (!fecha || !hora || !sede_id) {
-      return res.status(400).json({ error: 'fecha, hora y sede_id son requeridos' })
+      return res.status(400).json({ ok: false, mensaje: 'fecha, hora y sede_id son requeridos' })
     }
 
     // Validar formato fecha YYYY-MM-DD
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-      return res.status(400).json({ error: 'Formato de fecha inválido, usá YYYY-MM-DD' })
+      return res.status(400).json({ ok: false, mensaje: 'Formato de fecha inválido, usá YYYY-MM-DD' })
     }
 
     // Validar que la fecha no sea en el pasado (hora argentina)
     const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
     if (fecha < hoyAR) {
-      return res.status(400).json({ error: 'No podés agregar horarios en fechas pasadas' })
+      return res.status(400).json({ ok: false, mensaje: 'No podés agregar horarios en fechas pasadas' })
     }
 
     // Validar duración — default 60 min si no se envía
@@ -410,7 +411,7 @@ router.post('/mis-horarios', async (req, res) => {
 
     const mesaId = mesas?.[0]?.id ?? null
     if (!mesaId) {
-      return res.status(400).json({ error: 'No hay mesas disponibles en esta sede' })
+      return res.status(400).json({ ok: false, mensaje: 'No hay mesas disponibles en esta sede' })
     }
 
     const { data, error } = await supabase
@@ -431,13 +432,13 @@ router.post('/mis-horarios', async (req, res) => {
 
     if (error) {
       console.error('Supabase error POST /mis-horarios:', JSON.stringify(error))
-      return res.status(500).json({ error: error.message || 'Error al agregar horario' })
+      return res.status(500).json({ ok: false, mensaje: error.message || 'Error al agregar horario' })
     }
 
-    res.status(201).json({ data })
+    res.status(201).json({ ok: true, data })
   } catch (err) {
     console.error('POST /mis-horarios catch:', err)
-    res.status(500).json({ error: err.message || 'Error al agregar horario' })
+    res.status(500).json({ ok: false, mensaje: err.message || 'Error al agregar horario' })
   }
 })
 
@@ -457,7 +458,7 @@ router.delete('/mis-horarios/:turnoId', async (req, res) => {
       .single()
 
     if (errVerif || !turno) {
-      return res.status(403).json({ error: 'Turno no encontrado o sin permiso' })
+      return res.status(403).json({ ok: false, mensaje: 'Turno no encontrado o sin permiso' })
     }
 
     // Eliminar inscripciones asociadas primero
@@ -467,10 +468,10 @@ router.delete('/mis-horarios/:turnoId', async (req, res) => {
     const { error } = await supabase.from('turnos').delete().eq('id', turnoId)
     if (error) throw error
 
-    res.json({ message: 'Horario cancelado' })
+    res.json({ ok: true, mensaje: 'Horario cancelado' })
   } catch (err) {
     console.error('DELETE /mis-horarios/:id', err)
-    res.status(500).json({ error: 'Error al cancelar horario' })
+    res.status(500).json({ ok: false, mensaje: 'Error al cancelar horario' })
   }
 })
 
@@ -492,7 +493,7 @@ router.get('/solicitudes', async (req, res) => {
     const turnoIds = (turnosParticulares || []).map((t) => t.id)
 
     if (turnoIds.length === 0) {
-      return res.json({ data: [] })
+      return res.json({ ok: true, data: [] })
     }
 
     const { data: solicitudes, error } = await supabase
@@ -534,10 +535,10 @@ router.get('/solicitudes', async (req, res) => {
       }
     })
 
-    res.json({ data: result })
+    res.json({ ok: true, data: result })
   } catch (err) {
     console.error('GET /solicitudes', err)
-    res.status(500).json({ error: 'Error al obtener solicitudes' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener solicitudes' })
   }
 })
 
@@ -555,7 +556,7 @@ router.patch('/solicitudes/:solicitudId/confirmar', async (req, res) => {
       .single()
 
     if (errSol || !sol) {
-      return res.status(404).json({ error: 'Solicitud no encontrada' })
+      return res.status(404).json({ ok: false, mensaje: 'Solicitud no encontrada' })
     }
 
     const { data: turno } = await supabase
@@ -565,7 +566,7 @@ router.patch('/solicitudes/:solicitudId/confirmar', async (req, res) => {
       .single()
 
     if (!turno || turno.user_id !== entrenadorId) {
-      return res.status(403).json({ error: 'Sin permiso' })
+      return res.status(403).json({ ok: false, mensaje: 'Sin permiso' })
     }
 
     const { error } = await supabase
@@ -632,10 +633,10 @@ router.patch('/solicitudes/:solicitudId/confirmar', async (req, res) => {
       console.error('Notif clase confirmada:', notifErr)
     }
 
-    res.json({ message: 'Solicitud confirmada' })
+    res.json({ ok: true, mensaje: 'Solicitud confirmada' })
   } catch (err) {
     console.error('PATCH /solicitudes/:id/confirmar', err)
-    res.status(500).json({ error: 'Error al confirmar solicitud' })
+    res.status(500).json({ ok: false, mensaje: 'Error al confirmar solicitud' })
   }
 })
 
@@ -663,10 +664,8 @@ router.patch('/solicitudes/:solicitudId/rechazar', async (req, res) => {
       .single()
 
     if (!turno || turno.user_id !== entrenadorId) {
-      return res.status(403).json({ error: 'Sin permiso' })
+      return res.status(403).json({ ok: false, mensaje: 'Sin permiso' })
     }
-
-    // Eliminar el registro para liberar el turno
     const { error } = await supabase
       .from('socio_turno')
       .delete()
@@ -702,10 +701,10 @@ router.patch('/solicitudes/:solicitudId/rechazar', async (req, res) => {
       console.error('Notif clase rechazada:', notifErr)
     }
 
-    res.json({ message: 'Solicitud rechazada' })
+    res.json({ ok: true, mensaje: 'Solicitud rechazada' })
   } catch (err) {
     console.error('PATCH /solicitudes/:id/rechazar', err)
-    res.status(500).json({ error: 'Error al rechazar solicitud' })
+    res.status(500).json({ ok: false, mensaje: 'Error al rechazar solicitud' })
   }
 })
 
@@ -718,10 +717,10 @@ router.get('/niveles', async (req, res) => {
       .order('orden', { ascending: true })
 
     if (error) throw error
-    res.json({ data: data || [] })
+    res.json({ ok: true, data: data || [] })
   } catch (err) {
     console.error('GET /niveles', err)
-    res.status(500).json({ error: 'Error al obtener niveles' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener niveles' })
   }
 })
 
@@ -769,6 +768,7 @@ router.get('/perfil', async (req, res) => {
     }
 
     res.json({
+      ok: true,
       data: {
         ...entrenador,
         club: entrenador.clubes?.nombre,
@@ -780,7 +780,7 @@ router.get('/perfil', async (req, res) => {
     })
   } catch (err) {
     console.error('GET /perfil', err)
-    res.status(500).json({ error: 'Error al obtener perfil' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener perfil' })
   }
 })
 
@@ -799,13 +799,13 @@ router.get('/comunicados', async (req, res) => {
       .order('fecha', { ascending: false })
 
     if (error) {
-      if (error.code === '42P01') return res.json({ data: [] })
+      if (error.code === '42P01') return res.json({ ok: true, data: [] })
       throw error
     }
-    res.json({ data: data ?? [] })
+    res.json({ ok: true, data: data ?? [] })
   } catch (err) {
     console.error('GET /entrenador/comunicados', err)
-    res.status(500).json({ error: 'Error al obtener comunicados' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener comunicados' })
   }
 })
 

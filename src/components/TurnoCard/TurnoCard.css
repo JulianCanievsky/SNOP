@@ -83,8 +83,23 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   line-height: 1.4;
+}
+
+.info-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Ícono en la fila de horario */
+.turno-card-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 /* ── BOTÓN CANCELAR ── */

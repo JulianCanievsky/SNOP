@@ -1,29 +1,33 @@
 import { useState } from 'react'
+import { Clock, MapPin, User, Calendar, Gamepad2, Trophy, GraduationCap, Users } from 'lucide-react'
 import './TurnoCard.css'
 import { ToastContainer } from '../ui/Toast'
 import { useToast } from '../../hooks/useToast'
+import CategoriaBadge from '../ui/CategoriaBadge/CategoriaBadge'
+
+const TZ = 'America/Argentina/Buenos_Aires'
 
 // Configuración visual por tipo de evento
 const TIPO_CONFIG = {
   turno_fijo: {
     label:      'Turno fijo',
     badgeClass: 'badge-tipo--fijo',
-    icono:      '📅',
+    Icono:      Calendar,
   },
   clase_particular: {
     label:      'Clase particular',
     badgeClass: 'badge-tipo--clase',
-    icono:      '👨‍🏫',
+    Icono:      GraduationCap,
   },
   juego_libre: {
     label:      'Juego libre',
     badgeClass: 'badge-tipo--juego',
-    icono:      '🏓',
+    Icono:      Gamepad2,
   },
   torneo: {
     label:      'Torneo',
     badgeClass: 'badge-tipo--torneo',
-    icono:      '🏆',
+    Icono:      Trophy,
   },
 }
 
@@ -36,8 +40,7 @@ export default function TurnoCard({ evento, onCancelar }) {
   if (!evento?.fecha_inicio) return null
 
   const cfg = TIPO_CONFIG[evento.tipo] ?? TIPO_CONFIG.turno_fijo
-
-  const TZ = 'America/Argentina/Buenos_Aires'
+  const { Icono } = cfg
 
   const fechaObj   = new Date(evento.fecha_inicio)
   const fechaTexto = fechaObj.toLocaleDateString('es-AR', {
@@ -75,9 +78,16 @@ export default function TurnoCard({ evento, onCancelar }) {
           <span className={`badge-tipo ${cfg.badgeClass}`}>{cfg.label}</span>
         </div>
 
+        {/* Categoría — solo para turnos fijos y clases */}
+        {(evento.nivel_id !== undefined) && (
+          <CategoriaBadge nivelId={evento.nivel_id} />
+        )}
+
         {/* HORARIO */}
         <div className="horario">
-          <div className="icono">{cfg.icono}</div>
+          <div className="turno-card-icono">
+            <Icono size={18} strokeWidth={1.8} />
+          </div>
           <div className="horario-texto">
             <strong>{horaInicio} — {horaFin} hs</strong>
             {evento.duracion_min && <p>{evento.duracion_min} min</p>}
@@ -89,13 +99,35 @@ export default function TurnoCard({ evento, onCancelar }) {
 
         {/* INFO CONTEXTUAL según tipo */}
         <div className="info">
-          {evento.sede      && <span>📍 {evento.sede}</span>}
-          {evento.tipo === 'torneo' && evento.nombre && <span>· 🏆 {evento.nombre}</span>}
-          {evento.tipo === 'torneo' && evento.modalidad && (
-            <span>· {evento.modalidad === 'dobles' ? '👥 Dobles' : '🧍 Singles'}</span>
+          {evento.sede && (
+            <span className="info-item">
+              <MapPin size={13} strokeWidth={1.8} />
+              {evento.sede}
+            </span>
           )}
-          {evento.tipo !== 'torneo' && evento.entrenador && <span>· 👤 {evento.entrenador}</span>}
-          {evento.tipo !== 'torneo' && evento.mesa != null && <span>· Mesa {evento.mesa}</span>}
+          {evento.tipo === 'torneo' && evento.nombre && (
+            <span className="info-item">
+              <Trophy size={13} strokeWidth={1.8} />
+              {evento.nombre}
+            </span>
+          )}
+          {evento.tipo === 'torneo' && evento.modalidad && (
+            <span className="info-item">
+              <Users size={13} strokeWidth={1.8} />
+              {evento.modalidad === 'dobles' ? 'Dobles' : 'Singles'}
+            </span>
+          )}
+          {evento.tipo !== 'torneo' && evento.entrenador && (
+            <span className="info-item">
+              <User size={13} strokeWidth={1.8} />
+              {evento.entrenador}
+            </span>
+          )}
+          {evento.tipo !== 'torneo' && evento.mesa != null && (
+            <span className="info-item">
+              Mesa {evento.mesa}
+            </span>
+          )}
         </div>
 
         {/* ACCIÓN */}
@@ -119,7 +151,7 @@ export default function TurnoCard({ evento, onCancelar }) {
               <strong>{cfg.label.toLowerCase()}</strong> del{' '}
               <strong>{fechaTexto}</strong> a las <strong>{horaInicio} hs</strong>.
             </p>
-            <p style={{ marginTop: 8, fontSize: 13, color: '#64748b' }}>
+            <p style={{ marginTop: 8, fontSize: 13, color: 'var(--color-text-muted)' }}>
               {evento.tipo !== 'juego_libre' && evento.tipo !== 'torneo' ? (
                 <>
                   Si cancelás con <strong>24 hs o más de anticipación</strong>, la clase no se pierde y generás un crédito de recupero.{' '}

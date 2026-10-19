@@ -112,8 +112,8 @@ app.use('/api/notificaciones',      notificacionesRouter)
 // Sedes públicas
 app.get('/api/sedes', async (_req, res) => {
   const { data, error } = await supabase.from('sedes').select('id, nombre').order('nombre')
-  if (error) return res.status(500).json({ error: 'Error al obtener sedes' })
-  res.json({ data: data ?? [] })
+  if (error) return res.status(500).json({ ok: false, mensaje: 'Error al obtener sedes' })
+  res.json({ ok: true, data: data ?? [] })
 })
 
 // Niveles/categorías — accesible para cualquier usuario autenticado
@@ -124,10 +124,10 @@ app.get('/api/niveles', autenticar, async (_req, res) => {
       .select('id, nombre, orden')
       .order('orden', { ascending: true })
     if (error) throw error
-    res.json({ data: data ?? [] })
+    res.json({ ok: true, data: data ?? [] })
   } catch (err) {
     console.error('GET /api/niveles', err)
-    res.status(500).json({ error: 'Error al obtener niveles' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener niveles' })
   }
 })
 // Comunicados — últimos 5 para Inicio del socio (solo los últimos 5 días)
@@ -150,13 +150,13 @@ app.get('/api/comunicados', autenticar, async (req, res) => {
       .order('fecha', { ascending: false })
       .limit(5)
     if (error) {
-      if (error.code === '42P01') return res.json({ data: [] })
+      if (error.code === '42P01') return res.json({ ok: true, data: [] })
       throw error
     }
-    res.json({ data: data ?? [] })
+    res.json({ ok: true, data: data ?? [] })
   } catch (err) {
     console.error('GET /api/comunicados', err)
-    res.status(500).json({ error: 'Error al obtener comunicados' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener comunicados' })
   }
 })
 
@@ -173,13 +173,13 @@ app.get('/api/comunicados/todos', autenticar, async (req, res) => {
       .in('destinatarios', filtros)
       .order('fecha', { ascending: false })
     if (error) {
-      if (error.code === '42P01') return res.json({ data: [] })
+      if (error.code === '42P01') return res.json({ ok: true, data: [] })
       throw error
     }
-    res.json({ data: data ?? [] })
+    res.json({ ok: true, data: data ?? [] })
   } catch (err) {
     console.error('GET /api/comunicados/todos', err)
-    res.status(500).json({ error: 'Error al obtener comunicados' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener comunicados' })
   }
 })
 
@@ -206,7 +206,7 @@ app.get('/api/creditos', autenticar, async (req, res) => {
       .order('fecha_vencimiento', { ascending: true })
 
     if (error) {
-      if (error.code === '42P01') return res.json({ data: { disponibles: 0, usados: 0, vencidos: 0, creditos: [] } })
+      if (error.code === '42P01') return res.json({ ok: true, data: { disponibles: 0, usados: 0, vencidos: 0, creditos: [] } })
       throw error
     }
 
@@ -230,10 +230,10 @@ app.get('/api/creditos', autenticar, async (req, res) => {
         .catch(err => console.error('[creditos] error marcando vencidos:', err))
     }
 
-    res.json({ data: { disponibles, usados, vencidos, creditos } })
+    res.json({ ok: true, data: { disponibles, usados, vencidos, creditos } })
   } catch (err) {
     console.error('GET /api/creditos', err)
-    res.status(500).json({ error: 'Error al obtener créditos' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener créditos' })
   }
 })
 

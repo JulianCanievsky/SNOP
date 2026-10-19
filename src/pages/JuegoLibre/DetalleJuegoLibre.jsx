@@ -1,4 +1,5 @@
 import './JuegoLibre.css'
+import { Clock, MapPin, Users } from 'lucide-react'
 
 const AvatarParticipanteGrande = ({ participante }) => {
   const iniciales = participante.nombre
@@ -51,7 +52,7 @@ const TZ = 'America/Argentina/Buenos_Aires'
       <div className="detalle-contenido">
         <div className="detalle-card">
           <div className="detalle-fila">
-            <span className="detalle-icono">⏰</span>
+            <span className="detalle-icono"><Clock size={18} strokeWidth={1.8} /></span>
             <div>
               <p className="detalle-valor">{horario}</p>
               <p className="detalle-meta">{duracion}</p>
@@ -61,7 +62,7 @@ const TZ = 'America/Argentina/Buenos_Aires'
           <div className="detalle-separador" />
 
           <div className="detalle-fila">
-            <span className="detalle-icono">📍</span>
+            <span className="detalle-icono"><MapPin size={18} strokeWidth={1.8} /></span>
             <div>
               <p className="detalle-valor">Sede {evento.nombre_sede}</p>
               <p className="detalle-meta">{evento.capacidad_maxima - evento.inscriptos} mesas disponibles</p>
@@ -71,7 +72,7 @@ const TZ = 'America/Argentina/Buenos_Aires'
           <div className="detalle-separador" />
 
           <div className="detalle-fila">
-            <span className="detalle-icono">👥</span>
+            <span className="detalle-icono"><Users size={18} strokeWidth={1.8} /></span>
             <div>
               <p className="detalle-valor">{evento.inscriptos} / {evento.capacidad_maxima} lugares</p>
               <p className="detalle-meta">Abierto para todos los niveles</p>

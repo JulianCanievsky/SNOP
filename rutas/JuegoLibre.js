@@ -69,10 +69,10 @@ router.get('/', autenticar, adaptarSocioId, async (req, res) => {
       }
     })
 
-    res.json(resultado)
+    res.json({ ok: true, data: resultado })
   } catch (error) {
     console.error('ERROR GET /api/juego-libre:', error)
-    res.status(500).json({ error: 'Error al obtener juego libre' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener juego libre' })
   }
 })
 
@@ -87,7 +87,7 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
       .eq('id', eventoId)
       .single()
 
-    if (errorEvento || !evento) return res.status(404).json({ error: 'Evento no encontrado' })
+    if (errorEvento || !evento) return res.status(404).json({ ok: false, mensaje: 'Evento no encontrado' })
 
     // Verificar ya inscripto
     const { data: yaInscripto } = await supabase
@@ -98,7 +98,7 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
       .eq('estado', 'activo')
       .maybeSingle()
 
-    if (yaInscripto) return res.status(400).json({ error: 'Ya estás inscripto' })
+    if (yaInscripto) return res.status(400).json({ ok: false, mensaje: 'Ya estás inscripto' })
 
     // Verificar capacidad
     const { count } = await supabase
@@ -108,7 +108,7 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
       .eq('estado', 'activo')
 
     if (count >= evento.capacidad_maxima)
-      return res.status(400).json({ error: 'El evento está completo' })
+      return res.status(409).json({ ok: false, mensaje: 'El evento está completo' })
 
     // Insert con manejo de unique_violation para race condition
     const { error: errorInsc } = await supabase
@@ -117,7 +117,7 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
 
     if (errorInsc) {
       if (errorInsc.code === '23505') {
-        return res.status(400).json({ error: 'Ya estás inscripto' })
+        return res.status(409).json({ ok: false, mensaje: 'Ya estás inscripto' })
       }
       throw errorInsc
     }
@@ -136,7 +136,7 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
         .eq('evento_id', eventoId)
         .eq('socio_id', socioId)
         .eq('estado', 'activo')
-      return res.status(400).json({ error: 'El evento está completo' })
+      return res.status(409).json({ ok: false, mensaje: 'El evento está completo' })
     }
 
     // Si se llenó el cupo, avisar a todos los admins
@@ -179,10 +179,10 @@ router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
       }
     }
 
-    res.json({ mensaje: 'Inscripción confirmada' })
+    res.json({ ok: true, mensaje: 'Inscripción confirmada' })
   } catch (error) {
     console.error('ERROR POST /api/juego-libre/:id/inscribir:', error)
-    res.status(500).json({ error: 'Error al inscribirse' })
+    res.status(500).json({ ok: false, mensaje: 'Error al inscribirse' })
   }
 })
 
@@ -200,10 +200,10 @@ router.delete('/:id/cancelar', autenticar, adaptarSocioId, async (req, res) => {
 
     if (error) throw error
 
-    res.json({ mensaje: 'Inscripción cancelada' })
+    res.json({ ok: true, mensaje: 'Inscripción cancelada' })
   } catch (error) {
     console.error('ERROR DELETE /api/juego-libre/:id/cancelar:', error)
-    res.status(500).json({ error: 'Error al cancelar' })
+    res.status(500).json({ ok: false, mensaje: 'Error al cancelar' })
   }
 })
 

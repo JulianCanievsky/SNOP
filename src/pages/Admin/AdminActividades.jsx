@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Gamepad2, Trophy } from 'lucide-react'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getJuegosLibres, getInscriptosJuegoLibre } from '../../services/adminApi'
 import { getTorneosAdmin, getInscriptosTorneo } from '../../services/torneosApi'
@@ -212,8 +213,8 @@ export default function AdminActividades() {
   ]
 
   const accesos = [
-    { titulo: 'Nuevo juego libre', emoji: '🏓', path: '/admin/juego-libre' },
-    { titulo: 'Nuevo torneo',      emoji: '🏆', path: '/admin/torneos' },
+    { titulo: 'Nuevo juego libre', Icon: Gamepad2, path: '/admin/juego-libre' },
+    { titulo: 'Nuevo torneo',      Icon: Trophy,   path: '/admin/torneos' },
   ]
 
   return (
@@ -233,7 +234,7 @@ export default function AdminActividades() {
               style={{ flex: 1, padding: '10px 8px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               onClick={() => navigate(a.path)}
             >
-              {a.emoji} {a.titulo}
+              <a.Icon size={16} strokeWidth={1.8} /> {a.titulo}
             </button>
           ))}
         </div>

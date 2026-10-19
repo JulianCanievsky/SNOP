@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Clock } from 'lucide-react'
 import { useJuegoLibre } from './useJuegoLibre'
 import DetalleJuegoLibre from './DetalleJuegoLibre'
 import BottomNav from '../../components/BottomNav/BottomNav'
@@ -72,7 +73,7 @@ const TarjetaEvento = ({ evento, onAnotarme, onCancelar }) => {
 
       <div className="tarjeta-info">
         <div className="info-fila">
-          <span className="icono">⏰</span>
+          <span className="icono"><Clock size={15} strokeWidth={1.8} /></span>
           <span>{formatearHora(evento.fecha_inicio, evento.fecha_fin)} · Sede {evento.nombre_sede}</span>
         </div>
         <div className="info-fila">

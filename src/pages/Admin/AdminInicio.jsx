@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getStats } from '../../services/adminApi'
+import { ClipboardList, Users, Calendar, Gamepad2, Trophy, Megaphone, Star, Download, ChevronRight } from 'lucide-react'
 import './Admin.css'
 
 export default function AdminInicio() {
@@ -19,14 +20,14 @@ export default function AdminInicio() {
   }, [])
 
   const acciones = [
-    { titulo: 'Solicitudes de ingreso', sub: 'Aprobar socios nuevos',    emoji: '📋', path: '/admin/solicitudes' },
-    { titulo: 'Gestionar socios',       sub: 'Ver y editar socios',      emoji: '👥', path: '/admin/socios' },
-    { titulo: 'Turnos de entrenamiento', sub: 'Crear y gestionar turnos', emoji: '📅', path: '/admin/turnos' },
-    { titulo: 'Crear juego libre',      sub: 'Nuevo espacio de juego',   emoji: '🏓', path: '/admin/juego-libre' },
-    { titulo: 'Crear torneo',           sub: 'Torneo interno del club',  emoji: '🏆', path: '/admin/torneos' },
-    { titulo: 'Enviar comunicado',      sub: 'Notificar a socios',       emoji: '📢', path: '/admin/comunicado' },
-    { titulo: 'Gestión de niveles',     sub: 'Asignar niveles',          emoji: '⭐', path: '/admin/niveles' },
-    { titulo: 'Exportar actividades',   sub: 'Descargar Excel',          emoji: '📊', path: '/admin/exportar' },
+    { titulo: 'Solicitudes de ingreso', sub: 'Aprobar socios nuevos',    Icon: ClipboardList, path: '/admin/solicitudes' },
+    { titulo: 'Gestionar socios',       sub: 'Ver y editar socios',      Icon: Users,         path: '/admin/socios' },
+    { titulo: 'Turnos de entrenamiento', sub: 'Crear y gestionar turnos', Icon: Calendar,      path: '/admin/turnos' },
+    { titulo: 'Crear juego libre',      sub: 'Nuevo espacio de juego',   Icon: Gamepad2,      path: '/admin/juego-libre' },
+    { titulo: 'Crear torneo',           sub: 'Torneo interno del club',  Icon: Trophy,        path: '/admin/torneos' },
+    { titulo: 'Enviar comunicado',      sub: 'Notificar a socios',       Icon: Megaphone,     path: '/admin/comunicado' },
+    { titulo: 'Gestión de niveles',     sub: 'Asignar niveles',          Icon: Star,          path: '/admin/niveles' },
+    { titulo: 'Exportar actividades',   sub: 'Descargar Excel',          Icon: Download,      path: '/admin/exportar' },
   ]
 
   return (
@@ -87,12 +88,12 @@ export default function AdminInicio() {
           <div className="acciones-grid">
             {acciones.map((a) => (
               <button key={a.path} className="accion-card" onClick={() => navigate(a.path)}>
-                <div className="accion-icono">{a.emoji}</div>
+                <div className="accion-icono"><a.Icon size={20} strokeWidth={1.8} /></div>
                 <div className="accion-info">
                   <p className="accion-titulo">{a.titulo}</p>
                   <p className="accion-sub">{a.sub}</p>
                 </div>
-                <span className="accion-arrow">›</span>
+                <ChevronRight size={16} className="accion-arrow" />
               </button>
             ))}
           </div>

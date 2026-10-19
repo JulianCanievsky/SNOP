@@ -17,10 +17,10 @@ router.get('/clubes', async (_req, res) => {
       .eq('activo', true)
       .order('nombre')
     if (error) throw error
-    res.json({ data: data ?? [] })
+    res.json({ ok: true, data: data ?? [] })
   } catch (err) {
     console.error('GET /api/auth/clubes', err)
-    res.status(500).json({ error: 'Error al obtener clubes' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener clubes' })
   }
 })
 
@@ -29,7 +29,7 @@ router.post('/login', async (req, res) => {
   const { email, password, tipo_usuario_id } = req.body
 
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email y contraseña son requeridos' })
+    return res.status(400).json({ ok: false, mensaje: 'Email y contraseña son requeridos' })
   }
 
   try {
@@ -40,45 +40,41 @@ router.post('/login', async (req, res) => {
       .single()
 
     if (error || !usuario) {
-      return res.status(401).json({ error: 'Correo o contraseña incorrectos' })
+      return res.status(401).json({ ok: false, mensaje: 'Correo o contraseña incorrectos' })
     }
 
-    // Cuenta desactivada por el club
     if (!usuario.activo) {
-      return res.status(403).json({ error: 'Tu cuenta está desactivada. Contactá al club.' })
+      return res.status(403).json({ ok: false, mensaje: 'Tu cuenta está desactivada. Contactá al club.' })
     }
 
-    // Cuenta pendiente de aprobación (nuevo estado, mensaje diferenciado)
     const estadoCuenta = usuario.estado_cuenta ?? 'activa'
     if (estadoCuenta === 'pendiente') {
       return res.status(403).json({
-        error: 'Tu solicitud para unirte al club todavía no fue aprobada. Te avisaremos cuando esté lista.',
+        ok: false, mensaje: 'Tu solicitud para unirte al club todavía no fue aprobada. Te avisaremos cuando esté lista.',
       })
     }
 
     if (estadoCuenta === 'desactivada') {
-      return res.status(403).json({ error: 'Tu cuenta está desactivada. Contactá al club.' })
+      return res.status(403).json({ ok: false, mensaje: 'Tu cuenta está desactivada. Contactá al club.' })
     }
 
-    // Verificar rol seleccionado
     if (tipo_usuario_id && usuario.tipo_usuario_id !== tipo_usuario_id) {
       const roles = { 1: 'Socio', 2: 'Entrenador', 3: 'Administrador' }
       return res.status(403).json({
-        error: `Este correo no corresponde al rol ${roles[tipo_usuario_id] ?? tipo_usuario_id}`,
+        ok: false, mensaje: `Este correo no corresponde al rol ${roles[tipo_usuario_id] ?? tipo_usuario_id}`,
       })
     }
 
-    // Verificar contraseña
     if (
       !usuario.password ||
       (!usuario.password.startsWith('$2b$') && !usuario.password.startsWith('$2a$'))
     ) {
-      return res.status(401).json({ error: 'Correo o contraseña incorrectos' })
+      return res.status(401).json({ ok: false, mensaje: 'Correo o contraseña incorrectos' })
     }
 
     const passwordOk = await bcrypt.compare(password, usuario.password)
     if (!passwordOk) {
-      return res.status(401).json({ error: 'Correo o contraseña incorrectos' })
+      return res.status(401).json({ ok: false, mensaje: 'Correo o contraseña incorrectos' })
     }
 
     const token = jwt.sign(
@@ -93,10 +89,10 @@ router.post('/login', async (req, res) => {
       nivel_id:     usuario.nivel_id ?? null,
       nivel_nombre: usuario.niveles?.nombre ?? null,
     }
-    res.json({ token, user: perfilFinal })
+    res.json({ ok: true, token, user: perfilFinal })
   } catch (err) {
     console.error('POST /api/auth/login', err)
-    res.status(500).json({ error: 'Error interno al iniciar sesión' })
+    res.status(500).json({ ok: false, mensaje: 'Error interno al iniciar sesión' })
   }
 })
 
@@ -105,11 +101,11 @@ router.post('/registro', async (req, res) => {
   const { nombre, email, password, club_id } = req.body
 
   if (!nombre?.trim() || !email?.trim() || !password || !club_id) {
-    return res.status(400).json({ error: 'Completá todos los campos, incluyendo el club' })
+    return res.status(400).json({ ok: false, mensaje: 'Completá todos los campos, incluyendo el club' })
   }
 
   if (password.length < 6) {
-    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' })
+    return res.status(400).json({ ok: false, mensaje: 'La contraseña debe tener al menos 6 caracteres' })
   }
 
   try {
@@ -120,10 +116,9 @@ router.post('/registro', async (req, res) => {
       .maybeSingle()
 
     if (existente) {
-      return res.status(409).json({ error: 'Ya existe una cuenta con ese correo electrónico' })
+      return res.status(409).json({ ok: false, mensaje: 'Ya existe una cuenta con ese correo electrónico' })
     }
 
-    // Verificar que el club existe
     const { data: club, error: errClub } = await supabase
       .from('clubes')
       .select('id, nombre')
@@ -131,7 +126,7 @@ router.post('/registro', async (req, res) => {
       .single()
 
     if (errClub || !club) {
-      return res.status(400).json({ error: 'El club seleccionado no existe' })
+      return res.status(400).json({ ok: false, mensaje: 'El club seleccionado no existe' })
     }
 
     const hash = await bcrypt.hash(password, BCRYPT_ROUNDS)
@@ -154,7 +149,6 @@ router.post('/registro', async (req, res) => {
 
     if (insertError) throw insertError
 
-    // Crear solicitud de ingreso al club
     await supabase
       .from('solicitudes_club')
       .insert({
@@ -165,13 +159,14 @@ router.post('/registro', async (req, res) => {
       })
 
     res.status(201).json({
+      ok: true,
       mensaje: `Solicitud enviada a ${club.nombre}. Te avisaremos cuando el admin la apruebe.`,
       user: { ...nuevoUsuario, nivel_nombre: null },
       pendiente: true,
     })
   } catch (err) {
     console.error('POST /api/auth/registro', err)
-    res.status(500).json({ error: 'Error al crear la cuenta' })
+    res.status(500).json({ ok: false, mensaje: 'Error al crear la cuenta' })
   }
 })
 
@@ -180,10 +175,11 @@ router.post('/forgot-password', async (req, res) => {
   const { email } = req.body
 
   if (!email?.trim()) {
-    return res.status(400).json({ error: 'El correo es requerido' })
+    return res.status(400).json({ ok: false, mensaje: 'El correo es requerido' })
   }
 
   const RESPUESTA_OK = {
+    ok: true,
     mensaje: 'Si el correo está registrado, recibirás un link para restablecer tu contraseña.',
   }
 
@@ -240,7 +236,7 @@ router.post('/forgot-password', async (req, res) => {
     res.json(RESPUESTA_OK)
   } catch (err) {
     console.error('POST /api/auth/forgot-password', err)
-    res.status(500).json({ error: 'Error al procesar la solicitud' })
+    res.status(500).json({ ok: false, mensaje: 'Error al procesar la solicitud' })
   }
 })
 
@@ -249,17 +245,17 @@ router.post('/reset-password', async (req, res) => {
   const { token, password } = req.body
 
   if (!token || !password) {
-    return res.status(400).json({ error: 'Token y contraseña son requeridos' })
+    return res.status(400).json({ ok: false, mensaje: 'Token y contraseña son requeridos' })
   }
 
   if (password.length < 6) {
-    return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' })
+    return res.status(400).json({ ok: false, mensaje: 'La contraseña debe tener al menos 6 caracteres' })
   }
 
   try {
     const decoded = jwt.decode(token)
     if (!decoded?.id) {
-      return res.status(400).json({ error: 'Token inválido' })
+      return res.status(400).json({ ok: false, mensaje: 'Token inválido' })
     }
 
     const { data: usuario } = await supabase
@@ -269,7 +265,7 @@ router.post('/reset-password', async (req, res) => {
       .single()
 
     if (!usuario || !usuario.activo) {
-      return res.status(400).json({ error: 'Token inválido o expirado' })
+      return res.status(400).json({ ok: false, mensaje: 'Token inválido o expirado' })
     }
 
     const secretReset = `${process.env.JWT_SECRET}-${usuario.password}`
@@ -283,16 +279,16 @@ router.post('/reset-password', async (req, res) => {
 
     if (updateError) throw updateError
 
-    res.json({ mensaje: 'Contraseña actualizada correctamente. Ya podés iniciar sesión.' })
+    res.json({ ok: true, mensaje: 'Contraseña actualizada correctamente. Ya podés iniciar sesión.' })
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-      return res.status(400).json({ error: 'El link expiró. Solicitá uno nuevo.' })
+      return res.status(400).json({ ok: false, mensaje: 'El link expiró. Solicitá uno nuevo.' })
     }
     if (err.name === 'JsonWebTokenError') {
-      return res.status(400).json({ error: 'Token inválido' })
+      return res.status(400).json({ ok: false, mensaje: 'Token inválido' })
     }
     console.error('POST /api/auth/reset-password', err)
-    res.status(500).json({ error: 'Error al restablecer la contraseña' })
+    res.status(500).json({ ok: false, mensaje: 'Error al restablecer la contraseña' })
   }
 })
 

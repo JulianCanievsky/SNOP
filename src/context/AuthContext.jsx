@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
       tipo_usuario_id,
     })
 
-    const { token, user: perfil } = data
+    const { token, user: perfil } = data.data ?? data
 
     localStorage.setItem('snop_token', token)
     localStorage.setItem('snop_user',  JSON.stringify(perfil))

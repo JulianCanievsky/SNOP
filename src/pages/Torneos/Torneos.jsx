@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Clock, MapPin, Users, UserSquare2 } from 'lucide-react'
 import { getTorneos, inscribirTorneo, cancelarTorneo } from '../../services/torneosApi'
 import DetalleTorneo from './DetalleTorneo'
 import BottomNav from '../../components/BottomNav/BottomNav'
@@ -47,14 +49,19 @@ const TarjetaTorneo = ({ torneo, onVer, onCancelar }) => {
           <span className={`tor-badge${completo ? ' tor-badge--completo' : ''}`}>
             {completo ? 'Completo' : 'Abierto'}
           </span>
-          <span className="tor-modalidad">{torneo.modalidad === 'dobles' ? '👥 Dobles' : '🧍 Singles'}</span>
+          <span className="tor-modalidad">
+            {torneo.modalidad === 'dobles'
+              ? <><Users size={13} strokeWidth={1.8} style={{ verticalAlign:'middle' }} /> Dobles</>
+              : <><UserSquare2 size={13} strokeWidth={1.8} style={{ verticalAlign:'middle' }} /> Singles</>
+            }
+          </span>
         </div>
       </div>
 
       <div className="tor-info">
-        <span>⏰ {formatHora(torneo.fecha_inicio, torneo.fecha_fin)}</span>
-        <span>📍 {torneo.nombre_sede}</span>
-        <span>👥 {torneo.inscriptos}/{torneo.capacidad_maxima} inscriptos</span>
+        <span><Clock size={13} strokeWidth={1.8} style={{ verticalAlign:'middle' }} /> {formatHora(torneo.fecha_inicio, torneo.fecha_fin)}</span>
+        <span><MapPin size={13} strokeWidth={1.8} style={{ verticalAlign:'middle' }} /> {torneo.nombre_sede}</span>
+        <span><Users size={13} strokeWidth={1.8} style={{ verticalAlign:'middle' }} /> {torneo.inscriptos}/{torneo.capacidad_maxima} inscriptos</span>
       </div>
 
       <div className="tor-footer">

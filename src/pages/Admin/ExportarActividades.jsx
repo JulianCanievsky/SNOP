@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Gamepad2, Trophy, Dumbbell } from 'lucide-react'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSedes, exportarExcel } from '../../services/adminApi'
 import './Admin.css'
 
 const TIPOS = [
-  { key: 'turnos',      label: 'Turnos de entrenamiento', emoji: '🏓' },
-  { key: 'juego-libre', label: 'Juego libre',              emoji: '🎯' },
-  { key: 'torneos',     label: 'Torneos internos',         emoji: '🏆' },
+  { key: 'turnos',      label: 'Turnos de entrenamiento', Icon: Dumbbell  },
+  { key: 'juego-libre', label: 'Juego libre',              Icon: Gamepad2  },
+  { key: 'torneos',     label: 'Torneos internos',         Icon: Trophy    },
 ]
 
 // Genera yyyy-mm-dd del primer y último día del mes en curso
@@ -89,7 +90,7 @@ export default function ExportarActividades() {
                 className={`radio-option${tipo === t.key ? ' sel' : ''}`}
                 onClick={() => setTipo(t.key)}
               >
-                <span style={{ fontSize: 18 }}>{t.emoji}</span>
+                <span style={{ fontSize: 18, display:'flex' }}><t.Icon size={18} strokeWidth={1.8} /></span>
                 {t.label}
               </button>
             ))}
@@ -146,7 +147,7 @@ export default function ExportarActividades() {
           color: '#4338ca',
           lineHeight: 1.5,
         }}>
-          📋 El archivo descargado tiene <strong>una fila por socio por evento</strong>,
+          El archivo descargado tiene <strong>una fila por socio por evento</strong>,
           lo que permite filtrar y ordenar fácilmente en Excel. Los eventos sin inscriptos
           también aparecen con una fila indicando «sin inscriptos».
         </div>

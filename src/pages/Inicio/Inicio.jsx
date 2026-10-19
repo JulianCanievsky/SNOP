@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Calendar, Search, Gamepad2, Users, BookOpen, Trophy, User, Bell } from 'lucide-react'
+import { Calendar, Gamepad2, Users, GraduationCap, Trophy, User, Bell, Target } from 'lucide-react'
 import api from '../../lib/apiClient.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import { getNoLeidas } from '../../services/notificacionesApi.js'

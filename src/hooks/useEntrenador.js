@@ -22,7 +22,7 @@ export function useInicioEntrenador() {
         (solicitudesRes.data.data || []).filter((s) => s.estado === 'pendiente')
       )
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar inicio')
+      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar inicio')
     } finally {
       setCargando(false)
     }
@@ -47,7 +47,7 @@ export function useMisClasesEntrenador() {
       const { data } = await api.get('/entrenador/mis-clases')
       setClases(data.data || [])
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar clases')
+      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar clases')
     } finally {
       setCargando(false)
     }
@@ -77,7 +77,7 @@ export function useMisAlumnos() {
       const { data } = await api.get('/entrenador/mis-alumnos')
       setAlumnos(data.data || [])
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar alumnos')
+      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar alumnos')
     } finally {
       setCargando(false)
     }
@@ -108,7 +108,7 @@ export function useDetalleAlumno(alumnoId) {
       const { data } = await api.get(`/entrenador/alumnos/${alumnoId}`)
       setAlumno(data.data)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar alumno')
+      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar alumno')
     } finally {
       setCargando(false)
     }
@@ -144,7 +144,7 @@ export function useMisHorarios() {
       setHorarios(horariosRes.data.data || [])
       setSedes(sedesRes.data.data || [])
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar horarios')
+      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar horarios')
     } finally {
       setCargando(false)
     }
@@ -184,7 +184,7 @@ export function useSolicitudesEntrenador() {
       const { data } = await api.get('/entrenador/solicitudes')
       setSolicitudes(data.data || [])
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar solicitudes')
+      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar solicitudes')
     } finally {
       setCargando(false)
     }
