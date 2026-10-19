@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Clock, MapPin, Users, UserSquare2 } from 'lucide-react'
 import { getTorneos, inscribirTorneo, cancelarTorneo } from '../../services/torneosApi'
 import DetalleTorneo from './DetalleTorneo'
@@ -83,7 +81,6 @@ const TarjetaTorneo = ({ torneo, onVer, onCancelar }) => {
 }
 
 export default function Torneos() {
-  const navigate = useNavigate()
   const [torneos,    setTorneos]    = useState([])
   const { toasts, showToast, removeToast } = useToast()
   const [cargando,   setCargando]   = useState(true)

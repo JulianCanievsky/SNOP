@@ -719,8 +719,6 @@ router.put('/:id', async (req, res) => {
   const {
     sede_id, entrenador_id,
     dia_semana, hora_inicio, hora_fin,
-    duracion_min, capacidad_maxima,
-    nivel_minimo_id, nivel_maximo_id,
   } = req.body
 
   try {

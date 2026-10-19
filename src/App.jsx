@@ -18,6 +18,9 @@ import Torneos            from './pages/Torneos/Torneos'
 import Notificaciones     from './pages/Notificaciones/Notificaciones'
 import Entrenamientos     from './pages/Entrenamientos/Entrenamientos'
 
+// Dev-only — página de showcase del sistema de diseño (no se linkea en la nav)
+import DesignSystem       from './pages/DesignSystem/DesignSystem'
+
 // Admin
 import AdminInicio        from './pages/Admin/AdminInicio'
 import GestionSocios      from './pages/Admin/GestionSocios'
@@ -88,6 +91,11 @@ function AppRoutes() {
       <Route path="/registro"         element={<Registro />} />
       <Route path="/forgot-password"  element={<ForgotPassword />} />
       <Route path="/reset-password"   element={<ResetPassword />} />
+
+      {/* Dev-only: showcase del sistema de diseño. Solo accesible si NODE_ENV !== production */}
+      {import.meta.env.DEV && (
+        <Route path="/design-system" element={<DesignSystem />} />
+      )}
 
       {/* Socios (tipo_usuario_id = 1) */}
       <Route path="/inicio"             element={<RutaProtegida rolesPermitidos={[1]}><Inicio /></RutaProtegida>} />

@@ -23,7 +23,7 @@ function formatFechaCorta(iso) {
 }
 
 // ── Panel de inscriptos desplegable ──────────────────────────────────────────
-function PanelInscriptos({ inscriptos, cargando, total, capacidad }) {
+function PanelInscriptos({ inscriptos, cargando, capacidad }) {
   if (cargando) {
     return (
       <div className="inscriptos-panel">
@@ -130,7 +130,6 @@ function TarjetaActividad({ tipo, titulo, subtitulo, inscriptos, capacidad, colo
         <PanelInscriptos
           inscriptos={listaInscriptos}
           cargando={cargandoInscriptos}
-          total={inscriptos}
           capacidad={capacidad}
         />
       )}
@@ -177,7 +176,7 @@ export default function AdminActividades() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  async function togglePanel(tipo, id, capacidad) {
+  async function togglePanel(tipo, id, _capacidad) {
     const key = `${tipo}-${id}`
     const actual = paneles[key]
 

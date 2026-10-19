@@ -28,7 +28,7 @@ export default function RatingEntrenador({ turno, onEnviar, onOmitir, enviando }
   const [estrellas,      setEstrellas]      = useState(0)
   const [hover,          setHover]          = useState(0)
   const [seleccionados,  setSeleccionados]  = useState([])
-  const [comentario,     setComentario]     = useState('')
+  const [comentario,     _setComentario]    = useState('')
 
   const sugerencias = estrellas >= 4 ? COMENTARIOS_POSITIVOS : COMENTARIOS_NEGATIVOS
 

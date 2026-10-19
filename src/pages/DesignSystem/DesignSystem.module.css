@@ -1,0 +1,205 @@
+/* DesignSystem.module.css — layout del showcase.
+   Solo este archivo define layout de la página; los componentes
+   showcaseados usan los tokens y utility classes de index.css. */
+
+.page {
+  min-height: 100svh;
+  background: var(--color-bg);
+  padding-bottom: var(--space-8);
+}
+
+/* ── Top bar con toggle de tema ──────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-nav);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  box-shadow: var(--shadow-md);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.topbar .devBadge {
+  font-size: var(--font-size-xs);
+  background: rgba(255, 255, 255, 0.18);
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+}
+
+.themeBtn {
+  background: var(--color-btn-auth-primary-bg);
+  color: var(--color-btn-auth-primary-text);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+}
+.themeBtn:hover { background: rgba(255, 255, 255, 0.88); }
+
+/* ── Secciones ───────────────────────────────────────────────────────────── */
+.body {
+  padding: var(--space-5) var(--space-4);
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.subsectionTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+/* ── Grilla de swatches de color ─────────────────────────────────────────── */
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+
+.swatch {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.swatchColor {
+  height: 56px;
+  width: 100%;
+}
+
+.swatchInfo {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.swatchInfo strong {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+/* ── Filas de categorías ─────────────────────────────────────────────────── */
+.catGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+.catCell {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* ── Fila de botones ──────────────────────────────────────────────────────── */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.row > .btn-primary,
+.row > .btn-secondary,
+.row > .btn-danger {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+/* ── Inputs ──────────────────────────────────────────────────────────────── */
+.input,
+.select {
+  width: 100%;
+  padding: 12px var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-input-border);
+  background: var(--color-input-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+.input:focus,
+.select:focus {
+  border-color: var(--color-input-focus);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+.field label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* ── Escala de spacing / radius ──────────────────────────────────────────── */
+.scaleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+.scaleBar {
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+  height: 16px;
+}
+
+/* ── Toast trigger ───────────────────────────────────────────────────────── */
+.note {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}

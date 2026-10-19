@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMisClasesEntrenador } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
 import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
-import { Clock, MapPin } from 'lucide-react'
+
 import api from '../../../lib/apiClient.js'
 import './MisClasesEntrenador.css'
 
@@ -59,7 +59,7 @@ export default function MisClasesEntrenador() {
     }
   }
 
-  const handleConfirmar = async (solicitudId, claseId) => {
+  const handleConfirmar = async (solicitudId, _claseId) => {
     setAccionSocio(solicitudId)
     try {
       await api.patch(`/entrenador/solicitudes/${solicitudId}/confirmar`)

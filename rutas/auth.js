@@ -83,7 +83,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     )
 
-    const { password: _pw, niveles, estado_cuenta: _ec, ...perfil } = usuario
+    const { password: _pw, niveles: _niveles, estado_cuenta: _ec, ...perfil } = usuario
     const perfilFinal = {
       ...perfil,
       nivel_id:     usuario.nivel_id ?? null,

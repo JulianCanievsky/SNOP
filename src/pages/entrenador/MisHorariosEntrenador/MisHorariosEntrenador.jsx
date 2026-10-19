@@ -39,7 +39,6 @@ function agruparPorDia(horarios) {
   const mapa = {}
   for (const h of horarios) {
     const d = new Date(h.fecha_inicio)
-    const diaN = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
     const key  = d.toLocaleDateString('es-AR', { weekday: 'long', timeZone: TZ })
     const dia  = key.charAt(0).toUpperCase() + key.slice(1)
     if (!mapa[dia]) mapa[dia] = []

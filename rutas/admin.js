@@ -2,8 +2,7 @@ import express from 'express'
 import bcrypt from 'bcryptjs'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
-import { crearNotificacion, enviarEmail, emailTurnoAsignado, emailSolicitudAceptada, emailSolicitudRechazada, emailTurnoQuitado } from '../src/lib/notificaciones.js'
-import { getBonoActivo } from './bonos.js'
+import { crearNotificacion, enviarEmail, emailSolicitudAceptada, emailSolicitudRechazada } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
 
@@ -343,7 +342,7 @@ router.get('/config', async (req, res) => {
       .single()
 
     // Counts
-    const [sedesRes, entresRes, sociosRes] = await Promise.all([
+    const [, entresRes, sociosRes] = await Promise.all([
       supabase.from('sedes').select('id', { count: 'exact', head: true }),
       supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario_id', 2).eq('activo', true),
       supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario_id', 1).eq('activo', true),

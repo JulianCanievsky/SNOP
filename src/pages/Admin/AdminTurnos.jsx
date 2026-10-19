@@ -16,15 +16,6 @@ import {
 import './Admin.css'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-const DIAS_CORTO = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-
-function labelTurno(t) {
-  const dia  = DIAS[t.dia_semana] ?? `Día ${t.dia_semana}`
-  const hora = t.hora_inicio?.slice(0, 5) ?? '?'
-  const sede = t.sedes?.nombre ?? '?'
-  const ent  = t.users?.nombre ?? '?'
-  return `${dia} ${hora} hs · ${sede} · ${ent}`
-}
 
 // ── Helpers de fecha ─────────────────────────────────────────────────────────
 function hoyAR() {
@@ -92,7 +83,6 @@ function FormTurno({ inicial, entrenadores, sedes, niveles, onGuardar, onCancela
     ...inicial,
   })
   const [mostrarModal, setMostrarModal] = useState(false)
-  const [bodyPendiente, setBodyPendiente] = useState(null)
 
   const esEdicion = !!inicial?.dia_semana  // en edición no hay datepicker
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
@@ -288,6 +278,9 @@ export default function AdminTurnos() {
   // Asignar socio
   const [socioAsignar, setSocioAsignar] = useState('')
   const [asignando,    setAsignando]    = useState(false)
+
+  // Acción por socio (confirmar/rechazar solicitudes pendientes)
+  const [accionSocio, setAccionSocio] = useState(null)
 
   function mostrarExito(msg) {
     setExito(msg); setError('')

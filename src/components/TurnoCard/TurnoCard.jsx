@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Clock, MapPin, User, Calendar, Gamepad2, Trophy, GraduationCap, Users } from 'lucide-react'
+import { MapPin, User, Calendar, Gamepad2, Trophy, GraduationCap, Users } from 'lucide-react'
 import './TurnoCard.css'
 import { ToastContainer } from '../ui/Toast'
 import { useToast } from '../../hooks/useToast'
