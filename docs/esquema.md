@@ -61,17 +61,24 @@ Catálogo de roles.
 
 ### `niveles`
 
-Categorías de juego. **5 filas actuales** (conflicto con el modelo de 8 categorías del club — ver sección CONFLICTOS).
+Categorías de juego. **8 filas activas** tras la migración 005. **1ª = la más alta (élite), 8ª = la más baja.**
 
-| id | nombre       | orden |
-|----|--------------|-------|
-| 1  | Principiante | 1     |
-| 2  | Azul         | 2     |
-| 3  | Intermedio   | 3     |
-| 4  | Rojo         | 4     |
-| 5  | Avanzado     | 5     |
+| id | nombre        | orden |
+|----|---------------|-------|
+| 1  | 1ª categoría  | 1     |
+| 2  | 2ª categoría  | 2     |
+| 3  | 3ª categoría  | 3     |
+| 4  | 4ª categoría  | 4     |
+| 5  | 5ª categoría  | 5     |
+| 6  | 6ª categoría  | 6     |
+| 7  | 7ª categoría  | 7     |
+| 8  | 8ª categoría  | 8     |
 
 **Columnas:** `id`, `nombre`, `orden`
+
+**Nota de migración:** Los socios que tenían los 5 niveles viejos (Principiante/Azul/Intermedio/Rojo/Avanzado) quedaron con `nivel_id = NULL` — reasignar manualmente desde Gestión de Niveles en la app.
+
+**Conflicto resuelto** ✓ — migración 005 aplicada el 2026-10-19.
 
 ---
 
@@ -372,7 +379,7 @@ Mensajes del club a socios/entrenadores.
 | `id`           | int (PK)   |                                                                |
 | `titulo`       | text       |                                                                |
 | `mensaje`      | text       |                                                                |
-| `destinatarios`| text       | `'todos'`, `'con_deuda'`, `'nivel_rojo'`, `'nivel_azul'`, `'entrenadores'` |
+| `destinatarios`| text       | `'todos'`, `'con_deuda'`, `'entrenadores'`, `'nivel_<id>'` (ej. `'nivel_3'` para 3ª categoría). Valores viejos `'nivel_rojo'`/`'nivel_azul'` en registros existentes son inactivos. |
 | `enviado_por`  | int (FK)   | → `users.id` (admin)                                           |
 | `fecha`        | timestampz |                                                                |
 

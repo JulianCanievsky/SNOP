@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import api from '../../lib/apiClient.js'
 import {
   getPlantillasTurnos, getDetalleTurnoAdmin, crearTurnoAdmin, editarTurnoAdmin,
   bajaTurnoDefinitiva, cancelarSemana, asignarSocioTurno, quitarSocioTurno,
@@ -503,11 +504,11 @@ export default function AdminTurnos() {
             </div>
           </div>
 
-          {/* Inscriptos */}
+          {/* Inscriptos y solicitudes pendientes */}
           <div className="admin-card">
             <div className="admin-card-body" style={{ borderBottom: '1px solid var(--admin-border)' }}>
               <p className="admin-label" style={{ marginBottom: 8 }}>
-                Inscriptos ({inscriptosActivos.length}/{detalle.capacidad_maxima})
+                Inscriptos confirmados ({inscriptosActivos.length}/{detalle.capacidad_maxima})
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <select className="form-select" value={socioAsignar} onChange={e => setSocioAsignar(e.target.value)} style={{ flex: 1 }}>
@@ -521,8 +522,64 @@ export default function AdminTurnos() {
                 </button>
               </div>
             </div>
+
+            {/* Pendientes de aprobación */}
+            {(() => {
+              const pendientes = (detalle.socio_turno ?? []).filter(s => s.estado === false)
+              if (pendientes.length === 0) return null
+              return (
+                <div style={{ borderBottom: '1px solid var(--admin-border)' }}>
+                  <div className="admin-card-body" style={{ paddingBottom: 4 }}>
+                    <p className="admin-label" style={{ marginBottom: 6, color: 'var(--admin-yellow)' }}>
+                      Solicitudes pendientes ({pendientes.length})
+                    </p>
+                  </div>
+                  {pendientes.map(s => (
+                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderBottom: '1px solid var(--admin-border)' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>{s.users?.nombre ?? '—'}</p>
+                        <p style={{ margin: 0, fontSize: 11, color: 'var(--admin-muted)' }}>
+                          {s.users?.niveles?.nombre ?? 'Sin nivel'} · Solicitó {new Date(s.fecha_inscripcion).toLocaleDateString('es-AR')}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          disabled={accionSocio === s.id}
+                          onClick={async () => {
+                            setAccionSocio(s.id)
+                            try {
+                              await api.patch(`/entrenador/solicitudes/${s.id}/confirmar`)
+                              mostrarExito('Solicitud confirmada')
+                              await abrirDetalle(vistaDetalle)
+                            } catch (err) {
+                              setError(err.response?.data?.error || 'Error al confirmar')
+                            } finally { setAccionSocio(null) }
+                          }}
+                          style={{ padding: '5px 12px', background: 'var(--admin-green-bg)', color: 'var(--admin-green)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                        >✓ Confirmar</button>
+                        <button
+                          disabled={accionSocio === s.id}
+                          onClick={async () => {
+                            setAccionSocio(s.id)
+                            try {
+                              await api.patch(`/entrenador/solicitudes/${s.id}/rechazar`)
+                              mostrarExito('Solicitud rechazada')
+                              await abrirDetalle(vistaDetalle)
+                            } catch (err) {
+                              setError(err.response?.data?.error || 'Error al rechazar')
+                            } finally { setAccionSocio(null) }
+                          }}
+                          style={{ padding: '5px 12px', background: 'var(--admin-red-bg)', color: 'var(--admin-red)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                        >✕ Rechazar</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
+
             {inscriptosActivos.length === 0 ? (
-              <div className="estado-vacio" style={{ padding: '24px 16px' }}>Sin inscriptos todavía.</div>
+              <div className="estado-vacio" style={{ padding: '24px 16px' }}>Sin inscriptos confirmados todavía.</div>
             ) : (
               inscriptosActivos.map((s, idx) => (
                 <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--admin-border)' }}>

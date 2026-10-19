@@ -1,82 +1,241 @@
+/* ═══════════════════════════════════════════════════════════════
+   SNOP — Sistema de tokens CSS
+   Fuente de verdad única para colores, espaciado, tipografía, etc.
+   NO agregar hex sueltos en ningún otro archivo CSS.
+   Paleta derivada de la pantalla de bienvenida (#1565C0 = azul principal).
+═══════════════════════════════════════════════════════════════ */
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* ── Paleta principal (azul SNOP) ──────────────────────────── */
+  --color-primary:        #1565C0;   /* azul de la imagen */
+  --color-primary-light:  #1976D2;   /* azul más claro (hover) */
+  --color-primary-dark:   #0D47A1;   /* azul más oscuro (pressed) */
+  --color-primary-subtle: #E3F2FD;   /* fondo sutil azul (badge, chip) */
+  --color-on-primary:     #FFFFFF;   /* texto sobre fondo azul */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* ── Semánticos ─────────────────────────────────────────────── */
+  --color-success:        #16a34a;
+  --color-success-bg:     #f0fdf4;
+  --color-danger:         #dc2626;
+  --color-danger-bg:      #fef2f2;
+  --color-warning:        #d97706;
+  --color-warning-bg:     #fffbeb;
+  --color-info:           #0284c7;
+  --color-info-bg:        #f0f9ff;
 
-  /* ── SNOP app-wide tokens (socio) ── */
-  --app-bg:          #f1f5f9;
-  --app-card:        #ffffff;
-  --app-card-border: #e2e8f0;
-  --app-text:        #1a1a1a;
-  --app-text-muted:  #64748b;
-  --app-text-sub:    #94a3b8;
-  --app-header-bg:   #2563eb;
-  --app-nav-bg:      #ffffff;
-  --app-nav-border:  #e5e7eb;
-  --app-nav-hover:   #f1f5f9;
-  --app-input-bg:    #f8f9fc;
-  --app-input-border:#dde2ef;
-  --app-login-card:  #ffffff;
+  /* ── Superficie / fondo ─────────────────────────────────────── */
+  --color-bg:             #f1f5f9;   /* fondo de página */
+  --color-surface:        #ffffff;   /* card, modal, panel */
+  --color-surface-alt:    #f8fafc;   /* input, fondo alternado */
+  --color-surface-raised: #ffffff;   /* misma que surface; se diferencia en dark */
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* ── Texto ──────────────────────────────────────────────────── */
+  --color-text:           #111827;
+  --color-text-muted:     #64748b;
+  --color-text-subtle:    #94a3b8;
+  --color-text-on-primary:#FFFFFF;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* ── Bordes ─────────────────────────────────────────────────── */
+  --color-border:         #e2e8f0;
+  --color-border-strong:  #cbd5e1;
+
+  /* ── Inputs ─────────────────────────────────────────────────── */
+  --color-input-bg:       #f8fafc;
+  --color-input-border:   #dde2ef;
+  --color-input-focus:    #1565C0;
+
+  /* ── Navegación inferior (todos los roles) ──────────────────── */
+  --color-nav-bg:         #ffffff;
+  --color-nav-border:     #e5e7eb;
+  --color-nav-inactive:   #94a3b8;
+  --color-nav-active:     #1565C0;   /* mismo azul para todos los roles */
+  --color-nav-hover:      #f1f5f9;
+
+  /* ── Botones auth (pantalla de bienvenida/login) ────────────── */
+  --color-btn-auth-primary-bg:      #FFFFFF;
+  --color-btn-auth-primary-text:    #0D47A1;
+  --color-btn-auth-secondary-bg:    rgba(255, 255, 255, 0.15);
+  --color-btn-auth-secondary-border:rgba(255, 255, 255, 0.5);
+  --color-btn-auth-secondary-text:  #FFFFFF;
+
+  /* ── Tipografía ─────────────────────────────────────────────── */
+  --font-sans:    system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:    ui-monospace, Consolas, monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 20px;
+  --font-size-2xl:24px;
+
+  /* ── Espaciado ──────────────────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+
+  /* ── Radios ─────────────────────────────────────────────────── */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+  --radius-pill: 999px;
+
+  /* ── Sombras ─────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.10), 0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg: 0 10px 24px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+
+  /* ── Z-index ─────────────────────────────────────────────────── */
+  --z-nav:   100;
+  --z-modal: 200;
+  --z-toast: 300;
+
+  /* ── Transiciones ───────────────────────────────────────────── */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+
+  /* ── Categorías de jugador (8 niveles + apto para todos) ────────
+     bg = fondo del badge | text = texto del badge
+     Contraste AA verificado en fondo blanco/claro.
+     1ª–2ª: dorado/élite | 3ª–4ª: rojo | 5ª–6ª: azul | 7ª–8ª: verde/gris
+  ─────────────────────────────────────────────────────────────── */
+  --color-cat-1-bg:     #92400e;
+  --color-cat-1-text:   #fef3c7;
+  --color-cat-2-bg:     #b45309;
+  --color-cat-2-text:   #fff7ed;
+  --color-cat-3-bg:     #991b1b;
+  --color-cat-3-text:   #fee2e2;
+  --color-cat-4-bg:     #b91c1c;
+  --color-cat-4-text:   #fef2f2;
+  --color-cat-5-bg:     #1d4ed8;
+  --color-cat-5-text:   #dbeafe;
+  --color-cat-6-bg:     #1e40af;
+  --color-cat-6-text:   #eff6ff;
+  --color-cat-7-bg:     #065f46;
+  --color-cat-7-text:   #d1fae5;
+  --color-cat-8-bg:     #374151;
+  --color-cat-8-text:   #f3f4f6;
+  --color-cat-todos-bg: #4b5563;
+  --color-cat-todos-text:#f9fafb;
+
+  /* ── Alias de compatibilidad (para no romper código existente) ──
+     Los --app-* y --admin-* siguen funcionando apuntando a los
+     tokens nuevos. Migrar gradualmente. ─────────────────────── */
+  --app-bg:          var(--color-bg);
+  --app-card:        var(--color-surface);
+  --app-card-border: var(--color-border);
+  --app-text:        var(--color-text);
+  --app-text-muted:  var(--color-text-muted);
+  --app-text-sub:    var(--color-text-subtle);
+  --app-header-bg:   var(--color-primary);
+  --app-nav-bg:      var(--color-nav-bg);
+  --app-nav-border:  var(--color-nav-border);
+  --app-nav-hover:   var(--color-nav-hover);
+  --app-input-bg:    var(--color-input-bg);
+  --app-input-border:var(--color-input-border);
+  --app-login-card:  var(--color-surface);
+
+  --admin-primary:   var(--color-primary);
+  --admin-primary-d: var(--color-primary-dark);
+  --admin-primary-l: var(--color-primary-subtle);
+  --admin-primary-m: var(--color-primary-light);
+  --admin-bg:        var(--color-bg);
+  --admin-white:     var(--color-surface);
+  --admin-border:    var(--color-border);
+  --admin-text:      var(--color-text);
+  --admin-muted:     var(--color-text-muted);
+  --admin-red:       var(--color-danger);
+  --admin-red-bg:    var(--color-danger-bg);
+  --admin-green:     var(--color-success);
+  --admin-green-bg:  var(--color-success-bg);
+  --admin-yellow:    var(--color-warning);
+  --admin-yellow-bg: var(--color-warning-bg);
 }
 
-/* ── DARK MODE ── */
+/* ── TEMA OSCURO ────────────────────────────────────────────────── */
 [data-theme="dark"] {
-  --text: #9ca3af;
-  --text-h: #f3f4f6;
-  --bg: #0f1117;
-  --border: #2e303a;
-  --code-bg: #1f2028;
-  --accent: #c084fc;
-  --accent-bg: rgba(192, 132, 252, 0.15);
-  --accent-border: rgba(192, 132, 252, 0.5);
-  --social-bg: rgba(47, 48, 58, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  --color-primary:        #1976D2;
+  --color-primary-light:  #42A5F5;
+  --color-primary-dark:   #1565C0;
+  --color-primary-subtle: #1a2f4a;
+  --color-on-primary:     #FFFFFF;
 
-  /* ── SNOP app-wide dark tokens ── */
-  --app-bg:          #0f1117;
-  --app-card:        #1a1d27;
-  --app-card-border: #2a2d3a;
-  --app-text:        #e2e8f0;
-  --app-text-muted:  #8b95a5;
-  --app-text-sub:    #64748b;
-  --app-header-bg:   #1a3a6b;
-  --app-nav-bg:      #1a1d27;
-  --app-nav-border:  #2a2d3a;
-  --app-nav-hover:   #22263a;
-  --app-input-bg:    #22263a;
-  --app-input-border:#3a3d4e;
-  --app-login-card:  #1a1d27;
+  --color-success:        #4ade80;
+  --color-success-bg:     #052e16;
+  --color-danger:         #f87171;
+  --color-danger-bg:      #2a0a0a;
+  --color-warning:        #fbbf24;
+  --color-warning-bg:     #2a1a00;
+  --color-info:           #38bdf8;
+  --color-info-bg:        #0c1f2e;
+
+  --color-bg:             #0f1117;
+  --color-surface:        #1a1d27;
+  --color-surface-alt:    #22263a;
+  --color-surface-raised: #1e2235;
+
+  --color-text:           #e2e8f0;
+  --color-text-muted:     #8b95a5;
+  --color-text-subtle:    #64748b;
+
+  --color-border:         #2a2d3a;
+  --color-border-strong:  #3a3d4e;
+
+  --color-input-bg:       #22263a;
+  --color-input-border:   #3a3d4e;
+  --color-input-focus:    #42A5F5;
+
+  --color-nav-bg:         #1a1d27;
+  --color-nav-border:     #2a2d3a;
+  --color-nav-inactive:   #64748b;
+  --color-nav-active:     #42A5F5;
+  --color-nav-hover:      #22263a;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.30);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.40);
+  --shadow-lg: 0 10px 24px rgba(0,0,0,.50);
+
+  /* Categorías dark */
+  --color-cat-1-bg:     #fbbf24;
+  --color-cat-1-text:   #451a03;
+  --color-cat-2-bg:     #f97316;
+  --color-cat-2-text:   #431407;
+  --color-cat-3-bg:     #f87171;
+  --color-cat-3-text:   #450a0a;
+  --color-cat-4-bg:     #fca5a5;
+  --color-cat-4-text:   #7f1d1d;
+  --color-cat-5-bg:     #60a5fa;
+  --color-cat-5-text:   #1e3a5f;
+  --color-cat-6-bg:     #93c5fd;
+  --color-cat-6-text:   #1e3a8a;
+  --color-cat-7-bg:     #6ee7b7;
+  --color-cat-7-text:   #064e3b;
+  --color-cat-8-bg:     #9ca3af;
+  --color-cat-8-text:   #111827;
+  --color-cat-todos-bg: #d1d5db;
+  --color-cat-todos-text:#111827;
+}
+
+/* ── BASE ───────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
@@ -84,50 +243,188 @@ body {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
-  /* Sin bordes laterales para las pantallas de auth */
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+p { margin: 0; }
+
+/* ── Clases utilitarias globales (usadas en múltiples páginas) ─── */
+
+/* Page wrapper — todas las pantallas app */
+.snop-page {
+  min-height: 100svh;
+  background: var(--color-bg);
+  padding-bottom: 88px;           /* espacio para el nav fijo */
+  display: flex;
+  flex-direction: column;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+/* Header de pantalla — fondo azul, texto blanco */
+.snop-header {
+  background: var(--color-primary);
+  padding: 28px var(--space-5) 24px;
+  color: var(--color-on-primary);
+  position: relative;
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+
+.snop-header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-on-primary);
+  margin: 0 0 var(--space-1);
+  line-height: 1.2;
 }
-p {
+
+.snop-header p {
+  font-size: var(--font-size-sm);
+  opacity: 0.82;
   margin: 0;
+  color: var(--color-on-primary);
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+/* Contenedor del body de la pantalla */
+.snop-body {
+  padding: var(--space-5) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+/* Etiqueta de sección */
+.snop-label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  margin: 0 0 var(--space-2);
+}
+
+/* Card base */
+.snop-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.snop-card-body {
+  padding: var(--space-4);
+}
+
+/* Grid de stats 2-col */
+.snop-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.snop-stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.snop-stat-num {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.snop-stat-lbl {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+/* Botones globales */
+.btn-primary {
+  width: 100%;
+  padding: 14px var(--space-5);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.btn-primary:hover  { background: var(--color-primary-light); }
+.btn-primary:active { background: var(--color-primary-dark); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-secondary {
+  width: 100%;
+  padding: 13px var(--space-5);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.btn-secondary:hover { background: var(--color-primary-subtle); }
+.btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-danger {
+  width: 100%;
+  padding: 14px var(--space-5);
+  background: var(--color-danger);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+.btn-danger:hover   { opacity: 0.9; }
+.btn-danger:disabled{ opacity: 0.6; cursor: not-allowed; }
+
+/* Estado vacío */
+.snop-empty {
+  text-align: center;
+  padding: var(--space-8) var(--space-5);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+}
+
+/* Estado de carga (spinner) */
+.snop-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-8);
+}
+
+.snop-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: snop-spin 0.7s linear infinite;
+}
+
+@keyframes snop-spin {
+  to { transform: rotate(360deg); }
 }

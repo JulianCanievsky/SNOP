@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
-import { enviarComunicado, getComunicados, getStats } from '../../services/adminApi'
+import { enviarComunicado, getComunicados, getStats, getNiveles } from '../../services/adminApi'
 import './Admin.css'
 
 export default function EnviarComunicado() {
@@ -12,23 +12,36 @@ export default function EnviarComunicado() {
   const [destinatario, setDestinatario] = useState('todos')
   const [recientes,    setRecientes]    = useState([])
   const [stats,        setStats]        = useState(null)
+  const [niveles,      setNiveles]      = useState([])
   const [enviando,     setEnviando]     = useState(false)
   const [exito,        setExito]        = useState(false)
   const [error,        setError]        = useState('')
 
   useEffect(() => {
-    Promise.all([getComunicados(), getStats()])
-      .then(([c, s]) => { setRecientes(c); setStats(s) })
+    Promise.all([getComunicados(), getStats(), getNiveles()])
+      .then(([c, s, n]) => { setRecientes(c); setStats(s); setNiveles(n ?? []) })
       .catch(console.error)
   }, [])
 
+  // Opciones fijas + una por cada categoría cargada dinámicamente
   const opcionesDestinatarios = [
-    { key: 'todos',          label: 'Todos los socios',    conteo: stats?.socios_activos },
-    { key: 'entrenadores',   label: 'Entrenadores',        conteo: stats?.entrenadores },
-    { key: 'con_deuda',      label: 'Socios con deuda',    conteo: stats?.con_deuda },
-    { key: 'nivel_rojo',     label: 'Nivel Rojo',          conteo: null },
-    { key: 'nivel_azul',     label: 'Nivel Azul',          conteo: null },
+    { key: 'todos',        label: 'Todos los socios',  conteo: stats?.socios_activos },
+    { key: 'entrenadores', label: 'Entrenadores',       conteo: stats?.entrenadores },
+    { key: 'con_deuda',    label: 'Socios con deuda',   conteo: stats?.con_deuda },
+    ...niveles.map(n => ({
+      key:   `nivel_${n.id}`,
+      label: n.nombre,
+      conteo: null,
+    })),
   ]
+
+  // Labels para mostrar en la lista de recientes
+  const labelDestinatario = (key) => {
+    const op = opcionesDestinatarios.find(o => o.key === key)
+    if (op) return op.label
+    // Fallback: puede ser un valor antiguo como 'nivel_rojo'
+    return key
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -56,18 +69,6 @@ export default function EnviarComunicado() {
   function formatFecha(iso) {
     const d = new Date(iso)
     return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
-  }
-
-  const LABELS_DEST = {
-    todos:        'Todos los socios',
-    entrenadores: 'Entrenadores',
-    con_deuda:    'Socios con deuda',
-    nivel_rojo:   'Nivel Rojo',
-    nivel_azul:   'Nivel Azul',
-  }
-
-  function formatDest(key) {
-    return LABELS_DEST[key] ?? key
   }
 
   return (
@@ -135,7 +136,7 @@ export default function EnviarComunicado() {
                   <div className="comunicado-dot" />
                   <div>
                     <p className="comunicado-titulo">{c.titulo}</p>
-                    <p className="comunicado-meta">{formatDest(c.destinatarios)} · {formatFecha(c.fecha)}</p>
+                    <p className="comunicado-meta">{labelDestinatario(c.destinatarios)} · {formatFecha(c.fecha)}</p>
                   </div>
                 </div>
               ))}

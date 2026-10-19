@@ -1,28 +1,9 @@
 /* =============================================
    ADMIN PANEL — SNOP
-   Paleta índigo para diferenciar del panel socio
+   Los colores usan los tokens globales de index.css
+   (--color-primary, --color-surface, etc.).
+   Los alias --admin-* están definidos en index.css.
 ============================================= */
-
-:root {
-  --admin-primary:   #4f46e5;
-  --admin-primary-d: #3730a3;
-  --admin-primary-l: #eef2ff;
-  --admin-primary-m: #818cf8;
-  --admin-bg:        #f8fafc;
-  --admin-white:     #ffffff;
-  --admin-border:    #e5e7eb;
-  --admin-text:      #111827;
-  --admin-muted:     #6b7280;
-  --admin-red:       #ef4444;
-  --admin-red-bg:    #fef2f2;
-  --admin-green:     #16a34a;
-  --admin-green-bg:  #f0fdf4;
-  --admin-yellow:    #d97706;
-  --admin-yellow-bg: #fffbeb;
-  --r:  14px;
-  --r-s: 8px;
-  --r-p: 999px;
-}
 
 /* ── LAYOUT ── */
 .admin-page {

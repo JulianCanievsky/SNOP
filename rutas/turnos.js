@@ -8,10 +8,35 @@ import {
   unirseListaController,
   salirListaController,
 } from '../src/controllers/turnosController.js'
+import { solicitarTurno, getTurnosDisponibles } from '../src/services/turnosService.js'
 
 const router = express.Router()
 
 router.use(autenticar)
+
+// ── Turnos disponibles para inscribirse (filtrados por nivel del socio) ────────
+router.get('/disponibles', async (req, res) => {
+  try {
+    const data = await getTurnosDisponibles(req.userId)
+    res.json({ ok: true, data })
+  } catch (err) {
+    console.error('GET /turnos/disponibles', err)
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener turnos disponibles' })
+  }
+})
+
+// ── Solicitar unirse a un turno (queda pendiente de aprobación) ───────────────
+router.post('/solicitar', async (req, res) => {
+  const { turno_id } = req.body
+  if (!turno_id) return res.status(400).json({ ok: false, mensaje: 'turno_id es requerido' })
+  try {
+    const data = await solicitarTurno(turno_id, req.userId)
+    res.status(201).json({ ok: true, data, mensaje: 'Solicitud enviada. El entrenador la revisará.' })
+  } catch (err) {
+    const status = err.message?.includes('cupo') ? 409 : 400
+    res.status(status).json({ ok: false, mensaje: err.message })
+  }
+})
 
 // ── Turnos del socio ──────────────────────────────────────────────────────────
 router.get('/',                            obtenerTurnos)

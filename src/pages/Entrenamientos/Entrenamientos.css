@@ -1,0 +1,123 @@
+/* Entrenamientos — turnos disponibles para el socio */
+
+.ent-page {
+  min-height: 100svh;
+  background: var(--color-bg);
+  padding-bottom: 88px;
+}
+
+.ent-header {
+  background: var(--color-primary);
+  padding: 24px var(--space-5) 20px;
+  color: var(--color-on-primary);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.ent-btn-back {
+  background: rgba(255,255,255,.2);
+  border: none;
+  color: var(--color-on-primary);
+  font-size: 22px;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-family: var(--font-sans);
+}
+
+.ent-header h1 { font-size: 22px; font-weight: 700; margin: 0 0 2px; color: var(--color-on-primary); }
+.ent-header p  { font-size: var(--font-size-sm); opacity: .85; margin: 0; }
+
+.ent-body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* Tarjeta */
+.ent-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: var(--space-2);
+}
+.ent-card--lleno { opacity: .85; }
+
+.ent-card-fecha { font-size: var(--font-size-md); font-weight: 700; color: var(--color-text); margin: 0; text-transform: capitalize; }
+
+.ent-card-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.ent-card-horario { display: flex; align-items: center; gap: 6px; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.ent-card-horario svg { flex-shrink: 0; }
+
+.ent-card-info { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.ent-card-info span { display: flex; align-items: center; gap: 4px; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+
+/* Barra de cupo */
+.ent-cupo-wrap { display: flex; flex-direction: column; gap: 4px; }
+.ent-cupo-bar  { height: 5px; background: var(--color-border); border-radius: var(--radius-pill); overflow: hidden; }
+.ent-cupo-fill { height: 100%; border-radius: var(--radius-pill); transition: width .4s; }
+.ent-cupo-txt  { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--color-text-subtle); }
+
+/* Footer de tarjeta */
+.ent-card-footer { display: flex; justify-content: flex-end; margin-top: var(--space-1); }
+
+/* Badges de estado */
+.ent-badge { font-size: var(--font-size-xs); font-weight: 700; padding: 5px 14px; border-radius: var(--radius-pill); }
+.ent-badge--ok       { background: var(--color-success-bg); color: var(--color-success); }
+.ent-badge--pendiente{ background: var(--color-warning-bg);  color: var(--color-warning); }
+
+/* Botones de acción */
+.ent-btn-solicitar {
+  padding: 9px 20px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none; border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm); font-weight: 700;
+  cursor: pointer; font-family: var(--font-sans);
+  transition: background var(--transition-fast);
+}
+.ent-btn-solicitar:hover { background: var(--color-primary-light); }
+
+.ent-btn-espera {
+  padding: 8px 18px;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm); font-weight: 600;
+  cursor: pointer; font-family: var(--font-sans);
+  transition: all var(--transition-fast);
+}
+.ent-btn-espera:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+/* Modal */
+.ent-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: var(--z-modal);
+  animation: fadeIn .15s ease;
+}
+.ent-modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  padding: 24px var(--space-5);
+  width: 88%; max-width: 360px;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp .2s ease;
+}
+.ent-modal h3       { margin: 0 0 var(--space-3); font-size: 18px; color: var(--color-text); }
+.ent-modal-fecha    { font-size: var(--font-size-md); font-weight: 700; color: var(--color-text); margin: 0 0 4px; text-transform: capitalize; }
+.ent-modal-hora,
+.ent-modal-info     { font-size: var(--font-size-sm); color: var(--color-text-muted); margin: 0 0 4px; display: flex; align-items: center; }
+.ent-modal-aviso    { background: var(--color-primary-subtle); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-size: var(--font-size-sm); color: var(--color-text-muted); margin: var(--space-3) 0; line-height: 1.5; }
+.ent-modal-acciones { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
+.ent-btn-primario   { flex: 1; padding: 12px; background: var(--color-primary); color: var(--color-on-primary); border: none; border-radius: var(--radius-sm); font-size: var(--font-size-sm); font-weight: 700; cursor: pointer; font-family: var(--font-sans); transition: background var(--transition-fast); }
+.ent-btn-primario:hover   { background: var(--color-primary-light); }
+.ent-btn-primario:disabled{ opacity: .6; cursor: not-allowed; }
+.ent-btn-secundario { flex: 1; padding: 12px; background: transparent; color: var(--color-text-muted); border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); font-size: var(--font-size-sm); font-weight: 600; cursor: pointer; font-family: var(--font-sans); }
+
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

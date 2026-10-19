@@ -1,21 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useMisAlumnos } from '../../../hooks/useEntrenador'
+import { useMisAlumnos, useNiveles } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
 import './MisAlumnosEntrenador.css'
-
-const FILTROS = ['Todos', 'Rojo', 'Interm.', 'Azul']
 
 function iniciales(nombre = '') {
   return nombre.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
-}
-
-function nivelBadgeClass(nombreNivel = '') {
-  const n = nombreNivel.toLowerCase()
-  if (n.includes('azul')) return 'nivel-azul'
-  if (n.includes('rojo')) return 'nivel-rojo'
-  if (n.includes('inter')) return 'nivel-intermedio'
-  return 'nivel-default'
 }
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -31,16 +22,14 @@ function formatTurnoCorto(turnos = []) {
 
 export default function MisAlumnosEntrenador() {
   const navigate = useNavigate()
-  const { alumnos, cargando } = useMisAlumnos()
-  const [filtro, setFiltro] = useState('Todos')
+  const { alumnos, cargando }   = useMisAlumnos()
+  const { niveles }             = useNiveles()
+  // filtroId: null = "Todos"; number = nivel_id específico
+  const [filtroId, setFiltroId] = useState(null)
 
   const alumnosFiltrados = alumnos.filter((a) => {
-    if (filtro === 'Todos') return true
-    const nivel = a.nivel?.nombre?.toLowerCase() || ''
-    if (filtro === 'Rojo') return nivel.includes('rojo')
-    if (filtro === 'Interm.') return nivel.includes('inter')
-    if (filtro === 'Azul') return nivel.includes('azul')
-    return true
+    if (filtroId === null) return true
+    return a.nivel?.id === filtroId
   })
 
   return (
@@ -52,14 +41,21 @@ export default function MisAlumnosEntrenador() {
         </p>
       </header>
 
+      {/* Filtros dinámicos por categoría */}
       <div className="filtros-nivel">
-        {FILTROS.map((f) => (
+        <button
+          className={`filtro-btn ${filtroId === null ? 'activo' : ''}`}
+          onClick={() => setFiltroId(null)}
+        >
+          Todos
+        </button>
+        {niveles.map((n) => (
           <button
-            key={f}
-            className={`filtro-btn ${filtro === f ? 'activo' : ''}`}
-            onClick={() => setFiltro(f)}
+            key={n.id}
+            className={`filtro-btn ${filtroId === n.id ? 'activo' : ''}`}
+            onClick={() => setFiltroId(n.id)}
           >
-            {f}
+            {n.nombre}
           </button>
         ))}
       </div>
@@ -68,39 +64,28 @@ export default function MisAlumnosEntrenador() {
         <div className="sin-alumnos">Cargando...</div>
       ) : alumnosFiltrados.length === 0 ? (
         <div className="sin-alumnos">
-          {filtro === 'Todos'
+          {filtroId === null
             ? 'No tenés alumnos asignados.'
-            : `No hay alumnos en nivel ${filtro}.`}
+            : `No hay alumnos en ${niveles.find(n => n.id === filtroId)?.nombre ?? 'esa categoría'}.`}
         </div>
       ) : (
         <div className="alumnos-lista">
-          {alumnosFiltrados.map((alumno) => {
-            const nivelNombre = alumno.nivel?.nombre || ''
-            return (
-              <div
-                key={alumno.id}
-                className="alumno-item"
-                onClick={() => navigate(`/entrenador/alumnos/${alumno.id}`)}
-              >
-                <div className="alumno-avatar">{iniciales(alumno.nombre)}</div>
-                <div className="alumno-info">
-                  <p className="alumno-nombre">{alumno.nombre}</p>
-                  <p className="alumno-turno">{formatTurnoCorto(alumno.turnos)}</p>
-                </div>
-                <div className="alumno-derecha">
-                  {nivelNombre && (
-                    <span className={`badge-nivel-alumno ${nivelBadgeClass(nivelNombre)}`}>
-                      {nivelNombre}
-                    </span>
-                  )}
-                  {/* Punto rojo si el nivel es Rojo (alumno que necesita atención) */}
-                  {nivelNombre.toLowerCase().includes('rojo') && (
-                    <span className="dot-alerta" aria-label="Requiere atención" />
-                  )}
-                </div>
+          {alumnosFiltrados.map((alumno) => (
+            <div
+              key={alumno.id}
+              className="alumno-item"
+              onClick={() => navigate(`/entrenador/alumnos/${alumno.id}`)}
+            >
+              <div className="alumno-avatar">{iniciales(alumno.nombre)}</div>
+              <div className="alumno-info">
+                <p className="alumno-nombre">{alumno.nombre}</p>
+                <p className="alumno-turno">{formatTurnoCorto(alumno.turnos)}</p>
               </div>
-            )
-          })}
+              <div className="alumno-derecha">
+                <CategoriaBadge nivelId={alumno.nivel?.id ?? null} />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

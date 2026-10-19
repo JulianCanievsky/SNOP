@@ -1,202 +1,31 @@
-/* ── Layout ─────────────────────────────────────────────────── */
-.solicitudes-e {
-  min-height: 100vh;
-  background: #f1f5f9;
-  padding-bottom: 88px;
-  font-family: inherit;
-}
+/* SolicitudesEntrenador — tokens del sistema */
+.solicitudes-e { min-height:100svh; background:var(--color-bg); padding-bottom:88px; }
+.solicitudes-e-header { background:var(--color-primary); padding:28px var(--space-5) 24px; color:var(--color-on-primary); }
+.solicitudes-e-header h1 { font-size:26px; font-weight:700; margin:0 0 2px; color:var(--color-on-primary); }
+.solicitudes-e-header .subtitulo { font-size:var(--font-size-sm); opacity:.85; margin:0; }
+.solicitudes-e-contenido { padding:var(--space-4); display:flex; flex-direction:column; gap:var(--space-5); }
 
-/* ── Header ──────────────────────────────────────────────────── */
-.solicitudes-e-header {
-  background: #2563eb;
-  padding: 28px 20px 24px;
-  color: white;
-}
+.sol-seccion-titulo { font-size:var(--font-size-xs); font-weight:600; color:var(--color-text-muted); letter-spacing:.06em; text-transform:uppercase; margin:0 0 10px; }
 
-.solicitudes-e-header h1 {
-  font-size: 26px;
-  font-weight: 700;
-  margin: 0 0 2px;
-  color: white;
-}
+.solicitud-card { background:var(--color-surface); border-radius:var(--radius-lg); padding:14px var(--space-4); margin-bottom:10px; box-shadow:var(--shadow-sm); }
+.solicitud-card-header { display:flex; align-items:center; gap:10px; margin-bottom:var(--space-2); }
+.sol-card-avatar { width:38px; height:38px; border-radius:50%; background:var(--color-primary-subtle); color:var(--color-primary); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.sol-card-info { flex:1; min-width:0; }
+.sol-card-nombre { font-size:var(--font-size-sm); font-weight:600; color:var(--color-text); margin:0 0 2px; }
+.sol-card-detalle { font-size:12px; color:var(--color-text-subtle); margin:0; }
 
-.solicitudes-e-header .subtitulo {
-  font-size: 14px;
-  opacity: 0.85;
-  margin: 0;
-}
+.badge-pendiente-sol  { font-size:var(--font-size-xs); font-weight:600; background:var(--color-warning-bg);  color:var(--color-warning);  border-radius:20px; padding:3px 10px; flex-shrink:0; }
+.badge-confirmada-sol { font-size:var(--font-size-xs); font-weight:600; background:var(--color-success-bg); color:var(--color-success); border-radius:20px; padding:3px 10px; flex-shrink:0; }
+.badge-rechazada-sol  { font-size:var(--font-size-xs); font-weight:600; background:var(--color-danger-bg);  color:var(--color-danger);  border-radius:20px; padding:3px 10px; flex-shrink:0; }
 
-/* ── Contenido ───────────────────────────────────────────────── */
-.solicitudes-e-contenido {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+.sol-card-acciones { display:flex; gap:var(--space-2); margin-top:4px; }
+.btn-confirmar { flex:1; background:var(--color-success-bg); color:var(--color-success); border:none; border-radius:var(--radius-sm); padding:10px; font-size:var(--font-size-sm); font-weight:600; cursor:pointer; font-family:var(--font-sans); transition:filter var(--transition-fast); }
+.btn-rechazar  { flex:1; background:var(--color-danger-bg);  color:var(--color-danger);  border:none; border-radius:var(--radius-sm); padding:10px; font-size:var(--font-size-sm); font-weight:600; cursor:pointer; font-family:var(--font-sans); transition:filter var(--transition-fast); }
+.btn-confirmar:hover { filter:brightness(.92); }
+.btn-rechazar:hover  { filter:brightness(.92); }
+.btn-confirmar:disabled,.btn-rechazar:disabled { opacity:.5; cursor:not-allowed; }
 
-/* ── Sección ─────────────────────────────────────────────────── */
-.sol-seccion-titulo {
-  font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin: 0 0 10px;
-}
+.sin-solicitudes-e { background:var(--color-surface); border-radius:var(--radius-lg); padding:24px var(--space-4); text-align:center; color:var(--color-text-subtle); font-size:var(--font-size-sm); }
 
-/* ── Card de solicitud ───────────────────────────────────────── */
-.solicitud-card {
-  background: white;
-  border-radius: 14px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
-}
-
-.solicitud-card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.sol-card-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #dbeafe;
-  color: #2563eb;
-  font-size: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.sol-card-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.sol-card-nombre {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 2px;
-}
-
-.sol-card-detalle {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 0;
-}
-
-.badge-pendiente-sol {
-  font-size: 11px;
-  font-weight: 600;
-  background: #fef3c7;
-  color: #d97706;
-  border-radius: 20px;
-  padding: 3px 10px;
-  flex-shrink: 0;
-}
-
-.badge-confirmada-sol {
-  font-size: 11px;
-  font-weight: 600;
-  background: #dcfce7;
-  color: #16a34a;
-  border-radius: 20px;
-  padding: 3px 10px;
-  flex-shrink: 0;
-}
-
-.badge-rechazada-sol {
-  font-size: 11px;
-  font-weight: 600;
-  background: #fee2e2;
-  color: #dc2626;
-  border-radius: 20px;
-  padding: 3px 10px;
-  flex-shrink: 0;
-}
-
-/* ── Nivel badge dentro de la card ──────────────────────────── */
-.sol-nivel-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-  display: inline-block;
-}
-
-.nivel-azul       { background: #dbeafe; color: #2563eb; }
-.nivel-rojo       { background: #fee2e2; color: #dc2626; }
-.nivel-intermedio { background: #fef3c7; color: #d97706; }
-.nivel-default    { background: #f1f5f9; color: #475569; }
-
-/* ── Acciones ────────────────────────────────────────────────── */
-.sol-card-acciones {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.btn-confirmar {
-  flex: 1;
-  background: #dcfce7;
-  color: #16a34a;
-  border: none;
-  border-radius: 10px;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-}
-
-.btn-confirmar:hover { background: #bbf7d0; }
-
-.btn-rechazar {
-  flex: 1;
-  background: #fee2e2;
-  color: #dc2626;
-  border: none;
-  border-radius: 10px;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-}
-
-.btn-rechazar:hover { background: #fecaca; }
-
-.btn-confirmar:disabled,
-.btn-rechazar:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ── Sin solicitudes ─────────────────────────────────────────── */
-.sin-solicitudes-e {
-  background: white;
-  border-radius: 14px;
-  padding: 24px 16px;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 14px;
-}
-
-/* ── DARK MODE ── */
-[data-theme="dark"] .solicitudes-e        { background: var(--app-bg); }
-[data-theme="dark"] .solicitudes-e-header { background: #1a3a6b; }
-[data-theme="dark"] .solicitud-card       { background: var(--app-card); }
-[data-theme="dark"] .sol-card-nombre      { color: var(--app-text); }
-[data-theme="dark"] .sol-card-detalle     { color: var(--app-text-sub); }
-[data-theme="dark"] .sol-card-avatar      { background: #1a2e50; color: #60a5fa; }
-[data-theme="dark"] .nivel-default        { background: #22263a; color: #8b95a5; }
-[data-theme="dark"] .sin-solicitudes-e    { background: var(--app-card); color: var(--app-text-sub); }
+[data-theme="dark"] .solicitudes-e-header { background:var(--color-primary-dark); }
+[data-theme="dark"] .sol-card-avatar      { background:var(--color-primary-subtle); }

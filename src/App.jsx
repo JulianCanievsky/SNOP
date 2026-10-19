@@ -16,6 +16,7 @@ import Comunicados        from './pages/Comunicados/Comunicados'
 import MisClases          from './pages/MisClases/MisClases'
 import Torneos            from './pages/Torneos/Torneos'
 import Notificaciones     from './pages/Notificaciones/Notificaciones'
+import Entrenamientos     from './pages/Entrenamientos/Entrenamientos'
 
 // Admin
 import AdminInicio        from './pages/Admin/AdminInicio'
@@ -98,6 +99,7 @@ function AppRoutes() {
       <Route path="/mis-clases"         element={<RutaProtegida rolesPermitidos={[1]}><MisClases /></RutaProtegida>} />
       <Route path="/torneos"             element={<RutaProtegida rolesPermitidos={[1]}><Torneos /></RutaProtegida>} />
       <Route path="/notificaciones"      element={<RutaProtegida rolesPermitidos={[1]}><Notificaciones /></RutaProtegida>} />
+      <Route path="/entrenamientos"      element={<RutaProtegida rolesPermitidos={[1]}><Entrenamientos /></RutaProtegida>} />
       <Route path="/entrenadores/:entrenadorId" element={<RutaProtegida rolesPermitidos={[1]}><PerfilPublicoEntrenador /></RutaProtegida>} />
 
       {/* Entrenador (tipo_usuario_id = 2) */}

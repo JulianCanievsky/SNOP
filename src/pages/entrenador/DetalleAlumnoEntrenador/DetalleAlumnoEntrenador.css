@@ -1,208 +1,32 @@
-/* ── Layout ─────────────────────────────────────────────────── */
-.detalle-alumno-e {
-  min-height: 100vh;
-  background: #f1f5f9;
-  padding-bottom: 88px;
-  font-family: inherit;
-}
+/* DetalleAlumnoEntrenador — tokens del sistema */
+.detalle-alumno-e { min-height:100svh; background:var(--color-bg); padding-bottom:88px; }
+.detalle-alumno-e-header { background:var(--color-primary); padding:var(--space-5) var(--space-5) 28px; color:var(--color-on-primary); }
+.btn-back { background:none; border:none; color:var(--color-on-primary); font-size:var(--font-size-sm); font-weight:500; cursor:pointer; padding:0; margin-bottom:var(--space-2); display:flex; align-items:center; gap:4px; font-family:var(--font-sans); opacity:.85; }
+.btn-back svg { width:16px; height:16px; }
+.detalle-alumno-e-header h1 { font-size:24px; font-weight:700; margin:0 0 2px; color:var(--color-on-primary); }
+.detalle-alumno-e-header .subtitulo { font-size:var(--font-size-sm); opacity:.8; margin:0; }
 
-/* ── Header ──────────────────────────────────────────────────── */
-.detalle-alumno-e-header {
-  background: #2563eb;
-  padding: 20px 20px 28px;
-  color: white;
-}
+.detalle-alumno-e-contenido { padding:var(--space-4); display:flex; flex-direction:column; gap:var(--space-3); }
 
-.btn-back {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-family: inherit;
-  opacity: 0.85;
-}
+.alumno-perfil-card { background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-5); display:flex; flex-direction:column; align-items:center; gap:6px; box-shadow:var(--shadow-sm); }
+.alumno-avatar-grande { width:64px; height:64px; border-radius:50%; background:var(--color-primary-subtle); color:var(--color-primary); font-size:20px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.alumno-perfil-card h2  { font-size:18px; font-weight:700; color:var(--color-text); margin:0; }
+.alumno-perfil-card .email { font-size:var(--font-size-sm); color:var(--color-text-subtle); margin:0; }
 
-.btn-back svg {
-  width: 16px;
-  height: 16px;
-}
+.turnos-asignados-card { background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-4); box-shadow:var(--shadow-sm); }
+.card-seccion-titulo { font-size:var(--font-size-xs); font-weight:600; color:var(--color-text-muted); letter-spacing:.06em; text-transform:uppercase; margin:0 0 10px; }
+.turno-asignado-item { display:flex; align-items:center; gap:10px; padding:var(--space-2) 0; border-bottom:1px solid var(--color-bg); }
+.turno-asignado-item:last-child { border-bottom:none; }
+.turno-asignado-item svg { width:16px; height:16px; color:var(--color-text-muted); flex-shrink:0; }
+.turno-asignado-texto { font-size:var(--font-size-sm); color:var(--color-text); margin:0; }
 
-.detalle-alumno-e-header h1 {
-  font-size: 24px;
-  font-weight: 700;
-  margin: 0 0 2px;
-  color: white;
-}
+.cambiar-nivel-card { background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-4); box-shadow:var(--shadow-sm); }
+.nivel-descripcion  { font-size:12px; color:var(--color-text-subtle); margin:0 0 var(--space-3); font-style:italic; }
+.nivel-opciones     { display:flex; gap:var(--space-2); flex-wrap:wrap; }
+.nivel-opcion-btn { flex:1; border:1.5px solid var(--color-border); background:var(--color-surface); border-radius:var(--radius-sm); padding:10px var(--space-2); font-size:var(--font-size-xs); font-weight:600; cursor:pointer; font-family:var(--font-sans); transition:all var(--transition-fast); color:var(--color-text-muted); display:flex; align-items:center; justify-content:center; gap:4px; min-width:48px; }
+.nivel-opcion-btn--activo { background:var(--color-primary-subtle); border-color:var(--color-primary); color:var(--color-primary); }
+.nivel-opcion-btn:hover:not(:disabled) { border-color:var(--color-primary); color:var(--color-primary); }
+.nivel-opcion-btn:disabled { opacity:.6; cursor:not-allowed; }
 
-.detalle-alumno-e-header .subtitulo {
-  font-size: 13px;
-  opacity: 0.8;
-  margin: 0;
-}
-
-/* ── Contenido ───────────────────────────────────────────────── */
-.detalle-alumno-e-contenido {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* ── Card de perfil ──────────────────────────────────────────── */
-.alumno-perfil-card {
-  background: white;
-  border-radius: 14px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.alumno-avatar-grande {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #dbeafe;
-  color: #2563eb;
-  font-size: 20px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.alumno-perfil-card h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
-}
-
-.alumno-perfil-card .email {
-  font-size: 13px;
-  color: #94a3b8;
-  margin: 0;
-}
-
-/* ── Card de turnos ──────────────────────────────────────────── */
-.turnos-asignados-card {
-  background: white;
-  border-radius: 14px;
-  padding: 16px;
-}
-
-.card-seccion-titulo {
-  font-size: 11px;
-  font-weight: 600;
-  color: #94a3b8;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin: 0 0 10px;
-}
-
-.turno-asignado-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.turno-asignado-item:last-child { border-bottom: none; }
-
-.turno-asignado-item svg {
-  width: 16px;
-  height: 16px;
-  color: #64748b;
-  flex-shrink: 0;
-}
-
-.turno-asignado-texto {
-  font-size: 14px;
-  color: #1e293b;
-  margin: 0;
-}
-
-/* ── Card cambio de nivel ─────────────────────────────────────── */
-.cambiar-nivel-card {
-  background: white;
-  border-radius: 14px;
-  padding: 16px;
-}
-
-.nivel-descripcion {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 0 0 12px;
-  font-style: italic;
-}
-
-.nivel-opciones {
-  display: flex;
-  gap: 8px;
-}
-
-.nivel-opcion-btn {
-  flex: 1;
-  border: 1.5px solid #e2e8f0;
-  background: white;
-  border-radius: 10px;
-  padding: 10px 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.15s;
-  color: #475569;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.nivel-opcion-btn.rojo-sel {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #dc2626;
-}
-
-.nivel-opcion-btn.inter-sel {
-  background: #fef3c7;
-  border-color: #fcd34d;
-  color: #d97706;
-}
-
-.nivel-opcion-btn.azul-sel {
-  background: #dbeafe;
-  border-color: #93c5fd;
-  color: #2563eb;
-}
-
-.nivel-opcion-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ── DARK MODE ── */
-[data-theme="dark"] .detalle-alumno-e              { background: var(--app-bg); }
-[data-theme="dark"] .detalle-alumno-e-header       { background: #1a3a6b; }
-[data-theme="dark"] .alumno-perfil-card            { background: var(--app-card); }
-[data-theme="dark"] .alumno-perfil-card h2         { color: var(--app-text); }
-[data-theme="dark"] .alumno-perfil-card .email     { color: var(--app-text-sub); }
-[data-theme="dark"] .alumno-avatar-grande          { background: #1a2e50; color: #60a5fa; }
-[data-theme="dark"] .turnos-asignados-card         { background: var(--app-card); }
-[data-theme="dark"] .card-seccion-titulo           { color: var(--app-text-sub); }
-[data-theme="dark"] .turno-asignado-item           { border-bottom-color: var(--app-card-border); }
-[data-theme="dark"] .turno-asignado-item svg       { color: var(--app-text-muted); }
-[data-theme="dark"] .turno-asignado-texto          { color: var(--app-text); }
-[data-theme="dark"] .cambiar-nivel-card            { background: var(--app-card); }
-[data-theme="dark"] .nivel-descripcion             { color: var(--app-text-sub); }
-[data-theme="dark"] .nivel-opcion-btn              { background: var(--app-card); border-color: var(--app-card-border); color: var(--app-text-muted); }
+[data-theme="dark"] .detalle-alumno-e-header { background:var(--color-primary-dark); }
+[data-theme="dark"] .alumno-avatar-grande    { background:var(--color-primary-subtle); }

@@ -85,7 +85,7 @@ export async function getTurnosCancelados(socioId) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 export async function cancelarTurno(turnoId, socioId) {
-  // 1. Verificar el turno antes de cancelar (para saber si estaba lleno)
+  // 1. Verificar el turno antes de cancelar
   const { data: turno } = await supabase
     .from("turnos")
     .select("id, capacidad_maxima, dia_semana, hora_inicio, fecha_inicio, sedes(nombre), socio_turno(id, estado)")
@@ -109,7 +109,14 @@ export async function cancelarTurno(turnoId, socioId) {
 
   if (error) throw error;
 
-  // 3. Si el turno estaba lleno, avisar a todos los demás inscriptos que hay lugar
+  // 3. Generar crédito de recupero si cancela con ≥ N horas de anticipación
+  try {
+    await generarCreditoSiCorresponde(turnoId, socioId, turno);
+  } catch (creditoErr) {
+    console.error("[cancelarTurno] Error al generar crédito:", creditoErr);
+  }
+
+  // 4. Si el turno estaba lleno, notificar lista de espera
   if (estabaTurnoLleno && turno) {
     try {
       await notificarLugarDisponible(turno, socioId);
@@ -119,6 +126,76 @@ export async function cancelarTurno(turnoId, socioId) {
   }
 
   return data;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Genera un crédito de recupero si la cancelación se hace con suficiente anticipación.
+ * Reglas:
+ *   - Si ahora < fecha_inicio - N horas → genera crédito
+ *   - mes_periodo = mes del turno; si cae en últimos 7 días del mes → arrastrar al siguiente
+ *   - Idempotente: no duplica si ya existe un crédito para este turno+socio
+ */
+async function generarCreditoSiCorresponde(turnoId, socioId, turno) {
+  if (!turno?.fecha_inicio) return;
+
+  // Leer constantes de configuracion_club (club_id=1)
+  const { data: config } = await supabase
+    .from("configuracion_club")
+    .select("clave, valor")
+    .eq("club_id", 1)
+    .in("clave", ["horas_anticipacion_cancelacion", "dias_ultima_semana_mes"]);
+
+  const configMap = Object.fromEntries((config ?? []).map(c => [c.clave, c.valor]));
+  const horasAnticipacion = parseInt(configMap["horas_anticipacion_cancelacion"] ?? "24", 10);
+  const diasUltimaSemana  = parseInt(configMap["dias_ultima_semana_mes"]         ?? "7",  10);
+
+  const ahora       = new Date();
+  const fechaTurno  = new Date(turno.fecha_inicio);
+  const diffHoras   = (fechaTurno - ahora) / (1000 * 60 * 60);
+
+  // No genera crédito si cancela tarde
+  if (diffHoras < horasAnticipacion) return;
+
+  // Calcular mes_periodo con lógica de arrastre
+  const anio        = fechaTurno.getFullYear();
+  const mes         = fechaTurno.getMonth(); // 0-indexed
+  const diaTurno    = fechaTurno.getDate();
+  const ultimoDia   = new Date(anio, mes + 1, 0).getDate(); // último día del mes
+  const esUltimaSemana = (ultimoDia - diaTurno) < diasUltimaSemana;
+
+  let mesPeriodo;
+  if (esUltimaSemana) {
+    // Arrastrar al mes siguiente
+    const fechaSiguiente = new Date(anio, mes + 1, 1);
+    mesPeriodo = `${fechaSiguiente.getFullYear()}-${String(fechaSiguiente.getMonth() + 1).padStart(2, "0")}`;
+  } else {
+    mesPeriodo = `${anio}-${String(mes + 1).padStart(2, "0")}`;
+  }
+
+  // Calcular fecha de vencimiento = último día del mes de mesPeriodo
+  const [anioP, mesP] = mesPeriodo.split("-").map(Number);
+  const fechaVencimiento = new Date(anioP, mesP, 0, 23, 59, 59); // día 0 del mes siguiente = último del actual
+
+  // Idempotencia: verificar si ya existe crédito para este turno+socio
+  const { data: existente } = await supabase
+    .from("creditos_clase")
+    .select("id")
+    .eq("user_id", socioId)
+    .eq("turno_origen_id", turnoId)
+    .maybeSingle();
+
+  if (existente) return; // ya generado
+
+  await supabase.from("creditos_clase").insert({
+    user_id:          socioId,
+    turno_origen_id:  turnoId,
+    mes_periodo:      mesPeriodo,
+    usado:            false,
+    turno_usado_id:   null,
+    fecha_generado:   new Date().toISOString(),
+    fecha_vencimiento: fechaVencimiento.toISOString(),
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -361,4 +438,179 @@ export async function salirLista(turnoId, socioId) {
     // Fallback: marcar socio_turno como borrado (o dejarlo — no hacemos nada adicional)
     // El socio_turno con estado=false se mantiene para historial
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Socio solicita unirse a un turno de entrenamiento.
+ * Inserta socio_turno con estado=false (pendiente de aprobación).
+ * Verifica: turno activo, cupo disponible, nivel compatible, no duplicado.
+ */
+export async function solicitarTurno(turnoId, socioId) {
+  // 1. Cargar turno con inscripciones activas
+  const { data: turno, error: errTurno } = await supabase
+    .from("turnos")
+    .select("id, estado, activo, capacidad_maxima, nivel_minimo_id, nivel_maximo_id, user_id, socio_turno(id, estado, user_id)")
+    .eq("id", turnoId)
+    .single();
+
+  if (errTurno || !turno) throw new Error("Turno no encontrado");
+  if (!turno.estado || turno.activo === false) throw new Error("El turno no está disponible");
+
+  // 2. Verificar cupo
+  const inscriptosActivos = (turno.socio_turno ?? []).filter(s => s.estado === true).length;
+  if (inscriptosActivos >= (turno.capacidad_maxima ?? 0)) {
+    throw new Error("El turno no tiene cupo disponible. Podés anotarte en la lista de espera.");
+  }
+
+  // 3. Verificar que no está ya inscripto o pendiente
+  const yaExiste = (turno.socio_turno ?? []).some(s => s.user_id === socioId);
+  if (yaExiste) {
+    const estaActivo = (turno.socio_turno ?? []).some(s => s.user_id === socioId && s.estado === true);
+    if (estaActivo) throw new Error("Ya estás inscripto en este turno");
+    throw new Error("Ya tenés una solicitud pendiente para este turno");
+  }
+
+  // 4. Verificar nivel del socio
+  if (turno.nivel_minimo_id != null || turno.nivel_maximo_id != null) {
+    const { data: socioData } = await supabase
+      .from("users")
+      .select("nivel_id")
+      .eq("id", socioId)
+      .single();
+
+    if (socioData?.nivel_id != null) {
+      const { data: niveles } = await supabase
+        .from("niveles")
+        .select("id, orden")
+        .order("orden", { ascending: true });
+      const nivelMap   = Object.fromEntries((niveles ?? []).map(n => [n.id, n.orden]));
+      const ordenSocio = nivelMap[socioData.nivel_id] ?? 0;
+      const ordenMin   = turno.nivel_minimo_id != null ? (nivelMap[turno.nivel_minimo_id] ?? 0) : null;
+      const ordenMax   = turno.nivel_maximo_id != null ? (nivelMap[turno.nivel_maximo_id] ?? Infinity) : null;
+      if (ordenMin != null && ordenSocio < ordenMin)
+        throw new Error("Tu categoría no cumple el mínimo requerido para este turno");
+      if (ordenMax != null && ordenSocio > ordenMax)
+        throw new Error("Tu categoría supera el máximo permitido para este turno");
+    }
+  }
+
+  // 5. Insertar solicitud pendiente
+  const { data, error } = await supabase
+    .from("socio_turno")
+    .insert({ turno_id: turnoId, user_id: socioId, estado: false, fecha_inscripcion: new Date().toISOString() })
+    .select("id, estado, fecha_inscripcion")
+    .single();
+
+  if (error) {
+    if (error.code === "23505") throw new Error("Ya tenés una solicitud para este turno");
+    throw error;
+  }
+
+  // 6. Notificar al entrenador del turno
+  try {
+    await crearNotificacion({
+      user_id: turno.user_id,
+      titulo:  "Nueva solicitud de turno",
+      mensaje: "Un socio quiere unirse a tu turno. Revisá las solicitudes pendientes.",
+      tipo:    "nueva_solicitud",
+      link:    "/entrenador/solicitudes",
+    });
+  } catch { /* notificación no crítica */ }
+
+  return data;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Lista los turnos de entrenamiento disponibles para el socio:
+ *   - tipo_turno_id = 1 (entrenamiento)
+ *   - estado = true, activo = true
+ *   - fecha_inicio >= ahora (en ART)
+ *   - nivel compatible con el socio (o NULL = apto para todos)
+ * Enriquece con cupo_disponible y el estado del socio en cada turno.
+ */
+export async function getTurnosDisponibles(socioId) {
+  const ahora = new Date().toISOString();
+
+  // Cargar nivel del socio
+  const { data: socioData } = await supabase
+    .from("users")
+    .select("nivel_id")
+    .eq("id", socioId)
+    .single();
+  const nivelSocioId = socioData?.nivel_id ?? null;
+
+  // Cargar niveles para comparar orden
+  let nivelMap = {};
+  let ordenSocio = null;
+  if (nivelSocioId != null) {
+    const { data: niveles } = await supabase.from("niveles").select("id, orden");
+    nivelMap   = Object.fromEntries((niveles ?? []).map(n => [n.id, n.orden]));
+    ordenSocio = nivelMap[nivelSocioId] ?? null;
+  }
+
+  const { data: turnos, error } = await supabase
+    .from("turnos")
+    .select(`
+      id, fecha_inicio, fecha_fin, duracion_min, capacidad_maxima,
+      nivel_minimo_id, nivel_maximo_id, tipo_turno_id,
+      sedes(id, nombre),
+      mesas(numero),
+      users!turnos_user_id_fkey(id, nombre),
+      niveles_min:niveles!turnos_nivel_minimo_id_fkey(id, nombre, orden),
+      niveles_max:niveles!turnos_nivel_maximo_id_fkey(id, nombre, orden),
+      socio_turno(id, estado, user_id)
+    `)
+    .eq("tipo_turno_id", 1)
+    .eq("estado", true)
+    .gte("fecha_inicio", ahora)
+    .order("fecha_inicio", { ascending: true })
+    .limit(50);
+
+  if (error) throw error;
+
+  return (turnos ?? [])
+    .filter(t => {
+      // Filtrar por nivel compatible
+      if (t.nivel_minimo_id == null && t.nivel_maximo_id == null) return true; // apto para todos
+      if (ordenSocio == null) return true; // sin nivel asignado — ve todos
+      const ordenMin = t.nivel_minimo_id != null ? (nivelMap[t.nivel_minimo_id] ?? 0) : null;
+      const ordenMax = t.nivel_maximo_id != null ? (nivelMap[t.nivel_maximo_id] ?? Infinity) : null;
+      if (ordenMin != null && ordenSocio < ordenMin) return false;
+      if (ordenMax != null && ordenSocio > ordenMax) return false;
+      return true;
+    })
+    .map(t => {
+      const inscriptos     = (t.socio_turno ?? []).filter(s => s.estado === true).length;
+      const cupoDisponible = Math.max(0, (t.capacidad_maxima ?? 0) - inscriptos);
+      const miInscripcion  = (t.socio_turno ?? []).find(s => s.user_id === socioId);
+
+      let estadoSocio = "disponible";
+      if (miInscripcion?.estado === true)  estadoSocio = "confirmado";
+      else if (miInscripcion?.estado === false) estadoSocio = "pendiente";
+
+      let enListaEspera = false;
+      // La lista de espera se chequea por separado (no incluida aquí para no sobrecargar)
+
+      return {
+        id:              t.id,
+        fecha_inicio:    t.fecha_inicio,
+        fecha_fin:       t.fecha_fin,
+        duracion_min:    t.duracion_min,
+        capacidad_maxima:t.capacidad_maxima,
+        cupo_disponible: cupoDisponible,
+        inscriptos,
+        nivel_minimo_id: t.nivel_minimo_id,
+        nivel_maximo_id: t.nivel_maximo_id,
+        nivel_minimo:    t.niveles_min ?? null,
+        nivel_maximo:    t.niveles_max ?? null,
+        sede:            t.sedes?.nombre ?? null,
+        mesa:            t.mesas?.numero ?? null,
+        entrenador:      t.users?.nombre ?? null,
+        entrenador_id:   t.users?.id ?? null,
+        estado_socio:    estadoSocio, // 'disponible' | 'pendiente' | 'confirmado'
+        en_lista_espera: enListaEspera,
+      };
+    });
 }

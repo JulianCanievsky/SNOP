@@ -1,18 +1,11 @@
 import { useState } from 'react'
 import { useSolicitudesEntrenador } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
 import './SolicitudesEntrenador.css'
 
 function iniciales(nombre = '') {
   return nombre.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
-}
-
-function nivelBadgeClass(nombreNivel = '') {
-  const n = nombreNivel.toLowerCase()
-  if (n.includes('azul')) return 'nivel-azul'
-  if (n.includes('rojo')) return 'nivel-rojo'
-  if (n.includes('inter')) return 'nivel-intermedio'
-  return 'nivel-default'
 }
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -74,9 +67,7 @@ export default function SolicitudesEntrenador() {
         </div>
 
         {nivelNombre && (
-          <span className={`sol-nivel-badge ${nivelBadgeClass(nivelNombre)}`}>
-            {nivelNombre}
-          </span>
+          <CategoriaBadge nombre={nivelNombre} />
         )}
 
         {mostrarAcciones && (

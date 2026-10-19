@@ -19,9 +19,10 @@ export default function autenticar(req, res, next) {
 
     // Forma canónica — usar en código nuevo
     req.user = {
-      id:      payload.id,
-      rol:     payload.tipo_usuario_id,
-      club_id: payload.club_id ?? null,
+      id:       payload.id,
+      rol:      payload.tipo_usuario_id,
+      club_id:  payload.club_id  ?? null,
+      nivel_id: payload.nivel_id ?? null,
     }
 
     // Legacy — mantener para no romper routers existentes

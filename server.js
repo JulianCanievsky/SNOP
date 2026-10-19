@@ -28,6 +28,7 @@ import juegoLibreRoutes         from './rutas/JuegoLibre.js'
 import turnosRoutes             from './rutas/turnos.js'
 import clasesParticularesRoutes from './rutas/clasesParticulares.js'
 import perfilRouter             from './rutas/perfil.js'
+import autenticar               from './src/middlewares/autenticar.js'
 import entrenadorRouter         from './rutas/entrenador.js'
 import authRouter               from './rutas/auth.js'
 import adminRouter              from './rutas/admin.js'
@@ -114,16 +115,37 @@ app.get('/api/sedes', async (_req, res) => {
   if (error) return res.status(500).json({ error: 'Error al obtener sedes' })
   res.json({ data: data ?? [] })
 })
+
+// Niveles/categorías — accesible para cualquier usuario autenticado
+app.get('/api/niveles', autenticar, async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('niveles')
+      .select('id, nombre, orden')
+      .order('orden', { ascending: true })
+    if (error) throw error
+    res.json({ data: data ?? [] })
+  } catch (err) {
+    console.error('GET /api/niveles', err)
+    res.status(500).json({ error: 'Error al obtener niveles' })
+  }
+})
 // Comunicados — últimos 5 para Inicio del socio (solo los últimos 5 días)
-app.get('/api/comunicados', async (_req, res) => {
+app.get('/api/comunicados', autenticar, async (req, res) => {
   try {
     const hace5Dias = new Date()
     hace5Dias.setDate(hace5Dias.getDate() - 5)
 
+    // Traer comunicados globales ('todos') más los del nivel del socio ('nivel_<id>')
+    // El socio ve: 'todos', 'con_deuda', y su propio 'nivel_<id>'
+    const nivelId = req.user?.nivel_id ?? null
+    const filtros = ['todos', 'con_deuda', 'entrenadores']
+    if (nivelId) filtros.push(`nivel_${nivelId}`)
+
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
-      .in('destinatarios', ['todos', 'con_deuda', 'nivel_rojo', 'nivel_azul'])
+      .in('destinatarios', filtros)
       .gte('fecha', hace5Dias.toISOString())
       .order('fecha', { ascending: false })
       .limit(5)
@@ -138,17 +160,17 @@ app.get('/api/comunicados', async (_req, res) => {
   }
 })
 
-// Todos los comunicados para socios (solo los últimos 5 días)
-app.get('/api/comunicados/todos', async (_req, res) => {
+// Todos los comunicados para socios (pantalla completa de Comunicados)
+app.get('/api/comunicados/todos', autenticar, async (req, res) => {
   try {
-    const hace5Dias = new Date()
-    hace5Dias.setDate(hace5Dias.getDate() - 5)
+    const nivelId = req.user?.nivel_id ?? null
+    const filtros = ['todos', 'con_deuda', 'entrenadores']
+    if (nivelId) filtros.push(`nivel_${nivelId}`)
 
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
-      .in('destinatarios', ['todos', 'con_deuda', 'nivel_rojo', 'nivel_azul'])
-      .gte('fecha', hace5Dias.toISOString())
+      .in('destinatarios', filtros)
       .order('fecha', { ascending: false })
     if (error) {
       if (error.code === '42P01') return res.json({ data: [] })
@@ -170,6 +192,50 @@ app.use('/api/bonos',               bonosRouter)
 app.use('/api/clases-particulares', clasesParticularesRoutes)
 app.use('/api/perfil',              perfilRouter)
 app.use('/api/entrenador',          entrenadorRouter)
+
+// ── Créditos de recupero ──────────────────────────────────────────────────────
+// GET /api/creditos — resumen de créditos del socio autenticado
+app.get('/api/creditos', autenticar, async (req, res) => {
+  const socioId = req.userId
+  const ahora   = new Date()
+  try {
+    const { data, error } = await supabase
+      .from('creditos_clase')
+      .select('id, mes_periodo, usado, turno_origen_id, turno_usado_id, fecha_generado, fecha_vencimiento')
+      .eq('user_id', socioId)
+      .order('fecha_vencimiento', { ascending: true })
+
+    if (error) {
+      if (error.code === '42P01') return res.json({ data: { disponibles: 0, usados: 0, vencidos: 0, creditos: [] } })
+      throw error
+    }
+
+    const creditos = (data ?? []).map(c => ({
+      ...c,
+      vencido: !c.usado && new Date(c.fecha_vencimiento) < ahora,
+    }))
+
+    const disponibles = creditos.filter(c => !c.usado && !c.vencido).length
+    const usados      = creditos.filter(c =>  c.usado).length
+    const vencidos    = creditos.filter(c =>  c.vencido).length
+
+    // Marcar vencidos en la DB (proceso al consultar)
+    const idsVencidos = creditos.filter(c => c.vencido).map(c => c.id)
+    if (idsVencidos.length > 0) {
+      // No bloqueamos la respuesta — lo hacemos en background
+      supabase.from('creditos_clase')
+        .update({ usado: true })
+        .in('id', idsVencidos)
+        .then(() => {})
+        .catch(err => console.error('[creditos] error marcando vencidos:', err))
+    }
+
+    res.json({ data: { disponibles, usados, vencidos, creditos } })
+  } catch (err) {
+    console.error('GET /api/creditos', err)
+    res.status(500).json({ error: 'Error al obtener créditos' })
+  }
+})
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {

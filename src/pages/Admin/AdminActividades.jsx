@@ -3,14 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getJuegosLibres, getInscriptosJuegoLibre } from '../../services/adminApi'
 import { getTorneosAdmin, getInscriptosTorneo } from '../../services/torneosApi'
+import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import api from '../../lib/apiClient.js'
 import './Admin.css'
-
-const NIVEL_STYLE = {
-  Rojo:       { background: '#fee2e2', color: '#b91c1c' },
-  Intermedio: { background: '#fef9c3', color: '#92400e' },
-  Azul:       { background: '#dbeafe', color: '#1d4ed8' },
-}
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -55,12 +50,7 @@ function PanelInscriptos({ inscriptos, cargando, total, capacidad }) {
                 {insc.telefono && <span className="inscripto-email">{insc.telefono}</span>}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
-                <span
-                  className="badge-nivel"
-                  style={NIVEL_STYLE[insc.nivel] ?? { background: '#f3f4f6', color: '#6b7280' }}
-                >
-                  {insc.nivel}
-                </span>
+                <CategoriaBadge nombre={insc.nivel} />
                 {insc.fecha_inscripcion && (
                   <span style={{ fontSize: 10, color: '#9ca3af' }}>{formatFechaCorta(insc.fecha_inscripcion)}</span>
                 )}

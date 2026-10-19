@@ -1,403 +1,157 @@
+/* Perfil — tokens del sistema */
+
 .perfil-container {
-  min-height: 100vh;
-  background: #eef1f8;
-  padding: 20px;
-  padding-bottom: 90px; /* espacio para el BottomNav */
+  min-height: 100svh;
+  background: var(--color-bg);
+  padding: var(--space-5);
+  padding-bottom: 90px;
 }
 
 .perfil-header {
-  background: #2f6fe4;
-  color: white;
-  padding: 20px;
-  border-radius: 20px;
-  margin-bottom: 20px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-5);
 }
-
-.perfil-header h2 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: white;
-}
+.perfil-header h2 { margin:0; font-size:var(--font-size-xl); font-weight:700; color:var(--color-on-primary); }
 
 .perfil-card {
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
+  box-shadow: var(--shadow-sm);
 }
-
-.perfil-card h3 {
-  margin: 12px 0 4px;
-  font-size: 18px;
-  color: #111827;
-}
-
-.perfil-card p {
-  margin: 0;
-  color: #6b7280;
-  font-size: 14px;
-}
+.perfil-card h3 { margin:var(--space-3) 0 4px; font-size:18px; color:var(--color-text); }
+.perfil-card p  { margin:0; color:var(--color-text-muted); font-size:var(--font-size-sm); }
 
 .perfil-avatar {
-  width: 70px;
-  height: 70px;
+  width: 70px; height: 70px;
   border-radius: 50%;
-  background: #e7e2ff;
-  color: #5d4bff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
   margin: auto;
-  font-weight: bold;
-  font-size: 24px;
+  font-weight: 700; font-size: 24px;
 }
 
 .perfil-seccion-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
 }
-
 .perfil-seccion {
   margin: 0 0 10px;
-  color: #888;
+  color: var(--color-text-muted);
   text-transform: uppercase;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
 }
 
-.turno-card {
-  background: white;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.turno-card strong {
-  font-size: 14px;
-  color: #111827;
-}
-
-.turno-card p {
-  margin: 2px 0 0;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-/* ── TURNO CARD PERFIL (estilo rico con sede/mesa/entrenador) ── */
+/* ── Turno card perfil ── */
 .turno-card-perfil {
-  background: white;
-  border-radius: 14px;
-  padding: 14px 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 14px var(--space-4);
   margin-bottom: 10px;
-  border: 1.5px solid #e2e8f0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 10px;
 }
+.turno-card-perfil-pasado { opacity:.7; }
+.turno-card-perfil-header { display:flex; justify-content:space-between; align-items:center; }
+.turno-card-perfil-fecha  { font-size:var(--font-size-sm); font-weight:700; color:var(--color-text); margin:0; text-transform:capitalize; }
+.turno-card-perfil-horario { display:flex; align-items:center; gap:10px; background:var(--color-surface-alt); border-radius:var(--radius-sm); padding:9px var(--space-3); }
+.turno-card-perfil-horario strong { display:block; font-size:var(--font-size-sm); font-weight:600; color:var(--color-text); }
+.turno-card-perfil-horario p { margin:1px 0 0; font-size:12px; color:var(--color-text-subtle); }
+.turno-card-perfil-info  { display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:var(--color-text-muted); }
+.turno-card-perfil-info span { display:flex; align-items:center; gap:4px; }
 
-.turno-card-perfil-pasado {
-  opacity: 0.7;
-}
+.estado-activo { background:var(--color-success-bg); color:var(--color-success); padding:5px var(--space-3); border-radius:var(--radius-pill); font-size:12px; font-weight:600; white-space:nowrap; }
 
-.turno-card-perfil-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.turno-card-perfil-fecha {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
-  text-transform: capitalize;
-}
-
-.turno-card-perfil-horario {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #f8fafc;
-  border-radius: 10px;
-  padding: 9px 12px;
-}
-
-.turno-card-perfil-icono {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.turno-card-perfil-horario strong {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.turno-card-perfil-horario p {
-  margin: 1px 0 0;
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.turno-card-perfil-info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
-  color: #64748b;
-}
-
-.turno-card-perfil-info span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.estado-activo {
-  background: #dff3d8;
-  color: #1c7d2f;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
+/* Cuota */
 .cuota-card {
-  background: white;
-  border-radius: 12px;
-  padding: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  font-size: 14px;
-  font-weight: 500;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex; justify-content:space-between; align-items:center;
+  margin-bottom: var(--space-5);
+  font-size: var(--font-size-sm); font-weight:500;
+  box-shadow: var(--shadow-sm);
 }
+.pagado { background:var(--color-success-bg); color:var(--color-success); padding:5px var(--space-3); border-radius:var(--radius-pill); font-size:var(--font-size-sm); font-weight:600; }
+.deuda  { background:var(--color-danger-bg);  color:var(--color-danger);  padding:5px var(--space-3); border-radius:var(--radius-pill); font-size:var(--font-size-sm); font-weight:600; }
 
-.pagado {
-  background: #dff3d8;
-  color: #1c7d2f;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
+/* Bono */
+.bono-card { background:var(--color-surface); border-radius:var(--radius-lg); padding:18px; margin-bottom:var(--space-5); border:1.5px solid var(--color-primary-subtle); display:flex; flex-direction:column; gap:var(--space-3); box-shadow:var(--shadow-sm); }
+.bono-card-header { display:flex; align-items:center; justify-content:space-between; gap:var(--space-2); }
+.bono-tipo-badge { display:inline-block; padding:3px 10px; border-radius:var(--radius-pill); font-size:var(--font-size-xs); font-weight:700; }
+.bono-tipo-mensual       { background:var(--color-primary-subtle); color:var(--color-primary); }
+.bono-tipo-trimestral    { background:var(--color-success-bg);     color:var(--color-success); }
+.bono-tipo-personalizado { background:#fdf4ff;                     color:#7c3aed; }
+.bono-vencimiento { font-size:12px; color:var(--color-text-subtle); }
+.bono-creditos-bloque { display:flex; align-items:baseline; gap:var(--space-2); }
+.bono-creditos-num   { font-size:42px; font-weight:800; color:var(--color-primary); line-height:1; }
+.bono-creditos-label { font-size:var(--font-size-sm); color:var(--color-text-muted); }
+.bono-barra-fondo { height:8px; background:var(--color-border); border-radius:var(--radius-pill); overflow:hidden; }
+.bono-barra-fill  { height:100%; border-radius:var(--radius-pill); transition:width .4s; }
+.bono-notas { margin:0; font-size:12px; color:var(--color-text-subtle); font-style:italic; }
 
-.deuda {
-  background: #ffe3e3;
-  color: #d63031;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.btn-logout {
-  width: 100%;
-  padding: 14px;
-  border: 2px solid #2f6fe4;
-  background: white;
-  color: #2f6fe4;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-  transition: background 0.15s;
-  margin-bottom: 20px;
-}
-
-.btn-logout:hover {
-  background: #eff6ff;
-}
-
+/* Botones */
 .btn-historial {
   border: none;
-  background: #2f6fe4;
-  color: white;
-  padding: 8px 14px;
-  border-radius: 10px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: var(--space-2) 14px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  transition: background 0.15s;
+  font-size:var(--font-size-xs); font-weight:600;
+  transition:background var(--transition-fast);
+  font-family:var(--font-sans);
 }
+.btn-historial:hover { background:var(--color-primary-light); }
 
-.btn-historial:hover {
-  background: #1d5cbf;
+.btn-logout {
+  width:100%; padding:14px;
+  border: 2px solid var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer; font-size:var(--font-size-md); font-weight:600;
+  transition:background var(--transition-fast);
+  margin-bottom: var(--space-5);
+  font-family: var(--font-sans);
 }
+.btn-logout:hover { background:var(--color-primary-subtle); }
 
-.estado-carga,
-.estado-error {
-  padding: 40px;
-  text-align: center;
-  color: #6b7280;
-  font-size: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+.btn-tema {
+  width:100%; padding:14px;
+  border: 2px solid var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer; font-size:var(--font-size-md); font-weight:600;
+  transition:background var(--transition-fast);
+  margin-bottom: 0;
+  font-family: var(--font-sans);
 }
+.btn-tema:hover { background:var(--color-primary-subtle); }
 
 .btn-reintentar {
-  border: none;
-  background: #2f6fe4;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  border:none; background:var(--color-primary); color:var(--color-on-primary);
+  padding:10px var(--space-5); border-radius:var(--radius-sm); cursor:pointer;
+  font-size:var(--font-size-sm); font-weight:600; font-family:var(--font-sans);
 }
 
-.sin-turnos-perfil {
-  color: #9ca3af;
-  justify-content: center;
-  font-size: 14px;
-}
+.estado-carga, .estado-error { padding:var(--space-8); text-align:center; color:var(--color-text-muted); font-size:var(--font-size-md); display:flex; flex-direction:column; align-items:center; gap:var(--space-3); }
+.sin-turnos-perfil { color:var(--color-text-subtle); justify-content:center; font-size:var(--font-size-sm); }
 
-/* ── BADGE NIVEL (reutiliza paleta de Admin) ── */
-.badge-nivel {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.badge-nivel.rojo        { background: #fee2e2; color: #b91c1c; }
-.badge-nivel.intermedio  { background: #fef9c3; color: #92400e; }
-.badge-nivel.azul        { background: #dbeafe; color: #1d4ed8; }
-.badge-nivel.sin-nivel   { background: #f3f4f6; color: #6b7280; }
-
-/* ── BONO DE CRÉDITOS ─────────────────────────────────────────────────────── */
-.bono-card {
-  background: white;
-  border-radius: 16px;
-  padding: 18px;
-  margin-bottom: 20px;
-  border: 1.5px solid #dbeafe;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.bono-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.bono-tipo-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-}
-.bono-tipo-mensual       { background: #eff6ff; color: #2563eb; }
-.bono-tipo-trimestral    { background: #f0fdf4; color: #16a34a; }
-.bono-tipo-personalizado { background: #fdf4ff; color: #7c3aed; }
-
-.bono-vencimiento {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.bono-creditos-bloque {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.bono-creditos-num {
-  font-size: 42px;
-  font-weight: 800;
-  color: #2563eb;
-  line-height: 1;
-}
-
-.bono-creditos-label {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.bono-barra-fondo {
-  height: 8px;
-  background: #e2e8f0;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.bono-barra-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.4s ease;
-}
-
-.bono-notas {
-  margin: 0;
-  font-size: 12px;
-  color: #94a3b8;
-  font-style: italic;
-}
-
-/* ── DARK MODE ── */
-[data-theme="dark"] .perfil-container            { background: var(--app-bg); }
-[data-theme="dark"] .perfil-header               { background: #1a3a6b; }
-[data-theme="dark"] .perfil-card                 { background: var(--app-card); }
-[data-theme="dark"] .perfil-card h3              { color: var(--app-text); }
-[data-theme="dark"] .perfil-card p               { color: var(--app-text-muted); }
-[data-theme="dark"] .turno-card                  { background: var(--app-card); }
-[data-theme="dark"] .turno-card strong           { color: var(--app-text); }
-[data-theme="dark"] .turno-card p                { color: var(--app-text-muted); }
-[data-theme="dark"] .turno-card-perfil           { background: var(--app-card); border-color: var(--app-card-border); }
-[data-theme="dark"] .turno-card-perfil-fecha     { color: var(--app-text); }
-[data-theme="dark"] .turno-card-perfil-horario   { background: #22263a; }
-[data-theme="dark"] .turno-card-perfil-horario strong { color: var(--app-text); }
-[data-theme="dark"] .turno-card-perfil-info      { color: var(--app-text-muted); }
-[data-theme="dark"] .cuota-card                  { background: var(--app-card); color: var(--app-text); }
-[data-theme="dark"] .bono-card                   { background: var(--app-card); border-color: #1e3a6b; }
-[data-theme="dark"] .bono-creditos-label         { color: var(--app-text-muted); }
-[data-theme="dark"] .bono-barra-fondo            { background: #2a2d3a; }
-[data-theme="dark"] .bono-vencimiento            { color: var(--app-text-sub); }
-[data-theme="dark"] .btn-logout                  { background: var(--app-card); border-color: #3b5fc0; color: #7da8f5; }
-[data-theme="dark"] .btn-logout:hover            { background: #1e2540; }
-[data-theme="dark"] .badge-nivel.sin-nivel       { background: #2a2d3a; color: #8b95a5; }
-
-/* ── BOTÓN TEMA ── */
-.btn-tema {
-  width: 100%;
-  padding: 14px;
-  border: 2px solid #2f6fe4;
-  background: white;
-  color: #2f6fe4;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-  transition: background 0.15s;
-  margin-bottom: 0;
-  font-family: inherit;
-}
-
-.btn-tema:hover { background: #eff6ff; }
-
-[data-theme="dark"] .btn-tema {
-  background: var(--app-card);
-  border-color: #3b5fc0;
-  color: #7da8f5;
-}
-[data-theme="dark"] .btn-tema:hover { background: #1e2540; }
+/* Dark */
+[data-theme="dark"] .perfil-container  { background:var(--color-bg); }
+[data-theme="dark"] .perfil-header     { background:var(--color-primary-dark); }
+[data-theme="dark"] .turno-card-perfil { background:var(--color-surface); border-color:var(--color-border); }
+[data-theme="dark"] .bono-card         { background:var(--color-surface); border-color:var(--color-primary-subtle); }

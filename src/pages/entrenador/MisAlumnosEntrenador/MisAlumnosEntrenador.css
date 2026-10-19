@@ -1,182 +1,30 @@
-/* ── Layout ─────────────────────────────────────────────────── */
-.mis-alumnos-e {
-  min-height: 100vh;
-  background: #f1f5f9;
-  padding-bottom: 88px;
-  font-family: inherit;
-}
+/* MisAlumnosEntrenador — tokens del sistema */
+.mis-alumnos-e { min-height:100svh; background:var(--color-bg); padding-bottom:88px; }
+.mis-alumnos-e-header { background:var(--color-primary); padding:28px var(--space-5) 24px; color:var(--color-on-primary); }
+.mis-alumnos-e-header h1 { font-size:26px; font-weight:700; margin:0 0 4px; color:var(--color-on-primary); }
+.mis-alumnos-e-header .subtitulo { font-size:var(--font-size-sm); opacity:.85; margin:0; }
 
-/* ── Header ──────────────────────────────────────────────────── */
-.mis-alumnos-e-header {
-  background: #2563eb;
-  padding: 28px 20px 24px;
-  color: white;
-}
+.filtros-nivel { display:flex; gap:var(--space-2); padding:14px var(--space-4); background:var(--color-surface); border-bottom:1px solid var(--color-border); overflow-x:auto; scrollbar-width:none; }
+.filtros-nivel::-webkit-scrollbar { display:none; }
 
-.mis-alumnos-e-header h1 {
-  font-size: 26px;
-  font-weight: 700;
-  margin: 0 0 4px;
-  color: white;
-}
+.filtro-btn { border:1.5px solid var(--color-border); background:var(--color-surface); color:var(--color-text-muted); border-radius:var(--radius-pill); padding:6px var(--space-4); font-size:var(--font-size-sm); font-weight:500; cursor:pointer; white-space:nowrap; font-family:var(--font-sans); transition:all var(--transition-fast); flex-shrink:0; }
+.filtro-btn.activo { background:var(--color-primary); border-color:var(--color-primary); color:var(--color-on-primary); font-weight:600; }
 
-.mis-alumnos-e-header .subtitulo {
-  font-size: 14px;
-  opacity: 0.85;
-  margin: 0;
-}
+.alumnos-lista { padding:var(--space-3) var(--space-4); display:flex; flex-direction:column; gap:2px; }
 
-/* ── Filtros de nivel ─────────────────────────────────────────── */
-.filtros-nivel {
-  display: flex;
-  gap: 8px;
-  padding: 14px 16px;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.filtros-nivel::-webkit-scrollbar { display: none; }
+.alumno-item { background:var(--color-surface); border-radius:0; padding:14px var(--space-4); display:flex; align-items:center; gap:var(--space-3); cursor:pointer; transition:background var(--transition-fast); border-bottom:1px solid var(--color-bg); }
+.alumnos-lista > .alumno-item:first-child  { border-radius:var(--radius-lg) var(--radius-lg) 0 0; }
+.alumnos-lista > .alumno-item:last-child   { border-radius:0 0 var(--radius-lg) var(--radius-lg); border-bottom:none; }
+.alumnos-lista > .alumno-item:only-child   { border-radius:var(--radius-lg); }
+.alumno-item:hover { background:var(--color-surface-alt); }
 
-.filtro-btn {
-  border: 1.5px solid #e2e8f0;
-  background: white;
-  color: #475569;
-  border-radius: 20px;
-  padding: 6px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  font-family: inherit;
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
+.alumno-avatar { width:40px; height:40px; border-radius:50%; background:var(--color-primary-subtle); color:var(--color-primary); font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.alumno-info { flex:1; min-width:0; }
+.alumno-nombre { font-size:var(--font-size-md); font-weight:600; color:var(--color-text); margin:0 0 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.alumno-turno  { font-size:12px; color:var(--color-text-subtle); margin:0; }
+.alumno-derecha { display:flex; align-items:center; gap:6px; flex-shrink:0; }
 
-.filtro-btn.activo {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: white;
-  font-weight: 600;
-}
+.sin-alumnos { background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-8) var(--space-4); text-align:center; color:var(--color-text-subtle); font-size:var(--font-size-sm); margin:var(--space-4); }
 
-/* ── Lista de alumnos ─────────────────────────────────────────── */
-.alumnos-lista {
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.alumno-item {
-  background: white;
-  border-radius: 0;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: background 0.12s;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.alumnos-lista > .alumno-item:first-child {
-  border-radius: 14px 14px 0 0;
-}
-
-.alumnos-lista > .alumno-item:last-child {
-  border-radius: 0 0 14px 14px;
-  border-bottom: none;
-}
-
-.alumnos-lista > .alumno-item:only-child {
-  border-radius: 14px;
-}
-
-.alumno-item:hover { background: #f8fafc; }
-
-.alumno-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #dbeafe;
-  color: #2563eb;
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.alumno-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.alumno-nombre {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.alumno-turno {
-  font-size: 12px;
-  color: #94a3b8;
-  margin: 0;
-}
-
-.alumno-derecha {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.badge-nivel-alumno {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-}
-
-.nivel-azul       { background: #dbeafe; color: #2563eb; }
-.nivel-rojo       { background: #fee2e2; color: #dc2626; }
-.nivel-intermedio { background: #fef3c7; color: #d97706; }
-.nivel-default    { background: #f1f5f9; color: #475569; }
-
-.dot-alerta {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ef4444;
-  flex-shrink: 0;
-}
-
-/* ── Sin alumnos ─────────────────────────────────────────────── */
-.sin-alumnos {
-  background: white;
-  border-radius: 14px;
-  padding: 32px 16px;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 14px;
-  margin: 16px;
-}
-
-/* ── DARK MODE ── */
-[data-theme="dark"] .mis-alumnos-e         { background: var(--app-bg); }
-[data-theme="dark"] .mis-alumnos-e-header  { background: #1a3a6b; }
-[data-theme="dark"] .filtros-nivel         { background: var(--app-card); border-bottom-color: var(--app-card-border); }
-[data-theme="dark"] .filtro-btn            { background: var(--app-card); border-color: var(--app-card-border); color: var(--app-text-muted); }
-[data-theme="dark"] .alumno-item           { background: var(--app-card); border-bottom-color: var(--app-card-border); }
-[data-theme="dark"] .alumno-item:hover     { background: #22263a; }
-[data-theme="dark"] .alumno-nombre         { color: var(--app-text); }
-[data-theme="dark"] .alumno-turno          { color: var(--app-text-sub); }
-[data-theme="dark"] .alumno-avatar         { background: #1a2e50; color: #60a5fa; }
-[data-theme="dark"] .nivel-default         { background: #22263a; color: #8b95a5; }
-[data-theme="dark"] .sin-alumnos           { background: var(--app-card); color: var(--app-text-sub); }
+[data-theme="dark"] .mis-alumnos-e-header { background:var(--color-primary-dark); }
+[data-theme="dark"] .filtros-nivel { background:var(--color-surface); border-bottom-color:var(--color-border); }

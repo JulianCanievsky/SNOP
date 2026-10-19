@@ -1,18 +1,13 @@
 import { useState } from 'react'
 import { useMisClasesEntrenador } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
+import { Clock, MapPin } from 'lucide-react'
+import api from '../../../lib/apiClient.js'
 import './MisClasesEntrenador.css'
 
 const DIAS_LETRA = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
 const TIPO_LABEL = { 1: 'Grupal', 2: 'Particular' }
-
-function nivelBadgeClass(nombreNivel = '') {
-  const n = nombreNivel.toLowerCase()
-  if (n.includes('azul')) return 'nivel-azul'
-  if (n.includes('rojo')) return 'nivel-rojo'
-  if (n.includes('inter')) return 'nivel-intermedio'
-  return 'nivel-default'
-}
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -37,9 +32,11 @@ function buildDias() {
 }
 
 export default function MisClasesEntrenador() {
-  const { clases, cargando, cancelarClase } = useMisClasesEntrenador()
+  const { clases, cargando, cancelarClase, recargar } = useMisClasesEntrenador()
   const [diaIdx, setDiaIdx] = useState(0)
   const [cancelando, setCancelando] = useState(null)
+  const [accionSocio, setAccionSocio] = useState(null) // id de solicitud en proceso
+  const [expandido, setExpandido] = useState(null)    // id de clase con lista abierta
 
   const dias = buildDias()
   const fechaSel = dias[diaIdx].iso
@@ -59,6 +56,30 @@ export default function MisClasesEntrenador() {
       await cancelarClase(turnoId)
     } finally {
       setCancelando(null)
+    }
+  }
+
+  const handleConfirmar = async (solicitudId, claseId) => {
+    setAccionSocio(solicitudId)
+    try {
+      await api.patch(`/entrenador/solicitudes/${solicitudId}/confirmar`)
+      recargar?.()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setAccionSocio(null)
+    }
+  }
+
+  const handleRechazar = async (solicitudId) => {
+    setAccionSocio(solicitudId)
+    try {
+      await api.patch(`/entrenador/solicitudes/${solicitudId}/rechazar`)
+      recargar?.()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setAccionSocio(null)
     }
   }
 
@@ -103,6 +124,9 @@ export default function MisClasesEntrenador() {
             const inscritos = (clase.socio_turno || []).filter(
               (st) => st.estado === true
             ).length
+            const pendientes = (clase.socio_turno || []).filter(
+              (st) => st.estado === false
+            ).length
 
             return (
               <div key={clase.id} className="clase-card">
@@ -123,9 +147,7 @@ export default function MisClasesEntrenador() {
                     {formatHora(clase.fecha_inicio)} — {formatHora(clase.fecha_fin)} hs
                   </span>
                   {nivelNombre && (
-                    <span className={`badge-nivel ${nivelBadgeClass(nivelNombre)}`}>
-                      {nivelNombre}
-                    </span>
+                    <CategoriaBadge nombre={nivelNombre} abreviado />
                   )}
                 </div>
 
@@ -140,7 +162,59 @@ export default function MisClasesEntrenador() {
                   {clase.mesas?.numero ? ` · Mesa ${clase.mesas.numero}` : ''}
                 </p>
 
-                {/* Cancelar */}
+                {/* Lista de inscriptos expandible */}
+                <button
+                  className="clase-btn-ver-lista"
+                  onClick={() => setExpandido(expandido === clase.id ? null : clase.id)}
+                >
+                  {expandido === clase.id ? 'Ocultar lista' : `Ver inscriptos (${inscritos})`}
+                  {pendientes > 0 && <span className="clase-badge-pendientes">{pendientes} pendiente{pendientes > 1 ? 's' : ''}</span>}
+                </button>
+
+                {expandido === clase.id && (
+                  <div className="clase-inscriptos-lista">
+                    {/* Pendientes de aprobación */}
+                    {(clase.socio_turno ?? [])
+                      .filter(s => s.estado === false)
+                      .map(s => (
+                        <div key={s.id} className="clase-inscripto-row clase-inscripto-row--pendiente">
+                          <div className="clase-inscripto-info">
+                            <span className="clase-inscripto-nombre">{s.users?.nombre ?? '—'}</span>
+                            <span className="clase-inscripto-badge clase-inscripto-badge--pendiente">Pendiente</span>
+                          </div>
+                          <div className="clase-inscripto-acciones">
+                            <button
+                              disabled={accionSocio === s.id}
+                              onClick={() => handleConfirmar(s.id, clase.id)}
+                              className="clase-btn-confirmar"
+                            >✓</button>
+                            <button
+                              disabled={accionSocio === s.id}
+                              onClick={() => handleRechazar(s.id)}
+                              className="clase-btn-rechazar"
+                            >✕</button>
+                          </div>
+                        </div>
+                      ))
+                    }
+                    {/* Confirmados */}
+                    {(clase.socio_turno ?? [])
+                      .filter(s => s.estado === true)
+                      .map(s => (
+                        <div key={s.id} className="clase-inscripto-row">
+                          <div className="clase-inscripto-info">
+                            <span className="clase-inscripto-nombre">{s.users?.nombre ?? '—'}</span>
+                          </div>
+                        </div>
+                      ))
+                    }
+                    {inscritos === 0 && pendientes === 0 && (
+                      <p className="clase-inscripto-vacio">Sin inscriptos todavía.</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Cancelar turno */}
                 {clase.estado !== false && (
                   <button
                     className="btn-cancelar-clase"

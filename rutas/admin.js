@@ -888,16 +888,17 @@ async function enviarEmailComunicado({ titulo, mensaje, destinatarios }) {
     query = query.eq('tipo_usuario_id', 2)
   } else if (destinatarios === 'con_deuda') {
     query = query.eq('tipo_usuario_id', 1).eq('cuota_al_dia', false).eq('estado_cuenta', 'activa')
-  } else if (destinatarios === 'nivel_rojo') {
-    const { data: nivel } = await supabase
-      .from('niveles').select('id').ilike('nombre', '%rojo%').maybeSingle()
-    if (!nivel) return
-    query = query.eq('tipo_usuario_id', 1).eq('nivel_id', nivel.id).eq('estado_cuenta', 'activa')
-  } else if (destinatarios === 'nivel_azul') {
-    const { data: nivel } = await supabase
-      .from('niveles').select('id').ilike('nombre', '%azul%').maybeSingle()
-    if (!nivel) return
-    query = query.eq('tipo_usuario_id', 1).eq('nivel_id', nivel.id).eq('estado_cuenta', 'activa')
+  } else {
+    // Formato 'nivel_<id>' — ej. 'nivel_3' para 3ª categoría
+    const matchNivel = destinatarios.match(/^nivel_(\d+)$/)
+    if (matchNivel) {
+      const nivelId = parseInt(matchNivel[1], 10)
+      query = query.eq('tipo_usuario_id', 1).eq('nivel_id', nivelId).eq('estado_cuenta', 'activa')
+    } else {
+      // Segmento desconocido — no enviar a nadie
+      console.warn(`[comunicado] segmento desconocido: ${destinatarios}`)
+      return
+    }
   }
 
   const { data: usuarios, error } = await query

@@ -4,6 +4,7 @@ import { useTheme } from '../../context/ThemeContext'
 import { usePerfil } from '../../hooks/usePerfil'
 import { getMiBono } from '../../services/bonosApi'
 import BottomNav from '../../components/BottomNav/BottomNav'
+import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import './Perfil.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -13,25 +14,6 @@ const formatHora = (iso) =>
 
 const formatFecha = (iso) =>
   new Date(iso).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
-
-// Mapeo nombre de nivel → clase CSS del Admin (reutilizadas)
-function nivelClase(nombre) {
-  if (!nombre) return 'sin-nivel'
-  const n = nombre.toLowerCase()
-  if (n === 'rojo')       return 'rojo'
-  if (n === 'intermedio') return 'intermedio'
-  if (n === 'azul')       return 'azul'
-  return 'sin-nivel'
-}
-
-function NivelBadge({ nombre }) {
-  const cls = nivelClase(nombre)
-  return (
-    <span className={`badge-nivel ${cls}`} style={{ fontSize: 12 }}>
-      {nombre ?? 'Sin nivel asignado todavía'}
-    </span>
-  )
-}
 
 function TurnoCardPerfil({ inscripcion, pasado }) {
   const turno = inscripcion.turnos
@@ -118,8 +100,6 @@ const Perfil = () => {
   const iniciales = usuario.nombre
     ?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
 
-  const nivelNombre = usuario.nivel_nombre ?? usuario.niveles?.nombre ?? null
-
   const ahora        = new Date()
   const turnosActivos = turnos.filter(i => i.turnos && new Date(i.turnos.fecha_inicio) >= ahora)
   const turnosPasados = turnos.filter(i => i.turnos && new Date(i.turnos.fecha_inicio) <  ahora)
@@ -137,7 +117,7 @@ const Perfil = () => {
         <p>{usuario.email}</p>
         {/* Badge de nivel */}
         <div style={{ marginTop: 10 }}>
-          <NivelBadge nombre={nivelNombre} />
+          <CategoriaBadge nivelId={usuario.nivel_id ?? null} />
         </div>
       </div>
 

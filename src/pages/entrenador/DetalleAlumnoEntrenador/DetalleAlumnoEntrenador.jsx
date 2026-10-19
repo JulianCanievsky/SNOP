@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDetalleAlumno, useNiveles } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
 import './DetalleAlumnoEntrenador.css'
 
 function iniciales(nombre = '') {
@@ -18,15 +19,8 @@ function formatTurno(fechaISO, sede) {
   return `${diaCapital} — ${hora} hs · Sede ${sede || '—'}`
 }
 
-// Mapeo nombre nivel → clase CSS del botón seleccionado
-function selClass(nivelNombre = '', opcion) {
-  const n = nivelNombre.toLowerCase()
-  const o = opcion.toLowerCase()
-  if (o.includes('rojo') && n.includes('rojo')) return 'rojo-sel'
-  if (o.includes('inter') && n.includes('inter')) return 'inter-sel'
-  if (o.includes('azul') && n.includes('azul')) return 'azul-sel'
-  return ''
-}
+// Mapeo nombre nivel → clase CSS del botón seleccionado — ELIMINADO: usar CategoriaBadge
+
 
 export default function DetalleAlumnoEntrenador() {
   const { alumnoId } = useParams()
@@ -80,8 +74,6 @@ export default function DetalleAlumnoEntrenador() {
     )
   }
 
-  const nivelActual = alumno.niveles?.nombre || ''
-
   return (
     <div className="detalle-alumno-e">
       <header className="detalle-alumno-e-header">
@@ -125,22 +117,17 @@ export default function DetalleAlumnoEntrenador() {
           <p className="card-seccion-titulo">Cambiar nivel</p>
           <p className="nivel-descripcion">El nivel es asignado por el entrenador</p>
           <div className="nivel-opciones">
-            {niveles
-              .filter((n) => ['azul', 'intermedio', 'rojo'].includes(n.nombre.toLowerCase()))
-              .map((n) => {
-                const sc = selClass(nivelActual, n.nombre)
-                return (
-                  <button
-                    key={n.id}
-                    className={`nivel-opcion-btn ${sc}`}
-                    disabled={guardando}
-                    onClick={() => handleCambiarNivel(n.id)}
-                  >
-                    {n.nombre}
-                    {alumno.nivel_id === n.id && ' ✓'}
-                  </button>
-                )
-              })}
+            {niveles.map((n) => (
+              <button
+                key={n.id}
+                className={`nivel-opcion-btn ${alumno.nivel_id === n.id ? 'nivel-opcion-btn--activo' : ''}`}
+                disabled={guardando}
+                onClick={() => handleCambiarNivel(n.id)}
+              >
+                <CategoriaBadge nivelId={n.id} abreviado />
+                {alumno.nivel_id === n.id && ' ✓'}
+              </button>
+            ))}
           </div>
         </div>
       </div>

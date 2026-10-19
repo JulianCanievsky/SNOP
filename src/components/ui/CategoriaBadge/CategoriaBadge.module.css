@@ -1,0 +1,22 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* Cada categoría usa sus tokens de color globales */
+.cat-1    { background-color: var(--color-cat-1-bg);    color: var(--color-cat-1-text);    }
+.cat-2    { background-color: var(--color-cat-2-bg);    color: var(--color-cat-2-text);    }
+.cat-3    { background-color: var(--color-cat-3-bg);    color: var(--color-cat-3-text);    }
+.cat-4    { background-color: var(--color-cat-4-bg);    color: var(--color-cat-4-text);    }
+.cat-5    { background-color: var(--color-cat-5-bg);    color: var(--color-cat-5-text);    }
+.cat-6    { background-color: var(--color-cat-6-bg);    color: var(--color-cat-6-text);    }
+.cat-7    { background-color: var(--color-cat-7-bg);    color: var(--color-cat-7-text);    }
+.cat-8    { background-color: var(--color-cat-8-bg);    color: var(--color-cat-8-text);    }
+.cat-todos{ background-color: var(--color-cat-todos-bg);color: var(--color-cat-todos-text);}

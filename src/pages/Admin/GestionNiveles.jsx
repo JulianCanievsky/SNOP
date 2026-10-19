@@ -2,21 +2,10 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSocios, editarSocio, getNivelesStats, getNiveles } from '../../services/adminApi'
+import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import './Admin.css'
-
-function NivelBadge({ nombre }) {
-  const map = {
-    'Rojo':         'rojo',
-    'Intermedio':   'intermedio',
-    'Azul':         'azul',
-    'Principiante': 'sin-nivel',
-    'Avanzado':     'azul',
-  }
-  const cls = map[nombre] ?? 'sin-nivel'
-  return <span className={`badge-nivel ${cls}`}>{nombre ?? '—'}</span>
-}
 
 export default function GestionNiveles() {
   const navigate = useNavigate()
@@ -124,7 +113,7 @@ export default function GestionNiveles() {
                       </div>
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <NivelBadge nombre={nivelNombre} />
+                        <CategoriaBadge nombre={nivelNombre} />
                         <button
                           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#6b7280' }}
                           onClick={() => setEditando(s.id)}

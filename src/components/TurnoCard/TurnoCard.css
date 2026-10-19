@@ -1,102 +1,89 @@
-/* TurnoCard.css — estilos del componente de tarjeta de turno */
+/* TurnoCard — usa tokens del sistema global */
 
-/* ── CARD ── */
 .turno-card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1.5px solid #e2e8f0;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
-/* ── HEADER: fecha + badge tipo ── */
+/* ── HEADER ── */
 .turno-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
 }
-
 .turno-header h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--color-text);
   text-transform: capitalize;
   flex: 1;
 }
 
-/* Badge de tipo de evento */
+/* Badge tipo */
 .badge-tipo {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
   flex-shrink: 0;
 }
-
-.badge-tipo--fijo   { background: #eff6ff; color: #1d4ed8; }
-.badge-tipo--clase  { background: #f0fdf4; color: #15803d; }
-.badge-tipo--juego  { background: #fff7ed; color: #c2410c; }
-.badge-tipo--torneo { background: #fdf4ff; color: #7c3aed; }
+.badge-tipo--fijo   { background: var(--color-primary-subtle); color: var(--color-primary-dark); }
+.badge-tipo--clase  { background: var(--color-success-bg);     color: var(--color-success); }
+.badge-tipo--juego  { background: var(--color-warning-bg);     color: var(--color-warning); }
+.badge-tipo--torneo { background: #fdf4ff;                     color: #7c3aed; }
 
 /* ── HORARIO ── */
 .horario {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #f8fafc;
-  border-radius: 10px;
-  padding: 10px 12px;
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-sm);
+  padding: 10px var(--space-3);
 }
-
-.icono {
-  font-size: 20px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
 .horario-texto { flex: 1; }
-
 .horario-texto strong {
   display: block;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-text);
 }
-
 .horario-texto p {
   margin: 2px 0 0;
   font-size: 12px;
-  color: #9e9e9e;
+  color: var(--color-text-subtle);
 }
 
-/* Badge de estado */
+/* Badge estado */
 .badge-estado {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   white-space: nowrap;
   flex-shrink: 0;
 }
+.estado--confirmado { background: var(--color-success-bg); color: var(--color-success); }
+.estado--inscripto  { background: var(--color-warning-bg); color: var(--color-warning); }
 
-.estado--confirmado { background: #e8f5e9; color: #2e7d32; }
-.estado--inscripto  { background: #fff7ed; color: #c2410c; }
-
-/* ── INFO SEDE / ENTRENADOR / MESA ── */
+/* ── INFO ── */
 .info {
-  font-size: 13px;
-  color: #64748b;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   line-height: 1.4;
 }
 
@@ -104,76 +91,71 @@
 .cancelar-btn {
   width: 100%;
   padding: 11px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  background: #fdecec;
-  color: #d32f2f;
-  transition: background 0.2s;
-  font-family: inherit;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-family: var(--font-sans);
+  transition: background var(--transition-fast);
 }
-
-.cancelar-btn:hover { background: #f9d5d5; }
+.cancelar-btn:hover { filter: brightness(0.95); }
 
 /* ── MODAL ── */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0,0,0,0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 200;
+  z-index: var(--z-modal);
   animation: fadeIn 0.15s ease;
 }
-
 .modal {
-  background: white;
-  border-radius: 20px;
-  padding: 24px 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  padding: 24px var(--space-5);
   width: 88%;
   max-width: 360px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-lg);
   animation: slideUp 0.2s ease;
 }
-
-.modal h3 { margin: 0 0 10px; font-size: 18px; color: #1a1a1a; }
-.modal p  { margin: 0 0 20px; color: #555; font-size: 14px; line-height: 1.5; }
-
+.modal h3 { margin: 0 0 10px; font-size: 18px; color: var(--color-text); }
+.modal p  { margin: 0 0 20px; color: var(--color-text-muted); font-size: var(--font-size-sm); line-height: 1.5; }
 .modal-acciones { display: flex; gap: 10px; }
 
 .modal-btn-secundario {
   flex: 1;
   padding: 12px;
-  border-radius: 10px;
-  border: 1.5px solid #e5e7eb;
-  background: white;
-  color: #374151;
-  font-size: 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
-  font-family: inherit;
-  transition: background 0.2s;
+  font-family: var(--font-sans);
+  transition: background var(--transition-fast);
 }
-.modal-btn-secundario:hover { background: #f3f4f6; }
+.modal-btn-secundario:hover { background: var(--color-surface-alt); }
 
 .modal-btn-peligro {
   flex: 1;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   border: none;
-  background: #ef4444;
-  color: white;
-  font-size: 14px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
-  font-family: inherit;
-  transition: background 0.2s;
+  font-family: var(--font-sans);
+  transition: opacity var(--transition-fast);
 }
-.modal-btn-peligro:hover:not(:disabled) { background: #dc2626; }
-
+.modal-btn-peligro:hover:not(:disabled) { opacity: 0.9; }
 .modal-btn-peligro:disabled,
 .modal-btn-secundario:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -181,21 +163,13 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
 
 /* ── DARK MODE ── */
-[data-theme="dark"] .turno-card       { background: var(--app-card); border-color: var(--app-card-border); box-shadow: none; }
-[data-theme="dark"] .turno-header h3  { color: var(--app-text); }
-[data-theme="dark"] .horario          { background: #22263a; }
-[data-theme="dark"] .horario-texto strong { color: var(--app-text); }
-[data-theme="dark"] .horario-texto p  { color: var(--app-text-sub); }
-[data-theme="dark"] .info             { color: var(--app-text-muted); }
-[data-theme="dark"] .modal            { background: var(--app-card); }
-[data-theme="dark"] .modal h3         { color: var(--app-text); }
-[data-theme="dark"] .modal p          { color: var(--app-text-muted); }
-[data-theme="dark"] .modal-btn-secundario { background: var(--app-card); border-color: var(--app-card-border); color: var(--app-text); }
-[data-theme="dark"] .modal-btn-secundario:hover { background: #22263a; }
+[data-theme="dark"] .turno-card { background: var(--color-surface); border-color: var(--color-border); box-shadow: none; }
+[data-theme="dark"] .horario    { background: var(--color-surface-alt); }
+[data-theme="dark"] .modal      { background: var(--color-surface); }
+[data-theme="dark"] .modal-btn-secundario:hover { background: var(--color-surface-alt); }

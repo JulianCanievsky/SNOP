@@ -575,7 +575,31 @@ router.patch('/solicitudes/:solicitudId/confirmar', async (req, res) => {
 
     if (error) throw error
 
-    // Notificación + email al socio
+    // ── Descuento de crédito de recupero disponible ──────────────────────────
+    try {
+      const ahora = new Date().toISOString()
+      const { data: socioIdRow } = await supabase
+        .from('socio_turno').select('user_id').eq('id', solicitudId).single()
+      if (socioIdRow?.user_id) {
+        const { data: creditoDisponible } = await supabase
+          .from('creditos_clase')
+          .select('id')
+          .eq('user_id', socioIdRow.user_id)
+          .eq('usado', false)
+          .gte('fecha_vencimiento', ahora)
+          .order('fecha_vencimiento', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        if (creditoDisponible) {
+          await supabase
+            .from('creditos_clase')
+            .update({ usado: true, turno_usado_id: sol.turno_id })
+            .eq('id', creditoDisponible.id)
+        }
+      }
+    } catch (creditoErr) {
+      console.error('[confirmar] Error al descontar crédito:', creditoErr)
+    }
     try {
       const { data: solConDatos } = await supabase
         .from('socio_turno')

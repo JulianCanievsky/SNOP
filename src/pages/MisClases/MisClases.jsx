@@ -1,14 +1,13 @@
 /**
  * MisClases.jsx — Panel del socio: ver clases inscriptas, cancelarlas,
  * reconfirmar cuando se libera un cupo, y unirse a lista de espera.
- *
- * Cuando se cancela un turno que estaba lleno, el sistema notifica
- * automáticamente a otros socios que se liberó un lugar.
  */
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { CheckCircle, XCircle } from 'lucide-react'
 import api from '../../lib/apiClient.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
+import CreditosResumen from '../../components/CreditosResumen/CreditosResumen'
 import './MisClases.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -150,8 +149,11 @@ export default function MisClases() {
       </header>
 
       <div className="mc-body">
-        {mensaje    && <div className="mc-alerta mc-alerta--ok">✓ {mensaje}</div>}
-        {errorLocal && <div className="mc-alerta mc-alerta--error">{errorLocal}</div>}
+        {mensaje    && <div className="mc-alerta mc-alerta--ok"><CheckCircle size={16} /> {mensaje}</div>}
+        {errorLocal && <div className="mc-alerta mc-alerta--error"><XCircle size={16} /> {errorLocal}</div>}
+
+        {/* Créditos de recupero */}
+        <CreditosResumen />
 
         {/* Resumen */}
         <div className="mc-resumen-card">
@@ -227,8 +229,8 @@ export default function MisClases() {
                             {t?.users?.nombre ? ` · ${t.users.nombre}` : ''}
                           </span>
                           {hayLugar
-                            ? <span className="mc-badge-lugar">🟢 Hay lugar</span>
-                            : <span className="mc-badge-lleno">🔴 Lleno</span>
+                            ? <span className="mc-badge-lugar"><CheckCircle size={12} /> Hay lugar</span>
+                            : <span className="mc-badge-lleno"><XCircle size={12} /> Lleno</span>
                           }
                         </div>
                         <div className="mc-clase-acciones">
