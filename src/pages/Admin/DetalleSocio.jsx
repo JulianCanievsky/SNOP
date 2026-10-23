@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import {
   getSocio,
   editarSocio,
@@ -125,7 +126,6 @@ export default function DetalleSocio() {
   }
 
   const iniciales   = socio?.nombre?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
-  const nivelActual = niveles.find(n => n.id === socio?.nivel_id)
 
   return (
     <div className="admin-page">
@@ -145,11 +145,9 @@ export default function DetalleSocio() {
           <div style={{ fontSize: 13, color: 'var(--admin-muted)', marginBottom: 4 }}>
             {socio?.email}{socio?.telefono ? ` · ${socio.telefono}` : ''}
           </div>
-          {nivelActual && (
-            <span className={`badge-nivel ${nivelActual.nombre.toLowerCase()}`}>
-              {nivelActual.nombre}
-            </span>
-          )}
+          <div style={{ marginTop: 4 }}>
+            <CategoriaBadge nivelId={socio?.nivel_id ?? null} />
+          </div>
         </div>
 
         {exito && <div className="alerta-exito">✓ {exito}</div>}
@@ -162,7 +160,8 @@ export default function DetalleSocio() {
             {niveles.map(n => (
               <button
                 key={n.id}
-                className={`nivel-btn ${n.nombre.toLowerCase()} ${nivelId === n.id ? 'sel' : ''}`}
+                className={`nivel-btn${nivelId === n.id ? ' sel' : ''}`}
+                data-nivel-id={n.id}
                 onClick={() => setNivelId(nivelId === n.id ? '' : n.id)}
               >
                 {n.nombre}

@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Search } from 'lucide-react'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { getSocios } from '../../services/adminApi'
 import './Admin.css'
 
@@ -13,19 +15,6 @@ const FILTROS = [
 function iniciales(nombre) {
   return (nombre ?? '?')
     .split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-}
-
-function BadgeNivel({ nivel }) {
-  const nombre = nivel ?? 'Sin nivel'
-  const map = {
-    'Rojo':         'rojo',
-    'Intermedio':   'intermedio',
-    'Azul':         'azul',
-    'Principiante': 'sin-nivel',
-    'Avanzado':     'azul',
-  }
-  const cls = map[nombre] ?? 'sin-nivel'
-  return <span className={`badge-nivel ${cls}`}>{nombre}</span>
 }
 
 function BadgeCuota({ alDia }) {
@@ -70,7 +59,7 @@ export default function GestionSocios() {
       <div className="admin-body">
         {/* Búsqueda */}
         <div className="admin-search">
-          <span className="admin-search-icon">🔍</span>
+          <Search size={16} className="admin-search-icon" />
           <input
             className="form-input"
             placeholder="Buscar socio..."
@@ -114,7 +103,7 @@ export default function GestionSocios() {
                   <p className="socio-email">{s.email}</p>
                 </div>
                 <div className="socio-badges">
-                  <BadgeNivel nivel={s.niveles?.nombre} />
+                  <CategoriaBadge nivelId={s.nivel_id ?? null} size="sm" />
                   <BadgeCuota alDia={s.cuota_al_dia} />
                 </div>
               </div>

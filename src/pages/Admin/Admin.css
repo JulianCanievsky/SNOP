@@ -413,6 +413,7 @@
   border-radius: var(--r-s);
   border: 2px solid var(--admin-border);
   background: var(--admin-white);
+  color: var(--admin-muted);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -420,10 +421,11 @@
   font-family: inherit;
 }
 
-.nivel-btn.rojo.sel        { background: #fee2e2; border-color: #ef4444; color: #b91c1c; }
-.nivel-btn.intermedio.sel  { background: #fef9c3; border-color: #f59e0b; color: #92400e; }
-.nivel-btn.azul.sel        { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; }
-.nivel-btn:not(.sel)       { color: var(--admin-muted); }
+.nivel-btn.sel {
+  background: var(--admin-primary-l);
+  border-color: var(--admin-primary);
+  color: var(--admin-primary);
+}
 
 /* ── CHECKBOX NIVELES ── */
 .checkboxes-row {
@@ -792,7 +794,8 @@
 }
 
 [data-theme="dark"] .socio-row:hover      { background: #22263a; }
-[data-theme="dark"] .nivel-btn:not(.sel)  { color: var(--admin-muted); background: var(--admin-white); border-color: var(--admin-border); }
+[data-theme="dark"] .nivel-btn           { color: var(--admin-muted); background: var(--admin-white); border-color: var(--admin-border); }
+[data-theme="dark"] .nivel-btn.sel       { background: var(--admin-primary-l); border-color: var(--admin-primary); color: var(--admin-primary); }
 [data-theme="dark"] .filtro-pill          { background: var(--admin-white); color: var(--admin-muted); border-color: var(--admin-border); }
 [data-theme="dark"] .radio-option         { background: var(--admin-white); color: var(--admin-text); }
 [data-theme="dark"] .radio-option.sel     { background: var(--admin-primary-l); color: var(--admin-primary); }

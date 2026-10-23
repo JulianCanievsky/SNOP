@@ -5,6 +5,7 @@ import { usePerfil } from '../../hooks/usePerfil'
 import { getMiBono } from '../../services/bonosApi'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
+import { Clock, MapPin, User, Sun, Moon } from 'lucide-react'
 import './Perfil.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -32,7 +33,7 @@ function TurnoCardPerfil({ inscripcion, pasado }) {
         </span>
       </div>
       <div className="turno-card-perfil-horario">
-        <span className="turno-card-perfil-icono">⏰</span>
+        <Clock size={15} strokeWidth={1.8} className="turno-card-perfil-icono" />
         <div>
           <strong>{horaInicio}{horaFin ? ` — ${horaFin} hs` : ' hs'}</strong>
           {turno.duracion_min && <p>{turno.duracion_min} min</p>}
@@ -40,9 +41,15 @@ function TurnoCardPerfil({ inscripcion, pasado }) {
       </div>
       {(turno.sedes?.nombre || turno.mesas?.numero || turno.users?.nombre) && (
         <div className="turno-card-perfil-info">
-          {turno.users?.nombre && <span>👨‍🏫 {turno.users.nombre}</span>}
-          {turno.sedes?.nombre && <span>📍 {turno.sedes.nombre}</span>}
-          {turno.mesas?.numero && <span>🏓 Mesa {turno.mesas.numero}</span>}
+          {turno.users?.nombre && (
+            <span><User size={12} strokeWidth={1.8} /> {turno.users.nombre}</span>
+          )}
+          {turno.sedes?.nombre && (
+            <span><MapPin size={12} strokeWidth={1.8} /> {turno.sedes.nombre}</span>
+          )}
+          {turno.mesas?.numero && (
+            <span>Mesa {turno.mesas.numero}</span>
+          )}
         </div>
       )}
     </div>
@@ -226,7 +233,10 @@ const Perfil = () => {
         onClick={toggleTheme}
         aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
       >
-        {dark ? '☀️ Modo claro' : '🌙 Modo oscuro'}
+        {dark
+          ? <><Sun size={16} strokeWidth={1.8} style={{ verticalAlign: 'middle', marginRight: 6 }} />Modo claro</>
+          : <><Moon size={16} strokeWidth={1.8} style={{ verticalAlign: 'middle', marginRight: 6 }} />Modo oscuro</>
+        }
       </button>
 
       <button className="btn-logout" onClick={logout}>

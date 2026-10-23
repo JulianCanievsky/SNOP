@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { Calendar, Gamepad2, Users, Trophy, User, Bell, Search, BookOpen } from 'lucide-react'
+import { Calendar, Gamepad2, Users, Trophy, User, Bell, Search, BookOpen, Dumbbell, Target } from 'lucide-react'
 import api from '../../lib/apiClient.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import { getNoLeidas } from '../../services/notificacionesApi.js'
@@ -28,19 +28,20 @@ const TIPO_LABEL = {
   torneo:            'Torneo',
 }
 
-const TIPO_EMOJI = {
-  turno_fijo:       '🏓',
-  clase_particular: '👥',
-  juego_libre:      '🎯',
-  torneo:           '🏆',
+// Íconos lucide por tipo (reemplaza emojis)
+const TIPO_ICON = {
+  turno_fijo:       Dumbbell,
+  clase_particular: Users,
+  juego_libre:      Target,
+  torneo:           Trophy,
 }
 
-// Colores del badge por tipo
-const TIPO_BADGE_STYLE = {
-  turno_fijo:       { background: '#e8f5e9', color: '#2e7d32' },
-  clase_particular: { background: '#e8f0fe', color: '#1565c0' },
-  juego_libre:      { background: '#fff8e1', color: '#e65100' },
-  torneo:           { background: '#fce4ec', color: '#c62828' },
+// Colores del badge por tipo (usando variables CSS en lugar de hex sueltos)
+const TIPO_BADGE_CLASS = {
+  turno_fijo:       'badge-tipo-fijo',
+  clase_particular: 'badge-tipo-clase',
+  juego_libre:      'badge-tipo-juego',
+  torneo:           'badge-tipo-torneo',
 }
 
 export default function Inicio() {
@@ -204,10 +205,10 @@ export default function Inicio() {
           ) : (
             <>
               {proximasActividades.map((ev, i) => {
-                const tipo  = ev.tipo
-                const label = TIPO_LABEL[tipo] ?? 'Actividad'
-                const emoji = TIPO_EMOJI[tipo] ?? '📌'
-                const badgeStyle = TIPO_BADGE_STYLE[tipo] ?? { background: '#e8f5e9', color: '#2e7d32' }
+                const tipo      = ev.tipo
+                const label     = TIPO_LABEL[tipo] ?? 'Actividad'
+                const TipoIcon  = TIPO_ICON[tipo] ?? Dumbbell
+                const badgeClass = TIPO_BADGE_CLASS[tipo] ?? 'badge-tipo-fijo'
 
                 return (
                   <div
@@ -220,7 +221,8 @@ export default function Inicio() {
                   >
                     <div className="proximo-turno-info">
                       <span className="proximo-turno-label">
-                        {i === 0 ? 'Próxima actividad' : 'Siguiente'} · {emoji} {label}
+                        <TipoIcon size={13} strokeWidth={2} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                        {i === 0 ? 'Próxima actividad' : 'Siguiente'} · {label}
                       </span>
                       <span className="proximo-turno-fecha">{formatFecha(ev.fecha_inicio)}</span>
                       <span className="proximo-turno-hora">
@@ -228,7 +230,7 @@ export default function Inicio() {
                         {ev.sede ? ` · ${ev.sede}` : ''}
                       </span>
                     </div>
-                    <span className="badge-confirmado" style={badgeStyle}>
+                    <span className={`badge-confirmado ${badgeClass}`}>
                       {ev.estado === 'inscripto' ? 'Inscripto' : 'Confirmado'}
                     </span>
                   </div>
@@ -239,7 +241,10 @@ export default function Inicio() {
               {mostrarTarjetaJL && (
                 <div className="proximo-turno turno-jl-disponible">
                   <div className="proximo-turno-info">
-                    <span className="proximo-turno-label">🎯 Juego libre disponible</span>
+                    <span className="proximo-turno-label">
+                      <Target size={13} strokeWidth={2} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                      Juego libre disponible
+                    </span>
                     <span className="proximo-turno-fecha">{formatFecha(juegoLibreDisponible.fecha_inicio)}</span>
                     <span className="proximo-turno-hora">
                       {formatHora(juegoLibreDisponible.fecha_inicio, juegoLibreDisponible.fecha_fin)}

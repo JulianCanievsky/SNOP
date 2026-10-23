@@ -58,7 +58,7 @@ const ConfirmarClase = ({ entrenador, turno, onVolver, onConfirmar, enviando }) 
         <div className="turno-resumen-card">
           <p className="turno-resumen-titulo">Turno seleccionado</p>
           <p className="turno-resumen-detalle">
-            {formatearFechaCompleta(turno.fecha_inicio)} · Sede {turno.sede || 'Palermo'}
+            {formatearFechaCompleta(turno.fecha_inicio)}{turno.sede ? ` · ${turno.sede}` : ''}
           </p>
           <p className="turno-resumen-tipo">
             Clase particular · {turno.duracion_min} min

@@ -51,11 +51,19 @@ import PerfilPublicoEntrenador from './pages/entrenador/PerfilPublicoEntrenador/
 function RutaProtegida({ children, rolesPermitidos }) {
   const { user, loading } = useAuth()
 
-  if (loading) return null
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        minHeight: '100svh', background: 'var(--color-bg)',
+      }}>
+        <div className="snop-spinner" />
+      </div>
+    )
+  }
   if (!user) return <Navigate to="/login" replace />
 
   if (rolesPermitidos && !rolesPermitidos.includes(user.tipo_usuario_id)) {
-    // Redirige a la pantalla principal del rol real del usuario
     if (user.tipo_usuario_id === 3) return <Navigate to="/admin" replace />
     if (user.tipo_usuario_id === 2) return <Navigate to="/entrenador/inicio" replace />
     return <Navigate to="/inicio" replace />
@@ -118,6 +126,7 @@ function AppRoutes() {
       <Route path="/entrenador/mis-horarios"    element={<RutaProtegida rolesPermitidos={[2]}><MisHorariosEntrenador /></RutaProtegida>} />
       <Route path="/entrenador/solicitudes"     element={<RutaProtegida rolesPermitidos={[2]}><SolicitudesEntrenador /></RutaProtegida>} />
       <Route path="/entrenador/perfil"          element={<RutaProtegida rolesPermitidos={[2]}><PerfilEntrenador /></RutaProtegida>} />
+      <Route path="/entrenador/notificaciones"  element={<RutaProtegida rolesPermitidos={[2]}><Notificaciones /></RutaProtegida>} />
 
       {/* Admin (tipo_usuario_id = 3) */}
       <Route path="/admin"               element={<RutaProtegida rolesPermitidos={[3]}><AdminInicio /></RutaProtegida>} />

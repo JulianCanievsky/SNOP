@@ -39,7 +39,7 @@ export default function CreditosResumen({ compact = false }) {
 
   if (!data) return null
 
-  const { disponibles, usados, vencidos, creditos = [] } = data
+  const { disponibles, usados, vencidos, arrastrados = 0, creditos = [] } = data
 
   // Crédito que vence más pronto
   const proximo = creditos
@@ -92,6 +92,11 @@ export default function CreditosResumen({ compact = false }) {
             <p className={styles.vencimiento}>
               Próximo vencimiento:{' '}
               <strong>{formatFecha(proximo.fecha_vencimiento)}</strong>
+            </p>
+          )}
+          {arrastrados > 0 && (
+            <p className={styles.arrastrado}>
+              {arrastrados} crédito{arrastrados !== 1 ? 's' : ''} arrastrado{arrastrados !== 1 ? 's' : ''} del mes anterior
             </p>
           )}
         </>

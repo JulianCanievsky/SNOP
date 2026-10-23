@@ -60,7 +60,7 @@ function BarraCreditos({ usados, total }) {
 }
 
 // Tarjeta de un bono individual
-function TarjetaBono({ bono, onDesactivar, desactivando }) {
+function TarjetaBono({ bono, onDesactivar, desactivando, confirmandoId, onCancelarConfirm }) {
   const [expandido, setExpandido] = useState(false)
   const tc = TIPO_COLOR[bono.tipo] ?? { bg: '#f3f4f6', color: '#6b7280' }
   const hoy = new Date().toISOString().split('T')[0]
@@ -116,14 +116,36 @@ function TarjetaBono({ bono, onDesactivar, desactivando }) {
         </div>
 
         {bono.activo && !vencido && (
-          <button
-            className="btn-danger"
-            style={{ padding: '5px 10px', fontSize: 11, flexShrink: 0 }}
-            onClick={() => onDesactivar(bono.id)}
-            disabled={desactivando === bono.id}
-          >
-            {desactivando === bono.id ? '...' : 'Desactivar'}
-          </button>
+          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            {confirmandoId === bono.id ? (
+              <>
+                <button
+                  className="btn-danger"
+                  style={{ padding: '5px 10px', fontSize: 11 }}
+                  onClick={() => onDesactivar(bono.id)}
+                  disabled={desactivando === bono.id}
+                >
+                  {desactivando === bono.id ? '...' : '¿Sí, desactivar?'}
+                </button>
+                <button
+                  className="btn-secondary"
+                  style={{ padding: '5px 10px', fontSize: 11, width: 'auto' }}
+                  onClick={onCancelarConfirm}
+                >
+                  No
+                </button>
+              </>
+            ) : (
+              <button
+                className="btn-danger"
+                style={{ padding: '5px 10px', fontSize: 11, flexShrink: 0 }}
+                onClick={() => onDesactivar(bono.id)}
+                disabled={desactivando === bono.id}
+              >
+                Desactivar
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -164,6 +186,8 @@ export default function GestionBonos() {
   const [cargando,    setCargando]    = useState(true)
   const [enviando,    setEnviando]    = useState(false)
   const [desactivando, setDesactivando] = useState(null)
+  // bonoId pendiente de confirmación antes de desactivar (reemplaza window.confirm)
+  const [confirmandoBono, setConfirmandoBono] = useState(null)
   const [exito,       setExito]       = useState('')
   const [error,       setError]       = useState('')
 
@@ -248,7 +272,12 @@ export default function GestionBonos() {
   }
 
   async function handleDesactivar(bonoId) {
-    if (!window.confirm('¿Desactivar este bono?')) return
+    // Primer click: pedir confirmación inline sin window.confirm
+    if (confirmandoBono !== bonoId) {
+      setConfirmandoBono(bonoId)
+      return
+    }
+    setConfirmandoBono(null)
     setDesactivando(bonoId)
     try {
       await desactivarBono(bonoId)
@@ -403,6 +432,8 @@ export default function GestionBonos() {
                   bono={b}
                   onDesactivar={handleDesactivar}
                   desactivando={desactivando}
+                  confirmandoId={confirmandoBono}
+                  onCancelarConfirm={() => setConfirmandoBono(null)}
                 />
               ))
             )}
@@ -417,6 +448,8 @@ export default function GestionBonos() {
                     bono={b}
                     onDesactivar={handleDesactivar}
                     desactivando={desactivando}
+                    confirmandoId={confirmandoBono}
+                    onCancelarConfirm={() => setConfirmandoBono(null)}
                   />
                 ))}
               </>

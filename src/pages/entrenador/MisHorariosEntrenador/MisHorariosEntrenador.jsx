@@ -3,6 +3,7 @@ import { useMisHorarios } from '../../../hooks/useEntrenador'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
 import { ToastContainer } from '../../../components/ui/Toast'
 import { useToast } from '../../../hooks/useToast'
+import { MapPin, CalendarDays } from 'lucide-react'
 import './MisHorariosEntrenador.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -75,7 +76,9 @@ export default function MisHorariosEntrenador() {
   const [duracion, setDuracion] = useState(60)
   const [exito,    setExito]    = useState(false)
   const [errMsg,   setErrMsg]   = useState('')
-  const [cancelando, setCancelando] = useState(null)
+  const [cancelando,    setCancelando]    = useState(null)
+  // ID del slot pendiente de confirmación (reemplaza window.confirm)
+  const [confirmandoId, setConfirmandoId] = useState(null)
 
   const horariosPorDia = agruparPorDia(horarios)
   const celdas         = useMemo(() => generarCalendario(anio, mes), [anio, mes])
@@ -111,7 +114,13 @@ export default function MisHorariosEntrenador() {
   }
 
   const handleCancelar = async (turnoId) => {
-    if (!window.confirm('¿Cancelar este horario?')) return
+    // Primer click: pedir confirmación sin window.confirm
+    if (confirmandoId !== turnoId) {
+      setConfirmandoId(turnoId)
+      return
+    }
+    // Segundo click (confirmado)
+    setConfirmandoId(null)
     try {
       setCancelando(turnoId)
       await cancelarHorario(turnoId)
@@ -160,17 +169,42 @@ export default function MisHorariosEntrenador() {
                               {s.duracion_min && <span className="slot-duracion"> · {s.duracion_min}min</span>}
                             </span>
                             {s.sedes?.nombre && (
-                              <span className="slot-sede">📍 {s.sedes.nombre}</span>
+                              <span className="slot-sede">
+                                <MapPin size={11} strokeWidth={1.8} />
+                                {s.sedes.nombre}
+                              </span>
                             )}
                           </div>
-                          <button
-                            className="btn-cancelar-slot"
-                            disabled={cancelando === s.id}
-                            onClick={() => handleCancelar(s.id)}
-                            title="Cancelar horario"
-                          >
-                            {cancelando === s.id ? '...' : '✕'}
-                          </button>
+                          <div className="slot-acciones">
+                            {confirmandoId === s.id ? (
+                              <>
+                                <button
+                                  className="btn-cancelar-slot btn-cancelar-slot--confirmar"
+                                  disabled={cancelando === s.id}
+                                  onClick={() => handleCancelar(s.id)}
+                                  title="Confirmar cancelación"
+                                >
+                                  {cancelando === s.id ? '...' : '¿Sí?'}
+                                </button>
+                                <button
+                                  className="btn-cancelar-slot"
+                                  onClick={() => setConfirmandoId(null)}
+                                  title="No cancelar"
+                                >
+                                  No
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                className="btn-cancelar-slot"
+                                disabled={cancelando === s.id}
+                                onClick={() => handleCancelar(s.id)}
+                                title="Cancelar horario"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )
                     })}
@@ -228,7 +262,10 @@ export default function MisHorariosEntrenador() {
 
             {/* Fecha seleccionada */}
             {labelFechaSel && (
-              <p className="cal-fecha-sel-label">📅 {labelFechaSel}</p>
+              <p className="cal-fecha-sel-label">
+                <CalendarDays size={13} strokeWidth={1.8} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                {labelFechaSel}
+              </p>
             )}
           </div>
 

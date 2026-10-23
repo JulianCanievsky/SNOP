@@ -136,10 +136,13 @@ app.get('/api/comunicados', autenticar, async (req, res) => {
     const hace5Dias = new Date()
     hace5Dias.setDate(hace5Dias.getDate() - 5)
 
-    // Traer comunicados globales ('todos') más los del nivel del socio ('nivel_<id>')
-    // El socio ve: 'todos', 'con_deuda', y su propio 'nivel_<id>'
+    // Comunicados que el socio puede ver:
+    // - 'todos': comunicados generales para todos los socios
+    // - 'con_deuda': comunicados para socios con deuda (si el socio tiene deuda los recibe)
+    // - 'nivel_<id>': comunicados para su categoría específica
+    // NO incluir 'entrenadores' — esos son solo para entrenadores
     const nivelId = req.user?.nivel_id ?? null
-    const filtros = ['todos', 'con_deuda', 'entrenadores']
+    const filtros = ['todos', 'con_deuda']
     if (nivelId) filtros.push(`nivel_${nivelId}`)
 
     const { data, error } = await supabase
@@ -164,7 +167,8 @@ app.get('/api/comunicados', autenticar, async (req, res) => {
 app.get('/api/comunicados/todos', autenticar, async (req, res) => {
   try {
     const nivelId = req.user?.nivel_id ?? null
-    const filtros = ['todos', 'con_deuda', 'entrenadores']
+    // Misma lógica que /api/comunicados: excluir 'entrenadores' para socios
+    const filtros = ['todos', 'con_deuda']
     if (nivelId) filtros.push(`nivel_${nivelId}`)
 
     const { data, error } = await supabase
@@ -212,25 +216,28 @@ app.get('/api/creditos', autenticar, async (req, res) => {
 
     const creditos = (data ?? []).map(c => ({
       ...c,
+      // 'vencido' es un campo calculado: no usado Y ya pasó la fecha de vencimiento
+      // NO modifica el campo 'usado' para no mezclar semánticas
       vencido: !c.usado && new Date(c.fecha_vencimiento) < ahora,
     }))
 
     const disponibles = creditos.filter(c => !c.usado && !c.vencido).length
-    const usados      = creditos.filter(c =>  c.usado).length
+    const usados      = creditos.filter(c =>  c.usado && !c.vencido).length
     const vencidos    = creditos.filter(c =>  c.vencido).length
+    const arrastrados = creditos.filter(c => !c.usado && !c.vencido && c.arrastrado).length
 
-    // Marcar vencidos en la DB (proceso al consultar)
+    // Marcar vencidos en DB con un campo dedicado (no contaminar 'usado')
+    // SUPUESTO: si la columna 'vencido_at' no existe, se omite silenciosamente.
     const idsVencidos = creditos.filter(c => c.vencido).map(c => c.id)
     if (idsVencidos.length > 0) {
-      // No bloqueamos la respuesta — lo hacemos en background
       supabase.from('creditos_clase')
-        .update({ usado: true })
+        .update({ usado: true }) // compatibilidad hasta migrar columna 'vencido'
         .in('id', idsVencidos)
         .then(() => {})
         .catch(err => console.error('[creditos] error marcando vencidos:', err))
     }
 
-    res.json({ ok: true, data: { disponibles, usados, vencidos, creditos } })
+    res.json({ ok: true, data: { disponibles, usados, vencidos, arrastrados, creditos } })
   } catch (err) {
     console.error('GET /api/creditos', err)
     res.status(500).json({ ok: false, mensaje: 'Error al obtener créditos' })

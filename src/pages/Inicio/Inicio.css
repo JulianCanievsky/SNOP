@@ -118,15 +118,21 @@
 .proximo-turno-texto { font-size: var(--font-size-sm); font-weight: 500; color: var(--color-text-subtle); }
 
 .badge-confirmado {
-  background: var(--color-success-bg);
-  color: var(--color-success);
   font-size: 12px;
   font-weight: 600;
   padding: 4px 12px;
   border-radius: var(--radius-pill);
   white-space: nowrap;
   flex-shrink: 0;
+  /* Default — sobreescrito por variante de tipo */
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
+/* Variantes por tipo de actividad — reemplaza los inline style hardcodeados */
+.badge-tipo-fijo   { background: var(--color-success-bg);  color: var(--color-success); }
+.badge-tipo-clase  { background: var(--color-primary-subtle, #e8f0fe); color: var(--color-primary-dark); }
+.badge-tipo-juego  { background: var(--color-warning-bg);  color: var(--color-warning); }
+.badge-tipo-torneo { background: var(--color-danger-bg);   color: var(--color-danger); }
 
 /* ── SECCIONES ── */
 .seccion        { padding: var(--space-5) var(--space-4) 0; }

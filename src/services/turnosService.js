@@ -1,5 +1,13 @@
 import supabase from "../config/db.js";
-import { crearNotificacion, enviarEmail } from "../lib/notificaciones.js";
+import { crearNotificacion, enviarEmail, emailListaEsperaPromovido } from "../lib/notificaciones.js";
+import {
+  parseFechaAR,
+  horasHasta,
+  estaEnUltimaSemana,
+  finDeMesAR,
+  finDeProximoMesAR,
+  periodoMesAR,
+} from "../lib/fecha.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 export async function getTurnosBySocio(socioId) {
@@ -150,32 +158,19 @@ async function generarCreditoSiCorresponde(turnoId, socioId, turno) {
   const horasAnticipacion = parseInt(configMap["horas_anticipacion_cancelacion"] ?? "24", 10);
   const diasUltimaSemana  = parseInt(configMap["dias_ultima_semana_mes"]         ?? "7",  10);
 
-  const ahora       = new Date();
-  const fechaTurno  = new Date(turno.fecha_inicio);
-  const diffHoras   = (fechaTurno - ahora) / (1000 * 60 * 60);
-
-  // No genera crédito si cancela tarde
+  // Usar fecha.js para cálculos con TZ correcto
+  const diffHoras = horasHasta(turno.fecha_inicio);
   if (diffHoras < horasAnticipacion) return;
 
-  // Calcular mes_periodo con lógica de arrastre
-  const anio        = fechaTurno.getFullYear();
-  const mes         = fechaTurno.getMonth(); // 0-indexed
-  const diaTurno    = fechaTurno.getDate();
-  const ultimoDia   = new Date(anio, mes + 1, 0).getDate(); // último día del mes
-  const esUltimaSemana = (ultimoDia - diaTurno) < diasUltimaSemana;
+  // Periodo y arrastre usando fecha.js
+  const esUltimaSem = estaEnUltimaSemana(turno.fecha_inicio, diasUltimaSemana);
+  const mesPeriodo  = esUltimaSem
+    ? periodoMesAR(new Date(parseFechaAR(turno.fecha_inicio).getTime() + 32 * 24 * 60 * 60 * 1000).toISOString())
+    : periodoMesAR(turno.fecha_inicio);
 
-  let mesPeriodo;
-  if (esUltimaSemana) {
-    // Arrastrar al mes siguiente
-    const fechaSiguiente = new Date(anio, mes + 1, 1);
-    mesPeriodo = `${fechaSiguiente.getFullYear()}-${String(fechaSiguiente.getMonth() + 1).padStart(2, "0")}`;
-  } else {
-    mesPeriodo = `${anio}-${String(mes + 1).padStart(2, "0")}`;
-  }
-
-  // Calcular fecha de vencimiento = último día del mes de mesPeriodo
-  const [anioP, mesP] = mesPeriodo.split("-").map(Number);
-  const fechaVencimiento = new Date(anioP, mesP, 0, 23, 59, 59); // día 0 del mes siguiente = último del actual
+  const fechaVencimiento = esUltimaSem
+    ? finDeProximoMesAR(turno.fecha_inicio)
+    : finDeMesAR(turno.fecha_inicio);
 
   // Idempotencia: verificar si ya existe crédito para este turno+socio
   const { data: existente } = await supabase
@@ -185,16 +180,17 @@ async function generarCreditoSiCorresponde(turnoId, socioId, turno) {
     .eq("turno_origen_id", turnoId)
     .maybeSingle();
 
-  if (existente) return; // ya generado
+  if (existente) return;
 
   await supabase.from("creditos_clase").insert({
-    user_id:          socioId,
-    turno_origen_id:  turnoId,
-    mes_periodo:      mesPeriodo,
-    usado:            false,
-    turno_usado_id:   null,
-    fecha_generado:   new Date().toISOString(),
-    fecha_vencimiento: fechaVencimiento.toISOString(),
+    user_id:           socioId,
+    turno_origen_id:   turnoId,
+    mes_periodo:       mesPeriodo,
+    usado:             false,
+    arrastrado:        esUltimaSem,
+    turno_usado_id:    null,
+    fecha_generado:    new Date().toISOString(),
+    fecha_vencimiento: fechaVencimiento,
   });
 }
 
@@ -257,8 +253,6 @@ async function notificarLugarDisponible(turno, socioQueCancelo) {
   // Unir ambas listas (lista espera primero — son los más interesados)
   const destinatarios = [...destinatariosEspera, ...destinatariosCancelados];
 
-  const frontendUrl = process.env.FRONTEND_URL || "https://snop-psi.vercel.app";
-
   for (const socio of destinatarios) {
     await crearNotificacion({
       user_id: socio.id,
@@ -268,26 +262,12 @@ async function notificarLugarDisponible(turno, socioQueCancelo) {
       link:    "/mis-clases",
     });
 
-    await enviarEmail({
-      to:      socio.email,
-      subject: "Se liberó un lugar en tu turno — SNOP",
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
-          <h2 style="color:#2563eb;margin:0 0 8px;">🎾 Se liberó un lugar</h2>
-          <p style="color:#555;margin:0 0 16px;">Hola <strong>${socio.nombre}</strong>, se liberó un cupo en el siguiente turno:</p>
-          <div style="background:#eef2ff;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
-            <p style="margin:0 0 4px;font-weight:700;color:#1e293b;">${fechaStr}</p>
-            <p style="margin:0;color:#64748b;font-size:13px;">📍 ${sedeStr}</p>
-          </div>
-          <p style="color:#555;margin:0 0 20px;font-size:14px;">Anotate rápido antes de que se llene.</p>
-          <a href="${frontendUrl}/mis-clases"
-             style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:14px;">
-            Ver mis clases
-          </a>
-          <p style="color:#999;font-size:12px;margin-top:24px;">Si ya no querés recibir estos avisos, podés salir de la lista de espera desde la app.</p>
-        </div>
-      `,
+    const tmpl = emailListaEsperaPromovido({
+      nombre:     socio.nombre,
+      fechaTurno: fechaStr,
+      sede:       sedeStr,
     });
+    await enviarEmail({ to: socio.email, ...tmpl });
   }
 
   if (destinatarios.length > 0) {

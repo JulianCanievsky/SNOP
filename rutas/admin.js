@@ -1,6 +1,7 @@
 import express from 'express'
 import bcrypt from 'bcryptjs'
 import autenticar from '../src/middlewares/autenticar.js'
+import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import { crearNotificacion, enviarEmail, emailSolicitudAceptada, emailSolicitudRechazada } from '../src/lib/notificaciones.js'
 
@@ -8,15 +9,7 @@ const router = express.Router()
 
 const BCRYPT_ROUNDS = 12
 
-// Middleware: solo admins (tipo_usuario_id = 3)
-function soloAdmin(req, res, next) {
-  if (req.userTipo !== 3) {
-    return res.status(403).json({ error: 'Acceso restringido a administradores' })
-  }
-  next()
-}
-
-router.use(autenticar, soloAdmin)
+router.use(autenticar, requireRole(3))
 
 // ─────────────────────────────────────────────
 // STATS — GET /api/admin/stats
@@ -553,17 +546,20 @@ router.get('/solicitudes', async (req, res) => {
 
     const clubId = adminUser?.club_id
 
-    let query = supabase
+    // Si el admin no tiene club_id asignado, no mostrar solicitudes de otros clubes
+    if (!clubId) {
+      return res.status(400).json({ error: 'El administrador no tiene club asignado' })
+    }
+
+    const { data, error } = await supabase
       .from('solicitudes_club')
       .select(`
         id, estado, fecha_solicitud, fecha_resolucion,
         users!solicitudes_club_user_id_fkey ( id, nombre, email, telefono )
       `)
+      .eq('club_id', clubId)
       .order('fecha_solicitud', { ascending: false })
 
-    if (clubId) query = query.eq('club_id', clubId)
-
-    const { data, error } = await query
     if (error) {
       if (error.code === '42P01') return res.json({ data: [] })
       throw error

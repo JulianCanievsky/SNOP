@@ -1,66 +1,56 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
+import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import { crearNotificacion, enviarEmail, emailNuevaSolicitudClase } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
 
-// GET ENTRENADORES
+// GET ENTRENADORES — una sola query con join, elimina N+1
 router.get('/entrenadores', async (req, res) => {
   try {
-    const { data: entrenadores, error } = await supabase
-      .from('users')
-      .select(`
-        id,
-        nombre,
-        foto_url,
-        rating,
-        clases_dadas,
-        tipo_usuario_id,
-        tipo_usuario ( nombre )
-      `)
-      .eq('activo', true)
-      .eq('tipo_usuario_id', 2)
-
-    if (error) throw error
-
-    // Inicio del día de hoy para no excluir turnos de hoy que aún no pasaron
     const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-    const hoy   = new Date(`${hoyAR}T00:00:00-03:00`)
-    const desdeHoy = hoy.toISOString()
+    const desdeHoy = new Date(`${hoyAR}T00:00:00-03:00`).toISOString()
 
-    const entrenadoresConTurnos = await Promise.all(
-      entrenadores.map(async (entrenador) => {
-        const { data: turnos, error: errorTurnos } = await supabase
-          .from('turnos')
-          .select(`
-            id,
-            fecha_inicio,
-            fecha_fin,
-            duracion_min,
-            estado,
-            capacidad_maxima,
-            sede_id,
-            sedes ( nombre ),
-            tipo_turno_id
-          `)
-          .eq('user_id', entrenador.id)
-          .gte('fecha_inicio', desdeHoy)
-          .order('fecha_inicio', { ascending: true })
+    // Query única: entrenadores + turnos + ratings en paralelo
+    const [entrenadoresRes, turnosRes, ratingsRes] = await Promise.all([
+      supabase
+        .from('users')
+        .select('id, nombre, foto_url, rating, clases_dadas, tipo_usuario_id, tipo_usuario(nombre)')
+        .eq('activo', true)
+        .eq('tipo_usuario_id', 2),
+      supabase
+        .from('turnos')
+        .select('id, user_id, fecha_inicio, fecha_fin, duracion_min, estado, sede_id, sedes(nombre)')
+        .eq('tipo_turno_id', 2)  // solo clases particulares
+        .gte('fecha_inicio', desdeHoy)
+        .order('fecha_inicio', { ascending: true }),
+      supabase
+        .from('ratings_entrenador')
+        .select('entrenador_id')
+    ])
 
-        if (errorTurnos) console.log(errorTurnos)
+    if (entrenadoresRes.error) throw entrenadoresRes.error
 
-        // Contar calificaciones reales
-        const { count: totalRatings } = await supabase
-          .from('ratings_entrenador')
-          .select('id', { count: 'exact', head: true })
-          .eq('entrenador_id', entrenador.id)
+    // Agrupar turnos y ratings por entrenador
+    const turnosPorEntrenador = {}
+    for (const t of turnosRes.data ?? []) {
+      if (!turnosPorEntrenador[t.user_id]) turnosPorEntrenador[t.user_id] = []
+      turnosPorEntrenador[t.user_id].push(t)
+    }
+    const ratingsPorEntrenador = {}
+    for (const r of ratingsRes.data ?? []) {
+      ratingsPorEntrenador[r.entrenador_id] = (ratingsPorEntrenador[r.entrenador_id] ?? 0) + 1
+    }
 
+    const resultado = (entrenadoresRes.data ?? [])
+      .map(entrenador => {
+        const turnos = turnosPorEntrenador[entrenador.id] ?? []
         return {
           ...entrenador,
-          tipo_usuario:  entrenador.tipo_usuario?.nombre,
-          total_ratings: totalRatings ?? 0,
-          turnos_disponibles: (turnos || []).map((t) => ({
+          tipo_usuario: entrenador.tipo_usuario?.nombre,
+          total_ratings: ratingsPorEntrenador[entrenador.id] ?? 0,
+          turnos_disponibles: turnos.map(t => ({
             id: t.id,
             fecha_inicio: t.fecha_inicio,
             fecha_fin: t.fecha_fin,
@@ -71,15 +61,12 @@ router.get('/entrenadores', async (req, res) => {
           })),
         }
       })
-    )
+      .filter(e => e.turnos_disponibles.length > 0)
 
-    // Filtra entrenadores que tengan al menos un turno disponible
-    const conTurnos = entrenadoresConTurnos.filter(e => e.turnos_disponibles.length > 0)
-
-    res.json({ data: conTurnos })
+    res.json({ ok: true, data: resultado })
   } catch (error) {
     console.error('ERROR GET /entrenadores', error)
-    res.status(500).json({ error: 'Error al obtener entrenadores' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener entrenadores' })
   }
 })
 

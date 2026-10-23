@@ -31,7 +31,7 @@ const TIPO_CONFIG = {
   },
 }
 
-export default function TurnoCard({ evento, onCancelar }) {
+export default function TurnoCard({ evento, onCancelar, horasAnticipacion = 24 }) {
   const [mostrarModal, setMostrarModal] = useState(false)
   const [cancelando,   setCancelando]   = useState(false)
   const [cancelado,    setCancelado]    = useState(false)
@@ -154,8 +154,8 @@ export default function TurnoCard({ evento, onCancelar }) {
             <p style={{ marginTop: 8, fontSize: 13, color: 'var(--color-text-muted)' }}>
               {evento.tipo !== 'juego_libre' && evento.tipo !== 'torneo' ? (
                 <>
-                  Si cancelás con <strong>24 hs o más de anticipación</strong>, la clase no se pierde y generás un crédito de recupero.{' '}
-                  Si cancelás con menos de 24 hs, la clase se pierde sin crédito.
+                  Si cancelás con <strong>{horasAnticipacion} hs o más de anticipación</strong>, la clase no se pierde y generás un crédito de recupero.{' '}
+                  Si cancelás con menos de {horasAnticipacion} hs, la clase se pierde sin crédito.
                 </>
               ) : (
                 'Esta acción no se puede deshacer.'

@@ -1,33 +1,34 @@
 import express from 'express'
 import ExcelJS from 'exceljs'
 import autenticar from '../src/middlewares/autenticar.js'
+import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 
 const router = express.Router()
 
-// Solo admins
-function soloAdmin(req, res, next) {
-  if (req.userTipo !== 3) {
-    return res.status(403).json({ error: 'Acceso restringido a administradores' })
-  }
-  next()
-}
-
-router.use(autenticar, soloAdmin)
+router.use(autenticar, requireRole(3))
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function parseFiltros(query) {
   const { desde, hasta, sede_id } = query
-  const ahora = new Date()
+  const TZ_OFFSET = '-03:00' // America/Argentina/Buenos_Aires (no tiene DST)
+  const ahoraAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
 
+  // Usar offset explícito -03:00 para que la interpretación sea siempre en ART,
+  // independientemente del TZ del servidor.
   const fechaDesde = desde
-    ? new Date(`${desde}T00:00:00`)
-    : new Date(ahora.getFullYear(), ahora.getMonth(), 1) // primer día del mes
+    ? new Date(`${desde}T00:00:00${TZ_OFFSET}`)
+    : new Date(`${ahoraAR.slice(0, 8)}01T00:00:00${TZ_OFFSET}`) // primer día del mes en ART
 
   const fechaHasta = hasta
-    ? new Date(`${hasta}T23:59:59`)
-    : new Date(ahora.getFullYear(), ahora.getMonth() + 1, 0, 23, 59, 59) // fin del mes
+    ? new Date(`${hasta}T23:59:59${TZ_OFFSET}`)
+    : (() => {
+        // Último día del mes actual en ART
+        const [y, m] = ahoraAR.split('-').map(Number)
+        const ultimoDia = new Date(y, m, 0).getDate()
+        return new Date(`${ahoraAR.slice(0, 8)}${String(ultimoDia).padStart(2, '0')}T23:59:59${TZ_OFFSET}`)
+      })()
 
   return { fechaDesde, fechaHasta, sede_id: sede_id || null }
 }
