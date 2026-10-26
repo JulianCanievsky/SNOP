@@ -1,8 +1,8 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
-import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import { crearNotificacion, enviarEmail, emailNuevaSolicitudClase } from '../src/lib/notificaciones.js'
+import { crearInscripcion } from '../src/services/socioTurnoService.js'
 
 const router = express.Router()
 
@@ -150,48 +150,58 @@ router.post('/solicitar', autenticar, async (req, res) => {
   const socio_id = req.userId
   const { turno_id } = req.body
 
+  if (!turno_id) {
+    return res.status(400).json({ ok: false, mensaje: 'turno_id es requerido' })
+  }
+
   try {
+    // 1. Validar que el turno existe y es de tipo particular (tipo_turno_id = 2)
+    const { data: turnoData, error: errTurno } = await supabase
+      .from('turnos')
+      .select('id, tipo_turno_id, estado, capacidad_maxima, user_id, sedes(nombre), users!turnos_user_id_fkey(id, nombre, email), socio_turno(id, estado, user_id)')
+      .eq('id', turno_id)
+      .single()
 
-    // Verifica si ya solicitó ese turno
-    const { data: existe, error: errorExiste } = await supabase
-      .from('socio_turno')
-      .select('id')
-      .eq('user_id', socio_id)
-      .eq('turno_id', turno_id)
-      .maybeSingle();
-
-    if (errorExiste) throw errorExiste;
-
-    if (existe) {
-      return res.status(409).json({
-        error: 'Ya solicitaste este turno.'
-      });
+    if (errTurno || !turnoData) {
+      return res.status(404).json({ ok: false, mensaje: 'Turno no encontrado' })
+    }
+    if (turnoData.tipo_turno_id !== 2) {
+      return res.status(400).json({ ok: false, mensaje: 'Solo se pueden solicitar clases particulares desde aquí' })
+    }
+    if (!turnoData.estado) {
+      return res.status(400).json({ ok: false, mensaje: 'Este turno no está disponible' })
     }
 
-    // Inserta la solicitud como pendiente
-    const { data, error } = await supabase
-      .from('socio_turno')
-      .insert({
-        turno_id,
-        user_id: socio_id,
-        estado: false,
-        fecha_inscripcion: new Date().toISOString()
-      })
-      .select()
+    // 2. No puede solicitar a sí mismo (si el socio es también entrenador del turno)
+    if (turnoData.user_id === socio_id) {
+      return res.status(400).json({ ok: false, mensaje: 'No podés solicitar tu propio turno' })
+    }
 
-    if (error) throw error
+    // 3. Verificar cupo
+    const inscriptosActivos = (turnoData.socio_turno ?? []).filter(s => s.estado === true).length
+    if (inscriptosActivos >= (turnoData.capacidad_maxima ?? 1)) {
+      return res.status(400).json({ ok: false, mensaje: 'El turno no tiene cupo disponible' })
+    }
 
-    // Notificar al entrenador que tiene una nueva solicitud
+    // 4. Verificar duplicado
+    const yaSolicito = (turnoData.socio_turno ?? []).some(s => s.user_id === socio_id)
+    if (yaSolicito) {
+      return res.status(409).json({ ok: false, mensaje: 'Ya solicitaste este turno' })
+    }
+
+    // 5. Insertar solicitud pendiente (vía socioTurnoService → siempre escribe estado_texto)
+    const inscripcion = await crearInscripcion({
+      turno_id,
+      user_id:       socio_id,
+      estado_texto:  'pendiente',
+    })
+
+    // 6. Notificar al entrenador
     try {
-      const { data: turnoData } = await supabase
-        .from('turnos')
-        .select('fecha_inicio, sedes(nombre), users!turnos_user_id_fkey(id, nombre, email)')
-        .eq('id', turno_id)
-        .single()
       const { data: socioData } = await supabase
         .from('users').select('nombre').eq('id', socio_id).single()
 
-      if (turnoData?.users && socioData) {
+      if (turnoData.users && socioData) {
         const fechaStr = turnoData.fecha_inicio
           ? new Date(turnoData.fecha_inicio).toLocaleString('es-AR', {
               weekday: 'long', day: 'numeric', month: 'long',
@@ -219,19 +229,15 @@ router.post('/solicitar', autenticar, async (req, res) => {
       console.error('[clasesParticulares] notif nueva solicitud:', notifErr)
     }
 
-    res.status(201).json({
-      mensaje: 'Solicitud enviada correctamente.',
-      data
-    })
+    res.status(201).json({ ok: true, mensaje: 'Solicitud enviada correctamente', data: inscripcion })
 
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      error: 'Error al enviar la solicitud.'
-    });
+    console.error('[clasesParticulares POST /solicitar]', error)
+    if (error.code === '23505') {
+      return res.status(409).json({ ok: false, mensaje: 'Ya solicitaste este turno' })
+    }
+    res.status(500).json({ ok: false, mensaje: 'Error al enviar la solicitud' })
   }
-
 });
 
 // DELETE LIBERAR TURNO

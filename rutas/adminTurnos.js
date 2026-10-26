@@ -29,6 +29,7 @@ import {
   emailTurnoQuitado,
 } from '../src/lib/notificaciones.js'
 import { getBonoActivo } from './bonos.js'
+import { crearInscripcion } from '../src/services/socioTurnoService.js'
 
 const router = express.Router()
 
@@ -286,22 +287,19 @@ router.post('/asignar/:socioId', async (req, res) => {
       .maybeSingle()
     if (yaInscripto) return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
 
-    // Insertar inscripción confirmada
-    const { data: inscripcion, error: errIns } = await supabase
-      .from('socio_turno')
-      .insert({
-        user_id:           socioId,
-        turno_id,
-        estado:            true,
-        fecha_inscripcion: new Date().toISOString(),
-      })
-      .select('id, estado, turnos ( id, fecha_inicio, fecha_fin, sedes(nombre), mesas(numero) )')
-      .single()
+    // Insertar inscripción confirmada (vía socioTurnoService → siempre escribe estado_texto)
+    const inscripcion = await crearInscripcion({
+      user_id:      socioId,
+      turno_id,
+      estado_texto: 'activo',
+    })
 
-    if (errIns) {
-      if (errIns.code === '23505') return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
-      throw errIns
-    }
+    // Recargar con joins para la respuesta
+    const { data: inscripcionConJoins } = await supabase
+      .from('socio_turno')
+      .select('id, estado, estado_texto, turnos ( id, fecha_inicio, fecha_fin, sedes(nombre), mesas(numero) )')
+      .eq('id', inscripcion.id)
+      .single()
 
     // ── Descuento de bono: 1 crédito por turno de entrenamiento ──────────────
     let bonoInfo = null
@@ -329,14 +327,14 @@ router.post('/asignar/:socioId', async (req, res) => {
 
     // Notificación + email al socio
     try {
-      const fechaTurnoStr = inscripcion.turnos?.fecha_inicio
-        ? new Date(inscripcion.turnos.fecha_inicio).toLocaleString('es-AR', {
+      const fechaTurnoStr = inscripcionConJoins?.turnos?.fecha_inicio
+        ? new Date(inscripcionConJoins.turnos.fecha_inicio).toLocaleString('es-AR', {
             weekday: 'long', day: 'numeric', month: 'long',
             hour: '2-digit', minute: '2-digit',
             timeZone: 'America/Argentina/Buenos_Aires',
           })
         : 'próximamente'
-      const sedeStr = inscripcion.turnos?.sedes?.nombre ?? turno.sedes?.nombre ?? 'la sede'
+      const sedeStr = inscripcionConJoins?.turnos?.sedes?.nombre ?? turno.sedes?.nombre ?? 'la sede'
       await crearNotificacion({
         user_id: socioId,
         titulo:  'Nuevo turno asignado',
@@ -350,7 +348,7 @@ router.post('/asignar/:socioId', async (req, res) => {
       console.error('[admin/turnos/asignar] notif:', notifErr)
     }
 
-    res.status(201).json({ data: inscripcion, bonoInfo, mensaje: 'Turno asignado correctamente' })
+    res.status(201).json({ data: inscripcionConJoins ?? inscripcion, bonoInfo, mensaje: 'Turno asignado correctamente' })
   } catch (err) {
     console.error('POST /admin/turnos/asignar/:socioId', err)
     res.status(500).json({ error: 'Error al asignar turno' })
@@ -980,16 +978,12 @@ router.post('/:id/socios', async (req, res) => {
       .from('socio_turno').select('id').eq('user_id', socio_id).eq('turno_id', turnoId).maybeSingle()
     if (dup) return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
 
-    const { data, error } = await supabase
-      .from('socio_turno')
-      .insert({ user_id: socio_id, turno_id: turnoId, estado: true, fecha_inscripcion: new Date().toISOString() })
-      .select('id, estado')
-      .single()
-
-    if (error) {
-      if (error.code === '23505') return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
-      throw error
-    }
+    // Insertar inscripción confirmada (vía socioTurnoService → siempre escribe estado_texto)
+    const data = await crearInscripcion({
+      user_id:      socio_id,
+      turno_id:     turnoId,
+      estado_texto: 'activo',
+    })
 
     // ── Descuento de crédito del bono activo (si tiene uno) ──────────────────
     let bonoInfo = null

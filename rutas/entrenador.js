@@ -2,6 +2,7 @@ import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import { crearNotificacion, enviarEmail, emailClaseConfirmada, emailClaseRechazada } from '../src/lib/notificaciones.js'
+import { aprobarInscripcionPorId } from '../src/services/socioTurnoService.js'
 
 const router = express.Router()
 
@@ -569,12 +570,7 @@ router.patch('/solicitudes/:solicitudId/confirmar', async (req, res) => {
       return res.status(403).json({ ok: false, mensaje: 'Sin permiso' })
     }
 
-    const { error } = await supabase
-      .from('socio_turno')
-      .update({ estado: true })
-      .eq('id', solicitudId)
-
-    if (error) throw error
+    await aprobarInscripcionPorId({ socioTurnoId: solicitudId })
 
     // ── Descuento de crédito de recupero disponible ──────────────────────────
     try {

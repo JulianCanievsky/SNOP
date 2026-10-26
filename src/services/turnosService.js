@@ -8,6 +8,7 @@ import {
   finDeProximoMesAR,
   periodoMesAR,
 } from "../lib/fecha.js";
+import { crearInscripcion, actualizarEstado } from "./socioTurnoService.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 export async function getTurnosBySocio(socioId) {
@@ -107,17 +108,39 @@ export async function cancelarTurno(turnoId, socioId) {
     ? inscriptosAntes >= (turno.capacidad_maxima ?? 0)
     : false;
 
-  // 2. Cancelar la inscripción
+  // 2. Cancelar la inscripción usando el servicio centralizado
   const { data, error } = await supabase
     .from("socio_turno")
-    .update({ estado: false })
+    .update({
+      estado:       false,
+      estado_texto: 'cancelado_a_tiempo', // se corrige abajo si no aplica anticipación
+    })
     .eq("turno_id", turnoId)
     .eq("user_id", socioId)
     .select();
 
   if (error) throw error;
 
-  // 3. Generar crédito de recupero si cancela con ≥ N horas de anticipación
+  // 3. Determinar estado_texto correcto según anticipación y actualizar
+  try {
+    const diffHoras = horasHasta(turno?.fecha_inicio ?? '');
+    const { data: config } = await supabase
+      .from("configuracion_club")
+      .select("clave, valor")
+      .eq("club_id", 1)
+      .in("clave", ["horas_anticipacion_cancelacion"]);
+    const configMap = Object.fromEntries((config ?? []).map(c => [c.clave, c.valor]));
+    const horasAnticipacion = parseInt(configMap["horas_anticipacion_cancelacion"] ?? "24", 10);
+    const estadoTextoFinal = diffHoras >= horasAnticipacion ? 'cancelado_a_tiempo' : 'cancelado_tarde';
+
+    await supabase
+      .from("socio_turno")
+      .update({ estado_texto: estadoTextoFinal })
+      .eq("turno_id", turnoId)
+      .eq("user_id", socioId);
+  } catch { /* no crítico — el DEFAULT ya está seteado */ }
+
+  // 4. Generar crédito de recupero si cancela con ≥ N horas de anticipación
   try {
     await generarCreditoSiCorresponde(turnoId, socioId, turno);
   } catch (creditoErr) {
@@ -323,16 +346,9 @@ export async function reconfirmarTurno(turnoId, socioId) {
     }
   }
 
-  // 4. Reactivar la inscripción
-  const { data, error } = await supabase
-    .from("socio_turno")
-    .update({ estado: true })
-    .eq("turno_id", turnoId)
-    .eq("user_id", socioId)
-    .select();
-
-  if (error) throw error;
-  return data;
+  // 4. Reactivar la inscripción (vía socioTurnoService → mantiene estado_texto sincronizado)
+  const data = await actualizarEstado({ turno_id: turnoId, user_id: socioId, estado_texto: 'activo' });
+  return [data];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -374,11 +390,12 @@ export async function unirseLista(turnoId, socioId) {
         (s) => s.user_id === socioId && s.estado === false
       );
       if (yaEnSocioTurno) throw new Error("Ya estás en la lista de espera de este turno");
-      const { error: errInsert } = await supabase
-        .from("socio_turno")
-        .insert({ turno_id: turnoId, user_id: socioId, estado: false, fecha_inscripcion: new Date().toISOString() });
-      if (errInsert) throw errInsert;
-      return { turno_id: turnoId, user_id: socioId, modo: "socio_turno" };
+      const inscripcionFallback = await crearInscripcion({
+        turno_id: turnoId,
+        user_id:  socioId,
+        estado_texto: 'pendiente',
+      });
+      return { ...inscripcionFallback, modo: "socio_turno" };
     }
     throw errLista;
   }
@@ -475,17 +492,14 @@ export async function solicitarTurno(turnoId, socioId) {
     }
   }
 
-  // 5. Insertar solicitud pendiente
-  const { data, error } = await supabase
-    .from("socio_turno")
-    .insert({ turno_id: turnoId, user_id: socioId, estado: false, fecha_inscripcion: new Date().toISOString() })
-    .select("id, estado, fecha_inscripcion")
-    .single();
+  // 5. Insertar solicitud pendiente (vía socioTurnoService → siempre escribe estado_texto)
+  const data = await crearInscripcion({
+    turno_id: turnoId,
+    user_id:  socioId,
+    estado_texto: 'pendiente',
+  });
 
-  if (error) {
-    if (error.code === "23505") throw new Error("Ya tenés una solicitud para este turno");
-    throw error;
-  }
+  if (!data) throw new Error("Error al crear inscripción");
 
   // 6. Notificar al entrenador del turno
   try {
