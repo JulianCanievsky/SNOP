@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Clock } from 'lucide-react'
 import { useJuegoLibre } from './useJuegoLibre'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import DetalleJuegoLibre from './DetalleJuegoLibre'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import { getSedesPublicas } from '../../services/adminApi'
@@ -123,7 +124,7 @@ const JuegoLibre = () => {
       setEventoSeleccionado(null)
       await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha })
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al inscribirse', 'error')
+      showToast(obtenerMensajeError(err, 'Error al inscribirse'), 'error')
     } finally {
       setProcesando(false)
     }
@@ -137,7 +138,7 @@ const JuegoLibre = () => {
       setEventoSeleccionado(null)
       await cargarEventos({ sede_id: filtroSede, fecha: filtroFecha })
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al cancelar', 'error')
+      showToast(obtenerMensajeError(err, 'Error al cancelar'), 'error')
     } finally {
       setProcesando(false)
     }

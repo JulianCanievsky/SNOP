@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import {
   getSocio,
   editarSocio,
@@ -57,7 +58,7 @@ export default function DetalleSocio() {
         setNivelId(usuario.nivel_id ?? '')
         setCuota(usuario.cuota_al_dia ?? true)
       })
-      .catch(err => setError(err.response?.data?.error || 'Error al cargar socio'))
+      .catch(err => setError(obtenerMensajeError(err, 'Error al cargar socio')))
       .finally(() => setCargando(false))
   }, [id])
 
@@ -70,7 +71,7 @@ export default function DetalleSocio() {
       setExito('Cambios guardados correctamente')
       setTimeout(() => setExito(''), 3000)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al guardar')
+      setError(obtenerMensajeError(err, 'Error al guardar'))
     } finally {
       setGuardando(false)
     }
@@ -89,7 +90,7 @@ export default function DetalleSocio() {
       setExito('Turno asignado correctamente')
       setTimeout(() => setExito(''), 3000)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al asignar turno')
+      setError(obtenerMensajeError(err, 'Error al asignar turno'))
     } finally {
       setAsignando(false)
     }
@@ -104,7 +105,7 @@ export default function DetalleSocio() {
       const nuevosDisp = await getTurnosDisponibles()
       setTurnosDisp(nuevosDisp ?? [])
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al quitar turno')
+      setError(obtenerMensajeError(err, 'Error al quitar turno'))
     } finally {
       setQuitando(null)
     }

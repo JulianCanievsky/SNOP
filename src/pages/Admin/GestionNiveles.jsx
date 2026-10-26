@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSocios, editarSocio, getNivelesStats, getNiveles } from '../../services/adminApi'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
@@ -45,7 +46,7 @@ export default function GestionNiveles() {
           : s
       ))
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al cambiar nivel', 'error')
+      showToast(obtenerMensajeError(err, 'Error al cambiar nivel'), 'error')
     } finally {
       setEditando(null)
     }

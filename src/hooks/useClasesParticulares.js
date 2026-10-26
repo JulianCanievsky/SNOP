@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../lib/apiClient.js'
+import { obtenerMensajeError } from '../lib/errores.js'
 
 export const useClasesParticulares = () => {
   const [entrenadores, setEntrenadores] = useState([])
@@ -16,7 +17,7 @@ export const useClasesParticulares = () => {
       setEntrenadores(data.data || [])
     } catch (err) {
       console.error(err)
-      setError(err.response?.data?.error || 'Error al cargar entrenadores')
+      setError(obtenerMensajeError(err, 'Error al cargar entrenadores'))
     } finally {
       setCargando(false)
     }

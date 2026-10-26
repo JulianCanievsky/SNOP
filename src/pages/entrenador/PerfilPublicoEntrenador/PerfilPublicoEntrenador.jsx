@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../../../lib/apiClient.js'
+import { obtenerMensajeError } from '../../../lib/errores.js'
 import BottomNav from '../../../components/BottomNav/BottomNav'
 import './PerfilPublicoEntrenador.css'
 
@@ -62,7 +63,7 @@ export default function PerfilPublicoEntrenador() {
       setEntrenador(entRes.data.data)
       setRatingDetalle(ratingRes.data.data)
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudo cargar el perfil del entrenador')
+      setError(obtenerMensajeError(err, 'No se pudo cargar el perfil del entrenador'))
     } finally {
       setCargando(false)
     }

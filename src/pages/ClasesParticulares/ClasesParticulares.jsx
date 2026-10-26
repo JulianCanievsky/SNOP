@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useClasesParticulares } from '../../hooks/useClasesParticulares'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import ConfirmarClase from '../../components/TurnoCard/ConfirmarClase'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
@@ -149,7 +150,7 @@ const ClasesParticulares = () => {
       await cargarEntrenadores()
       await obtenerSolicitudes()
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al enviar la solicitud', 'error')
+      showToast(obtenerMensajeError(err, 'Error al enviar la solicitud'), 'error')
     } finally {
       setEnviando(false)
     }

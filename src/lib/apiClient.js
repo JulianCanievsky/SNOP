@@ -31,10 +31,12 @@ api.interceptors.request.use((config) => {
 })
 
 // Interceptor de respuesta: si el servidor devuelve 401 limpia la sesión
+// EXCEPTO cuando el 401 viene del endpoint de login (evita redirigir al usuario que tipea mal la contraseña)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const esLogin = error.config?.url?.includes('/auth/login')
+    if (error.response?.status === 401 && !esLogin) {
       // Token expirado o inválido — limpiar sesión sin ciclo de redirección
       localStorage.removeItem('snop_token')
       localStorage.removeItem('snop_user')

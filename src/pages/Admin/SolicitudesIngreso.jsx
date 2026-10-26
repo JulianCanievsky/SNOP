@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSolicitudes, aceptarSolicitud, rechazarSolicitud } from '../../services/adminApi'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import './Admin.css'
 
 const ESTADO_STYLE = {
@@ -55,7 +56,7 @@ export default function SolicitudesIngreso() {
       ))
       mostrar('Solicitud aceptada. El socio ya puede iniciar sesión.')
     } catch (err) {
-      mostrar(err.response?.data?.error || 'Error al aceptar', true)
+      mostrar(obtenerMensajeError(err, 'Error al aceptar'), true)
     } finally {
       setProcesando(null)
     }
@@ -70,7 +71,7 @@ export default function SolicitudesIngreso() {
       ))
       mostrar('Solicitud rechazada.')
     } catch (err) {
-      mostrar(err.response?.data?.error || 'Error al rechazar', true)
+      mostrar(obtenerMensajeError(err, 'Error al rechazar'), true)
     } finally {
       setProcesando(null)
     }

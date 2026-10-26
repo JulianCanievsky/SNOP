@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { crearSocio, getNiveles } from '../../services/adminApi'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import './Admin.css'
 
 export default function AgregarSocio() {
@@ -48,7 +49,7 @@ export default function AgregarSocio() {
       setExito(true)
       setTimeout(() => navigate('/admin/socios'), 1800)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear socio')
+      setError(obtenerMensajeError(err, 'Error al crear socio'))
     } finally {
       setEnviando(false)
     }

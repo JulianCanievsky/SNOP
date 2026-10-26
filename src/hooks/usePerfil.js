@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../lib/apiClient.js'
+import { obtenerMensajeError } from '../lib/errores.js'
 
 export const usePerfil = () => {
   const [perfil, setPerfil] = useState(null)
@@ -14,7 +15,7 @@ export const usePerfil = () => {
       setPerfil(data.data)
     } catch (err) {
       console.error(err)
-      setError(err.response?.data?.error || 'Error al cargar el perfil')
+      setError(obtenerMensajeError(err, 'Error al cargar el perfil'))
     } finally {
       setCargando(false)
     }

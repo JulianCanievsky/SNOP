@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { enviarComunicado, getComunicados, getStats, getNiveles } from '../../services/adminApi'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import './Admin.css'
 
 export default function EnviarComunicado() {
@@ -60,7 +61,7 @@ export default function EnviarComunicado() {
       setRecientes(nuevos)
       setTimeout(() => setExito(false), 4000)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al enviar comunicado')
+      setError(obtenerMensajeError(err, 'Error al enviar comunicado'))
     } finally {
       setEnviando(false)
     }

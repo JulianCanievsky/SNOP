@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../../lib/apiClient.js'
+import { obtenerMensajeError } from '../../lib/errores.js'
 
 export const useJuegoLibre = () => {
   const [eventos, setEventos] = useState([])
@@ -15,9 +16,10 @@ export const useJuegoLibre = () => {
       if (filtros.fecha) params.append('fecha', filtros.fecha)
 
       const { data } = await api.get(`/juego-libre?${params}`)
-      setEventos(data)
+      // El backend responde { ok, data: [...] } — leer data.data
+      setEventos(Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []))
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar los eventos')
+      setError(obtenerMensajeError(err, 'Error al cargar los eventos'))
     } finally {
       setCargando(false)
     }

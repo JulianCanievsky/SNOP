@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../lib/apiClient.js'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import './registro.css'
 
 export default function Registro() {
@@ -78,7 +79,7 @@ export default function Registro() {
       setSuccess(data.mensaje || '¡Solicitud enviada! El admin del club te aprobará pronto.')
       setForm({ nombre: '', email: '', telefono: '', password: '', confirmPassword: '', club_id: form.club_id })
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear la cuenta')
+      setError(obtenerMensajeError(err, 'Error al crear la cuenta'))
     } finally {
       setLoading(false)
     }

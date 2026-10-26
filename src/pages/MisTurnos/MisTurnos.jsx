@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import './MisTurnos.css'
 import TurnoCard from '../../components/TurnoCard/TurnoCard'
 import { getAgenda, cancelarTurno, cancelarJuegoLibre, cancelarTorneo } from '../../services/turnosApi'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
 import { useRating } from '../../hooks/useRating'
@@ -93,7 +94,7 @@ export default function MisTurnos() {
       setAgenda(prev => prev.filter(e => e.id !== evento.id))
     } catch (err) {
       console.error(err)
-      showToast(err?.response?.data?.mensaje || err?.response?.data?.error || 'No se pudo cancelar. Intentá de nuevo.', 'error')
+      showToast(obtenerMensajeError(err, 'No se pudo cancelar. Intentá de nuevo.'), 'error')
     }
   }
 

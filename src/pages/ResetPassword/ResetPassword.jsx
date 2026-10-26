@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../../lib/apiClient.js'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import './ResetPassword.css'
 
 export default function ResetPassword() {
@@ -45,7 +46,7 @@ export default function ResetPassword() {
       setExito(true)
       setTimeout(() => navigate('/login'), 3000)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al restablecer la contraseña')
+      setError(obtenerMensajeError(err, 'Error al restablecer la contraseña'))
     } finally {
       setLoading(false)
     }

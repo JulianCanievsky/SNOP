@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../../lib/apiClient.js'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import './ForgotPassword.css'
 
 export default function ForgotPassword() {
@@ -19,7 +20,7 @@ export default function ForgotPassword() {
       await api.post('/auth/forgot-password', { email: email.trim().toLowerCase() })
       setEnviado(true)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al procesar la solicitud')
+      setError(obtenerMensajeError(err, 'Error al procesar la solicitud'))
     } finally {
       setLoading(false)
     }

@@ -12,6 +12,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, MapPin, User, Clock, Users } from 'lucide-react'
 import api from '../../lib/apiClient.js'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { ToastContainer } from '../../components/ui/Toast'
@@ -88,7 +89,7 @@ export default function Entrenamientos() {
       const { data } = await api.get('/turnos/disponibles')
       setTurnos(data.data ?? [])
     } catch (err) {
-      setError(err.response?.data?.mensaje || 'No se pudieron cargar los entrenamientos')
+      setError(obtenerMensajeError(err, 'No se pudieron cargar los entrenamientos'))
     } finally {
       setCargando(false)
     }
@@ -105,7 +106,7 @@ export default function Entrenamientos() {
       setTurnoSel(null)
       await cargar()
     } catch (err) {
-      showToast(err.response?.data?.mensaje || 'No se pudo enviar la solicitud', 'error')
+      showToast(obtenerMensajeError(err, 'No se pudo enviar la solicitud'), 'error')
     } finally {
       setProcesando(false)
     }
@@ -117,7 +118,7 @@ export default function Entrenamientos() {
       showToast('Te anotaste en la lista de espera. Te avisamos si se libera un lugar.', 'success')
       await cargar()
     } catch (err) {
-      showToast(err.response?.data?.mensaje || 'No se pudo agregar a la lista de espera', 'error')
+      showToast(obtenerMensajeError(err, 'No se pudo agregar a la lista de espera'), 'error')
     }
   }
 

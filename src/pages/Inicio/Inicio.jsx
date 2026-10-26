@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { Calendar, Gamepad2, Users, Trophy, User, Bell, Search, BookOpen, Dumbbell, Target } from 'lucide-react'
 import api from '../../lib/apiClient.js'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import { getNoLeidas } from '../../services/notificacionesApi.js'
 import { ToastContainer } from '../../components/ui/Toast'
@@ -76,9 +77,10 @@ export default function Inicio() {
 
       // ── Juego libre disponible (aún no inscripto) ─────────────
       if (jlRes.status === 'fulfilled') {
-        const todosJl = jlRes.value.data ?? []
+        // El backend responde { ok, data: [...] }
+        const todosJl = jlRes.value.data?.data ?? jlRes.value.data ?? []
         // El primero que esté abierto y el socio NO esté inscripto
-        const disponible = todosJl.find(e => !e.ya_inscripto && e.estado !== 'completo')
+        const disponible = (Array.isArray(todosJl) ? todosJl : []).find(e => !e.ya_inscripto && e.estado !== 'completo')
         setJuegoLibreDisponible(disponible ?? null)
       }
     } catch (err) {
@@ -125,7 +127,7 @@ export default function Inicio() {
       // Refrescar para que aparezca en agenda
       await cargarDatos()
     } catch (err) {
-      showToast(err.response?.data?.error || 'No se pudo inscribir. Intentá de nuevo.', 'error')
+      showToast(obtenerMensajeError(err, 'No se pudo inscribir. Intentá de nuevo.'), 'error')
     } finally {
       setInscribiendose(false)
     }

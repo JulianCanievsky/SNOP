@@ -8,6 +8,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSocio }                          from '../../services/adminApi'
 import { crearBono, getBonosSocio, desactivarBono } from '../../services/bonosApi'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import './Admin.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -221,7 +222,7 @@ export default function GestionBonos() {
       setSocio(usuario)
       setBonos(bonosData ?? [])
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar datos')
+      setError(obtenerMensajeError(err, 'Error al cargar datos'))
     } finally {
       setCargando(false)
     }
@@ -265,7 +266,7 @@ export default function GestionBonos() {
       await cargar()
       setForm(prev => ({ ...prev, notas: '' }))
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear bono')
+      setError(obtenerMensajeError(err, 'Error al crear bono'))
     } finally {
       setEnviando(false)
     }
@@ -283,7 +284,7 @@ export default function GestionBonos() {
       await desactivarBono(bonoId)
       await cargar()
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al desactivar bono')
+      setError(obtenerMensajeError(err, 'Error al desactivar bono'))
     } finally {
       setDesactivando(null)
     }

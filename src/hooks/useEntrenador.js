@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../lib/apiClient.js'
+import { obtenerMensajeError } from '../lib/errores.js'
 
 // ─── INICIO ──────────────────────────────────────────────────────────────────
 
@@ -22,7 +23,7 @@ export function useInicioEntrenador() {
         (solicitudesRes.data.data || []).filter((s) => s.estado === 'pendiente')
       )
     } catch (err) {
-      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar inicio')
+      setError(obtenerMensajeError(err, 'Error al cargar inicio'))
     } finally {
       setCargando(false)
     }
@@ -47,7 +48,7 @@ export function useMisClasesEntrenador() {
       const { data } = await api.get('/entrenador/mis-clases')
       setClases(data.data || [])
     } catch (err) {
-      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar clases')
+      setError(obtenerMensajeError(err, 'Error al cargar clases'))
     } finally {
       setCargando(false)
     }
@@ -77,7 +78,7 @@ export function useMisAlumnos() {
       const { data } = await api.get('/entrenador/mis-alumnos')
       setAlumnos(data.data || [])
     } catch (err) {
-      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar alumnos')
+      setError(obtenerMensajeError(err, 'Error al cargar alumnos'))
     } finally {
       setCargando(false)
     }
@@ -108,7 +109,7 @@ export function useDetalleAlumno(alumnoId) {
       const { data } = await api.get(`/entrenador/alumnos/${alumnoId}`)
       setAlumno(data.data)
     } catch (err) {
-      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar alumno')
+      setError(obtenerMensajeError(err, 'Error al cargar alumno'))
     } finally {
       setCargando(false)
     }
@@ -144,7 +145,7 @@ export function useMisHorarios() {
       setHorarios(horariosRes.data.data || [])
       setSedes(sedesRes.data.data || [])
     } catch (err) {
-      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar horarios')
+      setError(obtenerMensajeError(err, 'Error al cargar horarios'))
     } finally {
       setCargando(false)
     }
@@ -184,7 +185,7 @@ export function useSolicitudesEntrenador() {
       const { data } = await api.get('/entrenador/solicitudes')
       setSolicitudes(data.data || [])
     } catch (err) {
-      setError(err.response?.data?.mensaje || err.response?.data?.error || 'Error al cargar solicitudes')
+      setError(obtenerMensajeError(err, 'Error al cargar solicitudes'))
     } finally {
       setCargando(false)
     }
@@ -214,7 +215,7 @@ export function usePerfilEntrenador() {
       const { data } = await api.get('/entrenador/perfil')
       setPerfil(data.data)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar perfil')
+      setError(obtenerMensajeError(err, 'Error al cargar perfil'))
     } finally {
       setCargando(false)
     }

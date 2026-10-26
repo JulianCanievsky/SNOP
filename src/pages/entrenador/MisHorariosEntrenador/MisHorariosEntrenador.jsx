@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useMisHorarios } from '../../../hooks/useEntrenador'
+import { obtenerMensajeError } from '../../../lib/errores.js'
 import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
 import { ToastContainer } from '../../../components/ui/Toast'
 import { useToast } from '../../../hooks/useToast'
@@ -109,7 +110,7 @@ export default function MisHorariosEntrenador() {
       setFechaSel('')
       setTimeout(() => setExito(false), 3000)
     } catch (err) {
-      setErrMsg(err.response?.data?.error || 'Error al guardar')
+      setErrMsg(obtenerMensajeError(err, 'Error al guardar'))
     }
   }
 
@@ -125,7 +126,7 @@ export default function MisHorariosEntrenador() {
       setCancelando(turnoId)
       await cancelarHorario(turnoId)
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al cancelar', 'error')
+      showToast(obtenerMensajeError(err, 'Error al cancelar'), 'error')
     } finally {
       setCancelando(null)
     }

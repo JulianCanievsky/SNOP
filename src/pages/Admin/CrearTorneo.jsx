@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSedes } from '../../services/adminApi'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import { crearTorneo, getTorneosAdmin, borrarTorneo, getInscriptosTorneo, quitarInscriptoTorneo } from '../../services/torneosApi'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
@@ -85,7 +86,7 @@ export default function CrearTorneo() {
       setForm(prev => ({ ...prev, nombre: '', fecha: '', sede_id: '' }))
       setTimeout(() => setExito(false), 3000)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear torneo')
+      setError(obtenerMensajeError(err, 'Error al crear torneo'))
     } finally {
       setEnviando(false)
     }
@@ -98,7 +99,7 @@ export default function CrearTorneo() {
       setPublicados(prev => prev.filter(p => p.id !== id))
       if (modalId === id) setModalId(null)
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al eliminar', 'error')
+      showToast(obtenerMensajeError(err, 'Error al eliminar'), 'error')
     }
   }
 
@@ -124,7 +125,7 @@ export default function CrearTorneo() {
         p.id === torneoId ? { ...p, inscriptos: Math.max(0, (p.inscriptos ?? 1) - 1) } : p
       ))
     } catch (err) {
-      showToast(err.response?.data?.error || 'No se pudo quitar al inscripto', 'error')
+      showToast(obtenerMensajeError(err, 'No se pudo quitar al inscripto'), 'error')
     } finally {
       setQuitando(null)
     }

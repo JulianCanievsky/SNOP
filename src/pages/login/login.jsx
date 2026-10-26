@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import './login.css'
 
 // tipo_usuario_id según tabla tipo_usuario
@@ -44,8 +45,7 @@ export default function Login() {
         navigate('/inicio')
       }
     } catch (err) {
-      // axios envuelve el error del backend en err.response.data.error
-      setError(err.response?.data?.error || err.message || 'Error al iniciar sesión')
+      setError(obtenerMensajeError(err, 'Error al iniciar sesión'))
     } finally {
       setLoading(false)
     }

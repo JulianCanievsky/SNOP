@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Clock, MapPin, Users, UserSquare2 } from 'lucide-react'
 import { getTorneos, inscribirTorneo, cancelarTorneo } from '../../services/torneosApi'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import DetalleTorneo from './DetalleTorneo'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import { ToastContainer } from '../../components/ui/Toast'
@@ -95,7 +96,7 @@ export default function Torneos() {
       const data = await getTorneos()
       setTorneos(data ?? [])
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cargar torneos')
+      setError(obtenerMensajeError(err, 'Error al cargar torneos'))
     } finally {
       setCargando(false)
     }
@@ -111,7 +112,7 @@ export default function Torneos() {
       setSeleccionado(null)
       await cargar()
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al inscribirse', 'error')
+      showToast(obtenerMensajeError(err, 'Error al inscribirse'), 'error')
     } finally {
       setProcesando(false)
     }
@@ -125,7 +126,7 @@ export default function Torneos() {
       setSeleccionado(null)
       await cargar()
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al cancelar', 'error')
+      showToast(obtenerMensajeError(err, 'Error al cancelar'), 'error')
     } finally {
       setProcesando(false)
     }

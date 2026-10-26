@@ -8,6 +8,7 @@ import {
   borrarJuegoLibre,
   getInscriptosJuegoLibre,
 } from '../../services/adminApi'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import './Admin.css'
@@ -82,7 +83,7 @@ export default function CrearJuegoLibre() {
       setForm(prev => ({ ...prev, fecha: '', sede_id: '' }))
       setTimeout(() => setExito(false), 3000)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear espacio')
+      setError(obtenerMensajeError(err, 'Error al crear espacio'))
     } finally {
       setEnviando(false)
     }
@@ -95,7 +96,7 @@ export default function CrearJuegoLibre() {
       setPublicados(prev => prev.filter(p => p.id !== id))
       if (modalEventoId === id) setModalEventoId(null)
     } catch (err) {
-      showToast(err.response?.data?.error || 'Error al eliminar', 'error')
+      showToast(obtenerMensajeError(err, 'Error al eliminar'), 'error')
     }
   }
 

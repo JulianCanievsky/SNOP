@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import api from '../../lib/apiClient.js'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import {
   getPlantillasTurnos, getDetalleTurnoAdmin, crearTurnoAdmin, editarTurnoAdmin,
   bajaTurnoDefinitiva, cancelarSemana, asignarSocioTurno, quitarSocioTurno,
@@ -332,7 +333,7 @@ export default function AdminTurnos() {
       setMostrarForm(false)
       await cargarTurnos()
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al crear turno')
+      setError(obtenerMensajeError(err, 'Error al crear turno'))
     } finally { setGuardando(false) }
   }
 
@@ -345,7 +346,7 @@ export default function AdminTurnos() {
       await abrirDetalle(vistaDetalle)
       await cargarTurnos()
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al actualizar turno')
+      setError(obtenerMensajeError(err, 'Error al actualizar turno'))
     } finally { setGuardando(false) }
   }
 
@@ -359,7 +360,7 @@ export default function AdminTurnos() {
       setDetalle(null)
       await cargarTurnos()
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al dar de baja')
+      setError(obtenerMensajeError(err, 'Error al dar de baja'))
     } finally { setGuardando(false) }
   }
 
@@ -372,7 +373,7 @@ export default function AdminTurnos() {
       setMotivoSemana('')
       await abrirDetalle(vistaDetalle)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al cancelar la semana')
+      setError(obtenerMensajeError(err, 'Error al cancelar la semana'))
     } finally { setGuardando(false) }
   }
 
@@ -385,7 +386,7 @@ export default function AdminTurnos() {
       await abrirDetalle(vistaDetalle)
       await cargarTurnos()
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al reasignar entrenador')
+      setError(obtenerMensajeError(err, 'Error al reasignar entrenador'))
     } finally { setGuardando(false) }
   }
 
@@ -398,7 +399,7 @@ export default function AdminTurnos() {
       setSocioAsignar('')
       await abrirDetalle(vistaDetalle)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al asignar socio')
+      setError(obtenerMensajeError(err, 'Error al asignar socio'))
     } finally { setAsignando(false) }
   }
 
@@ -409,7 +410,7 @@ export default function AdminTurnos() {
       mostrarExito('Socio quitado del turno')
       await abrirDetalle(vistaDetalle)
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al quitar socio')
+      setError(obtenerMensajeError(err, 'Error al quitar socio'))
     }
   }
 
@@ -545,7 +546,7 @@ export default function AdminTurnos() {
                               mostrarExito('Solicitud confirmada')
                               await abrirDetalle(vistaDetalle)
                             } catch (err) {
-                              setError(err.response?.data?.error || 'Error al confirmar')
+                              setError(obtenerMensajeError(err, 'Error al confirmar'))
                             } finally { setAccionSocio(null) }
                           }}
                           style={{ padding: '5px 12px', background: 'var(--admin-green-bg)', color: 'var(--admin-green)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
@@ -559,7 +560,7 @@ export default function AdminTurnos() {
                               mostrarExito('Solicitud rechazada')
                               await abrirDetalle(vistaDetalle)
                             } catch (err) {
-                              setError(err.response?.data?.error || 'Error al rechazar')
+                              setError(obtenerMensajeError(err, 'Error al rechazar'))
                             } finally { setAccionSocio(null) }
                           }}
                           style={{ padding: '5px 12px', background: 'var(--admin-red-bg)', color: 'var(--admin-red)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}

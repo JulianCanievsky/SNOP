@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, XCircle } from 'lucide-react'
 import api from '../../lib/apiClient.js'
+import { obtenerMensajeError } from '../../lib/errores.js'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import CreditosResumen from '../../components/CreditosResumen/CreditosResumen'
 import './MisClases.css'
@@ -46,7 +47,7 @@ export default function MisClases() {
       // El endpoint también devuelve las inscripciones canceladas (para reconfirmar)
       setCanceladas(res.data.cancelados ?? [])
     } catch (err) {
-      setError(err.response?.data?.error || 'No se pudieron cargar las clases')
+      setError(obtenerMensajeError(err, 'No se pudieron cargar las clases'))
     } finally {
       setCargando(false)
     }
@@ -68,7 +69,7 @@ export default function MisClases() {
       mostrarMensaje('Clase cancelada. Si el turno estaba lleno, avisamos a otros socios.')
       await cargar()
     } catch (err) {
-      mostrarMensaje(err.response?.data?.mensaje || 'No se pudo cancelar', true)
+      mostrarMensaje(obtenerMensajeError(err, 'No se pudo cancelar'), true)
     } finally {
       setProcesando(null)
     }
@@ -82,7 +83,7 @@ export default function MisClases() {
       mostrarMensaje('¡Listo! Volviste a anotarte en el turno.')
       await cargar()
     } catch (err) {
-      mostrarMensaje(err.response?.data?.mensaje || 'No hay cupo disponible en este momento', true)
+      mostrarMensaje(obtenerMensajeError(err, 'No hay cupo disponible en este momento'), true)
     } finally {
       setProcesando(null)
     }
@@ -96,7 +97,7 @@ export default function MisClases() {
       mostrarMensaje('Te anotaste en la lista de espera. Te avisamos si se libera un lugar.')
       await cargar()
     } catch (err) {
-      mostrarMensaje(err.response?.data?.mensaje || 'No se pudo agregar a la lista de espera', true)
+      mostrarMensaje(obtenerMensajeError(err, 'No se pudo agregar a la lista de espera'), true)
     } finally {
       setProcesando(null)
     }
