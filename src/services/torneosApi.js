@@ -1,7 +1,7 @@
 import api from '../lib/apiClient.js'
 
 // Socio
-export const getTorneos          = ()    => api.get('/torneos').then(r => r.data)
+export const getTorneos          = ()    => api.get('/torneos').then(r => r.data?.data ?? r.data ?? [])
 export const inscribirTorneo     = (id)  => api.post(`/torneos/${id}/inscribir`, {}).then(r => r.data)
 export const cancelarTorneo      = (id)  => api.delete(`/torneos/${id}/cancelar`).then(r => r.data)
 

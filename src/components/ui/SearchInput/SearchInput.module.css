@@ -1,0 +1,26 @@
+.wrap  { position:relative; display:flex; align-items:center; }
+.ico   { position:absolute; left:12px; color:var(--color-text-muted); pointer-events:none; flex-shrink:0; }
+.input {
+  width:100%;
+  padding:10px 36px 10px 36px;
+  border:1.5px solid var(--color-border);
+  border-radius:var(--radius-lg);
+  font-size:var(--font-size-sm);
+  background:var(--color-surface);
+  color:var(--color-text);
+  font-family:var(--font-sans);
+  transition:border-color var(--transition-fast);
+  outline:none;
+}
+.input:focus { border-color:var(--color-primary); }
+.input::placeholder { color:var(--color-text-muted); }
+/* Ocultar la x nativa del input type=search en Chrome */
+.input::-webkit-search-cancel-button { -webkit-appearance:none; }
+.clear {
+  position:absolute; right:10px;
+  background:none; border:none; cursor:pointer;
+  color:var(--color-text-muted); padding:2px;
+  display:flex; align-items:center;
+  border-radius:var(--radius-sm);
+}
+.clear:hover { color:var(--color-text); }

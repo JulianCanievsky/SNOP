@@ -14,3 +14,14 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Archivos temporales de build/lint (no deben estar en git)
+l.txt
+b.txt
+build_fase4.txt
+build_final.txt
+build_out.txt
+build_output.txt
+npm_out.txt
+lint_out.txt
+({data

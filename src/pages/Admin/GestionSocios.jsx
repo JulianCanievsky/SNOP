@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
+import SearchInput from '../../components/ui/SearchInput/SearchInput.jsx'
 import { getSocios } from '../../services/adminApi'
 import './Admin.css'
 
@@ -58,15 +58,12 @@ export default function GestionSocios() {
 
       <div className="admin-body">
         {/* Búsqueda */}
-        <div className="admin-search">
-          <Search size={16} className="admin-search-icon" />
-          <input
-            className="form-input"
-            placeholder="Buscar socio..."
-            value={buscar}
-            onChange={e => setBuscar(e.target.value)}
-          />
-        </div>
+        <SearchInput
+          value={buscar}
+          onChange={setBuscar}
+          placeholder="Buscar socio..."
+          className="admin-search"
+        />
 
         {/* Filtros */}
         <div className="filtros-row">

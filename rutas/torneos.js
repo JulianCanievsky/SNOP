@@ -8,6 +8,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
 
 const router = express.Router()
 router.use(autenticar)
@@ -32,11 +33,10 @@ router.get('/', async (req, res) => {
       .order('fecha_inicio', { ascending: true })
 
     if (error) {
-      if (error.code === '42P01') return res.json([])
+      if (error.code === '42P01') return responder.ok(res, [])
       throw error
     }
 
-    // Traer usuarios inscriptos para mostrar participantes
     const allInscIds = (torneos ?? []).flatMap(t =>
       (t.inscripciones_torneo ?? [])
         .filter(i => i.estado === 'activo')
@@ -74,10 +74,10 @@ router.get('/', async (req, res) => {
       }
     })
 
-    res.json(resultado)
+    responder.ok(res, resultado)
   } catch (err) {
     console.error('GET /api/torneos', err)
-    res.status(500).json({ error: 'Error al obtener torneos' })
+    responder.interno(res, 'Error al obtener torneos')
   }
 })
 
@@ -93,15 +93,14 @@ router.post('/:id/inscribir', async (req, res) => {
       .eq('id', torneoId)
       .single()
 
-    if (errT || !torneo) return res.status(404).json({ error: 'Torneo no encontrado' })
-    if (!torneo.activo)  return res.status(400).json({ error: 'El torneo no está disponible' })
+    if (errT || !torneo) return responder.noEncontrado(res, 'Torneo no encontrado')
+    if (!torneo.activo)  return responder.error(res, 'El torneo no está disponible')
 
     const activos = (torneo.inscripciones_torneo ?? []).filter(i => i.estado === 'activo')
     if (activos.length >= torneo.capacidad_maxima) {
-      return res.status(400).json({ error: 'El torneo está completo' })
+      return responder.error(res, 'El torneo está completo')
     }
 
-    // Verificar no inscripto
     const { data: existe } = await supabase
       .from('inscripciones_torneo')
       .select('id')
@@ -109,21 +108,21 @@ router.post('/:id/inscribir', async (req, res) => {
       .eq('socio_id', socioId)
       .maybeSingle()
 
-    if (existe) return res.status(409).json({ error: 'Ya estás inscripto en este torneo' })
+    if (existe) return responder.conflicto(res, 'Ya estás inscripto en este torneo')
 
     const { error: errI } = await supabase
       .from('inscripciones_torneo')
       .insert({ torneo_id: torneoId, socio_id: socioId, estado: 'activo' })
 
     if (errI) {
-      if (errI.code === '23505') return res.status(409).json({ error: 'Ya estás inscripto en este torneo' })
+      if (errI.code === '23505') return responder.conflicto(res, 'Ya estás inscripto en este torneo')
       throw errI
     }
 
-    res.json({ mensaje: 'Inscripción confirmada' })
+    responder.ok(res, null, 201)
   } catch (err) {
     console.error('POST /api/torneos/:id/inscribir', err)
-    res.status(500).json({ error: 'Error al inscribirse' })
+    responder.interno(res, 'Error al inscribirse')
   }
 })
 
@@ -141,10 +140,10 @@ router.delete('/:id/cancelar', async (req, res) => {
       .eq('estado', 'activo')
 
     if (error) throw error
-    res.json({ mensaje: 'Inscripción cancelada' })
+    responder.ok(res, { mensaje: 'Inscripción cancelada' })
   } catch (err) {
     console.error('DELETE /api/torneos/:id/cancelar', err)
-    res.status(500).json({ error: 'Error al cancelar inscripción' })
+    responder.interno(res, 'Error al cancelar inscripción')
   }
 })
 

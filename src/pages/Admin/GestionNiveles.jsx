@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSocios, editarSocio, getNivelesStats, getNiveles } from '../../services/adminApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
+import SearchInput, { normalizar } from '../../components/ui/SearchInput/SearchInput.jsx'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
@@ -11,11 +12,13 @@ import './Admin.css'
 export default function GestionNiveles() {
   const navigate = useNavigate()
   const { toasts, showToast, removeToast } = useToast()
-  const [socios,   setSocios]   = useState([])
-  const [niveles,  setNiveles]  = useState([])
-  const [stats,    setStats]    = useState({})
-  const [cargando, setCargando] = useState(true)
-  const [editando, setEditando] = useState(null) // id del socio con selector abierto
+  const [socios,    setSocios]   = useState([])
+  const [niveles,   setNiveles]  = useState([])
+  const [stats,     setStats]    = useState({})
+  const [cargando,  setCargando] = useState(true)
+  const [editando,  setEditando] = useState(null)
+  const [buscar,    setBuscar]   = useState('')
+  const [filtroNivel, setFiltroNivel] = useState('') // '' = todos, o nivel_id como string
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -36,6 +39,16 @@ export default function GestionNiveles() {
   }, [])
 
   useEffect(() => { cargar() }, [cargar])
+
+  // Filtrado local con debounce implícito (búsqueda en memoria)
+  const sociosFiltrados = useMemo(() => {
+    const q = normalizar(buscar)
+    return socios.filter(s => {
+      if (filtroNivel !== '' && String(s.nivel_id ?? '') !== filtroNivel) return false
+      if (!q) return true
+      return normalizar(s.nombre).includes(q) || normalizar(s.email).includes(q)
+    })
+  }, [socios, buscar, filtroNivel])
 
   async function cambiarNivel(socioId, nuevoNivelId, nuevoNivelNombre) {
     try {
@@ -71,16 +84,37 @@ export default function GestionNiveles() {
           ))}
         </div>
 
+        {/* Buscador + filtro de categoría */}
+        <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
+          <SearchInput
+            value={buscar}
+            onChange={setBuscar}
+            placeholder="Buscar por nombre o email..."
+            className="admin-search-input"
+          />
+          <select
+            className="admin-select"
+            value={filtroNivel}
+            onChange={e => setFiltroNivel(e.target.value)}
+            aria-label="Filtrar por categoría"
+          >
+            <option value="">Todas las categorías</option>
+            {niveles.map(n => (
+              <option key={n.id} value={String(n.id)}>{n.nombre}</option>
+            ))}
+          </select>
+        </div>
+
         {/* Lista */}
         <div>
-          <p className="admin-label">Modificar nivel individual</p>
+          <p className="admin-label">Modificar nivel individual {sociosFiltrados.length !== socios.length && `(${sociosFiltrados.length} resultado${sociosFiltrados.length !== 1 ? 's' : ''})`}</p>
           <div className="admin-card">
             {cargando ? (
               <div className="estado-carga"><div className="spinner-admin" /></div>
-            ) : socios.length === 0 ? (
-              <div className="estado-vacio">No hay socios activos.</div>
+            ) : sociosFiltrados.length === 0 ? (
+              <div className="estado-vacio">{buscar || filtroNivel ? 'Sin resultados para la búsqueda.' : 'No hay socios activos.'}</div>
             ) : (
-              socios.map(s => {
+              sociosFiltrados.map(s => {
                 const iniciales = s.nombre?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
                 const abierto   = editando === s.id
                 const nivelNombre = s.niveles?.nombre

@@ -60,7 +60,7 @@ const Perfil = () => {
   const { user, logout } = useAuth()
   const { dark, toggleTheme } = useTheme()
   const { perfil, cargando, cargarPerfil } = usePerfil()
-  const [mostrarHistorial, setMostrarHistorial] = useState(false)
+  const [tab, setTab] = useState('resumen') // 'resumen' | 'historial'
   const [bono, setBono] = useState(undefined) // undefined = cargando, null = sin bono
 
   useEffect(() => {
@@ -128,104 +128,107 @@ const Perfil = () => {
         </div>
       </div>
 
-      <div className="perfil-seccion-header">
-        <h4 className="perfil-seccion">Próximos turnos</h4>
-        {turnosPasados.length > 0 && (
-          <button
-            className="btn-historial"
-            onClick={() => setMostrarHistorial(!mostrarHistorial)}
-          >
-            {mostrarHistorial ? 'Ocultar historial' : 'Ver historial'}
-          </button>
-        )}
+      {/* Tabs Resumen / Historial */}
+      <div className="perfil-tabs">
+        <button
+          className={`perfil-tab${tab === 'resumen' ? ' perfil-tab--activo' : ''}`}
+          onClick={() => setTab('resumen')}
+        >Resumen</button>
+        <button
+          className={`perfil-tab${tab === 'historial' ? ' perfil-tab--activo' : ''}`}
+          onClick={() => setTab('historial')}
+        >Historial {turnosPasados.length > 0 && <span className="perfil-tab-badge">{turnosPasados.length}</span>}</button>
       </div>
 
-      {turnosActivos.length === 0 ? (
-        <div className="turno-card sin-turnos-perfil">No tenés turnos activos.</div>
-      ) : (
-        turnosActivos.map(inscripcion => (
-          <TurnoCardPerfil
-            key={inscripcion.turno_id ?? inscripcion.turnos?.id}
-            inscripcion={inscripcion}
-            pasado={false}
-          />
-        ))
-      )}
-
-      {mostrarHistorial && (
+      {tab === 'resumen' && (
         <>
-          <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Historial</h4>
-          {turnosPasados.map(inscripcion => (
-            <TurnoCardPerfil
-              key={`h-${inscripcion.turno_id ?? inscripcion.turnos?.id}`}
-              inscripcion={inscripcion}
-              pasado
-            />
-          ))}
-        </>
-      )}
+          <div className="perfil-seccion-header">
+            <h4 className="perfil-seccion">Próximos turnos</h4>
+          </div>
 
-      {/* Estado de cuenta */}
-      <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Estado de cuenta</h4>
-      <div className="cuota-card">
-        <span>Cuota social</span>
-        <span className={usuario.cuota_al_dia ? 'pagado' : 'deuda'}>
-          {usuario.cuota_al_dia ? 'Pagado' : 'Pendiente'}
-        </span>
-      </div>
-
-      {/* Bono activo */}
-      {bono !== undefined && (
-        <>
-          <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Bono de créditos</h4>
-          {bono === null ? (
-            <div className="cuota-card" style={{ color: '#9ca3af', fontSize: 14 }}>
-              Sin bono activo
-            </div>
+          {turnosActivos.length === 0 ? (
+            <div className="turno-card sin-turnos-perfil">No tenés turnos activos.</div>
           ) : (
-            <div className="bono-card">
-              {/* Tipo + vencimiento */}
-              <div className="bono-card-header">
-                <span className={`bono-tipo-badge bono-tipo-${bono.tipo}`}>
-                  {{ mensual: 'Mensual', trimestral: 'Trimestral', personalizado: 'Personalizado' }[bono.tipo] ?? bono.tipo}
-                </span>
-                <span className="bono-vencimiento">
-                  Vence {new Date(`${bono.fecha_vencimiento}T12:00:00`).toLocaleDateString('es-AR', {
-                    day: '2-digit', month: '2-digit', year: 'numeric',
-                    timeZone: 'America/Argentina/Buenos_Aires',
-                  })}
-                </span>
-              </div>
+            turnosActivos.map(inscripcion => (
+              <TurnoCardPerfil
+                key={inscripcion.turno_id ?? inscripcion.turnos?.id}
+                inscripcion={inscripcion}
+                pasado={false}
+              />
+            ))
+          )}
 
-              {/* Créditos grandes */}
-              <div className="bono-creditos-bloque">
-                <span className="bono-creditos-num">{bono.creditos_disponibles}</span>
-                <span className="bono-creditos-label">
-                  de {bono.creditos_total} crédito{bono.creditos_total !== 1 ? 's' : ''} disponibles
-                </span>
-              </div>
+          {/* Estado de cuenta */}
+          <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Estado de cuenta</h4>
+          <div className="cuota-card">
+            <span>Cuota social</span>
+            <span className={usuario.cuota_al_dia ? 'pagado' : 'deuda'}>
+              {usuario.cuota_al_dia ? 'Pagado' : 'Pendiente'}
+            </span>
+          </div>
 
-              {/* Barra de progreso */}
-              <div className="bono-barra-fondo">
-                <div
-                  className="bono-barra-fill"
-                  style={{
-                    width: `${Math.min((bono.creditos_usados / bono.creditos_total) * 100, 100)}%`,
-                    background: bono.creditos_disponibles === 0
-                      ? '#ef4444'
-                      : bono.creditos_disponibles <= 2
-                        ? '#f59e0b'
-                        : '#2563eb',
-                  }}
-                />
-              </div>
-
-              {bono.notas && (
-                <p className="bono-notas">{bono.notas}</p>
+          {/* Bono activo */}
+          {bono !== undefined && (
+            <>
+              <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Bono de créditos</h4>
+              {bono === null ? (
+                <div className="cuota-card" style={{ color: '#9ca3af', fontSize: 14 }}>
+                  Sin bono activo
+                </div>
+              ) : (
+                <div className="bono-card">
+                  <div className="bono-card-header">
+                    <span className={`bono-tipo-badge bono-tipo-${bono.tipo}`}>
+                      {{ mensual: 'Mensual', trimestral: 'Trimestral', personalizado: 'Personalizado' }[bono.tipo] ?? bono.tipo}
+                    </span>
+                    <span className="bono-vencimiento">
+                      Vence {new Date(`${bono.fecha_vencimiento}T12:00:00`).toLocaleDateString('es-AR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        timeZone: 'America/Argentina/Buenos_Aires',
+                      })}
+                    </span>
+                  </div>
+                  <div className="bono-creditos-bloque">
+                    <span className="bono-creditos-num">{bono.creditos_disponibles}</span>
+                    <span className="bono-creditos-label">
+                      de {bono.creditos_total} crédito{bono.creditos_total !== 1 ? 's' : ''} disponibles
+                    </span>
+                  </div>
+                  <div className="bono-barra-fondo">
+                    <div
+                      className="bono-barra-fill"
+                      style={{
+                        width: `${Math.min((bono.creditos_usados / bono.creditos_total) * 100, 100)}%`,
+                        background: bono.creditos_disponibles === 0
+                          ? '#ef4444'
+                          : bono.creditos_disponibles <= 2
+                            ? '#f59e0b'
+                            : '#2563eb',
+                      }}
+                    />
+                  </div>
+                  {bono.notas && <p className="bono-notas">{bono.notas}</p>}
+                </div>
               )}
-            </div>
+            </>
           )}
         </>
+      )}
+
+      {tab === 'historial' && (
+        <div className="perfil-historial">
+          {turnosPasados.length === 0 ? (
+            <div className="turno-card sin-turnos-perfil">No hay historial de turnos.</div>
+          ) : (
+            turnosPasados.map(inscripcion => (
+              <TurnoCardPerfil
+                key={`h-${inscripcion.turno_id ?? inscripcion.turnos?.id}`}
+                inscripcion={inscripcion}
+                pasado
+              />
+            ))
+          )}
+        </div>
       )}
 
       <button

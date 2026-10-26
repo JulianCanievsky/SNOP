@@ -9,6 +9,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
 
 const router = express.Router()
 router.use(autenticar)
@@ -24,15 +25,15 @@ router.get('/', async (req, res) => {
       .limit(30)
 
     if (error) {
-      if (error.code === '42P01') return res.json({ data: [], no_leidas: 0 })
+      if (error.code === '42P01') return responder.ok(res, { data: [], no_leidas: 0 })
       throw error
     }
 
     const noLeidas = (data ?? []).filter(n => !n.leida).length
-    res.json({ data: data ?? [], no_leidas: noLeidas })
+    responder.ok(res, { data: data ?? [], no_leidas: noLeidas })
   } catch (err) {
     console.error('GET /notificaciones', err)
-    res.status(500).json({ error: 'Error al obtener notificaciones' })
+    responder.interno(res, 'Error al obtener notificaciones')
   }
 })
 
@@ -46,13 +47,13 @@ router.get('/no-leidas', async (req, res) => {
       .eq('leida', false)
 
     if (error) {
-      if (error.code === '42P01') return res.json({ count: 0 })
+      if (error.code === '42P01') return responder.ok(res, { count: 0 })
       throw error
     }
-    res.json({ count: count ?? 0 })
+    responder.ok(res, { count: count ?? 0 })
   } catch (err) {
     console.error('GET /notificaciones/no-leidas', err)
-    res.status(500).json({ error: 'Error al obtener count' })
+    responder.interno(res, 'Error al obtener count')
   }
 })
 
@@ -66,10 +67,10 @@ router.patch('/leer-todas', async (req, res) => {
       .eq('leida', false)
 
     if (error && error.code !== '42P01') throw error
-    res.json({ ok: true })
+    responder.ok(res, null)
   } catch (err) {
     console.error('PATCH /notificaciones/leer-todas', err)
-    res.status(500).json({ error: 'Error al marcar notificaciones' })
+    responder.interno(res, 'Error al marcar notificaciones')
   }
 })
 
@@ -83,10 +84,10 @@ router.patch('/:id/leer', async (req, res) => {
       .eq('user_id', req.userId)
 
     if (error) throw error
-    res.json({ ok: true })
+    responder.ok(res, null)
   } catch (err) {
     console.error('PATCH /notificaciones/:id/leer', err)
-    res.status(500).json({ error: 'Error al marcar notificación' })
+    responder.interno(res, 'Error al marcar notificación')
   }
 })
 
