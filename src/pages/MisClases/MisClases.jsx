@@ -31,6 +31,7 @@ export default function MisClases() {
   const navigate = useNavigate()
 
   const [clases,       setClases]       = useState([])
+  const [historial,    setHistorial]    = useState([])
   const [canceladas,   setCanceladas]   = useState([])
   const [cargando,     setCargando]     = useState(true)
   const [error,        setError]        = useState(null)
@@ -43,9 +44,9 @@ export default function MisClases() {
     setError(null)
     try {
       const res = await api.get('/turnos')
-      setClases(res.data.data ?? [])
-      // El endpoint también devuelve las inscripciones canceladas (para reconfirmar)
-      setCanceladas(res.data.cancelados ?? [])
+      setClases(res.data.data ?? [])           // próximos
+      setHistorial(res.data.historial ?? [])   // pasados
+      setCanceladas(res.data.cancelados ?? []) // para reconfirmar
     } catch (err) {
       setError(obtenerMensajeError(err, 'No se pudieron cargar las clases'))
     } finally {
@@ -104,8 +105,12 @@ export default function MisClases() {
   }
 
   const ahora   = new Date()
-  const futuras  = clases.filter(c => c.turnos?.fecha_inicio && new Date(c.turnos.fecha_inicio) >= ahora)
-  const pasadas  = clases.filter(c => c.turnos?.fecha_inicio && new Date(c.turnos.fecha_inicio) < ahora)
+  // clases = próximos (ya filtrados por el backend, fecha_fin >= ahora)
+  const futuras  = clases
+  // pasadas viene en historial del backend; fallback al filtro local por compatibilidad
+  const pasadas  = historial.length > 0
+    ? historial
+    : clases.filter(c => c.turnos?.fecha_inicio && new Date(c.turnos.fecha_inicio) < ahora)
 
   // Canceladas futuras: turnos futuros donde el socio estuvo inscripto pero canceló
   const canceladasFuturas = canceladas.filter(

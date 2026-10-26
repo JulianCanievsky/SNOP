@@ -1,6 +1,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import { parseFechaAR } from '../src/lib/fecha.js'
 
 const router = express.Router()
 
@@ -16,7 +17,7 @@ router.get('/', autenticar, async (req, res) => {
       .single()
 
     if (errorUsuario || !usuario) {
-      return res.status(404).json({ error: 'Usuario no encontrado' })
+      return res.status(404).json({ ok: false, mensaje: 'Usuario no encontrado' })
     }
 
     const { data: inscripciones, error: errorTurnos } = await supabase
@@ -24,6 +25,7 @@ router.get('/', autenticar, async (req, res) => {
       .select(`
         turno_id,
         estado,
+        estado_texto,
         turnos (
           id,
           fecha_inicio,
@@ -37,23 +39,51 @@ router.get('/', autenticar, async (req, res) => {
         )
       `)
       .eq('user_id', usuario_id)
-      .eq('estado', true)   // solo confirmados por el entrenador
+      .eq('estado', true)   // solo confirmados
 
     if (errorTurnos) throw errorTurnos
 
+    // Separar próximos e historial en zona horaria Argentina
+    const ahora = new Date()
+    const proximos  = []
+    const historial = []
+
+    for (const insc of inscripciones ?? []) {
+      const fechaFin = insc.turnos?.fecha_fin
+        ? parseFechaAR(insc.turnos.fecha_fin)
+        : insc.turnos?.fecha_inicio
+          ? parseFechaAR(insc.turnos.fecha_inicio)
+          : null
+
+      if (!fechaFin || fechaFin >= ahora) {
+        proximos.push(insc)
+      } else {
+        historial.push(insc)
+      }
+    }
+
+    proximos.sort((a, b) =>
+      new Date(a.turnos?.fecha_inicio ?? 0) - new Date(b.turnos?.fecha_inicio ?? 0)
+    )
+    historial.sort((a, b) =>
+      new Date(b.turnos?.fecha_inicio ?? 0) - new Date(a.turnos?.fecha_inicio ?? 0)
+    )
+
     res.json({
+      ok: true,
       data: {
         usuario: {
           ...usuario,
           nivel_nombre: usuario.niveles?.nombre ?? null,
         },
-        turnos: inscripciones || []
+        turnos:   proximos,   // compatibilidad: campo "turnos" = próximos
+        historial,
       }
     })
 
   } catch (error) {
     console.error(error)
-    res.status(500).json({ error: 'Error al obtener perfil' })
+    res.status(500).json({ ok: false, mensaje: 'Error al obtener perfil' })
   }
 })
 

@@ -11,11 +11,16 @@ export async function obtenerTurnos(req, res) {
   // socioId viene del JWT, no de la URL — evita que un socio vea turnos de otro
   const socioId = req.userId
   try {
-    const [activos, cancelados] = await Promise.all([
+    const [{ proximos, historial }, cancelados] = await Promise.all([
       getTurnosBySocio(socioId),
       getTurnosCancelados(socioId),
     ])
-    res.status(200).json({ ok: true, data: activos, cancelados: cancelados ?? [] })
+    res.status(200).json({
+      ok:        true,
+      data:      proximos,        // próximos: fecha_fin >= ahora
+      historial: historial ?? [], // historial: fecha_fin < ahora
+      cancelados: cancelados ?? [],
+    })
   } catch (error) {
     console.error('ERROR OBTENER TURNOS:', error)
     res.status(500).json({ ok: false, mensaje: 'Error al obtener turnos' })

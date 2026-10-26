@@ -11,12 +11,20 @@ import {
 import { crearInscripcion, actualizarEstado } from "./socioTurnoService.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Devuelve las inscripciones ACTIVAS del socio, separadas en próximos e historial.
+ * - próximos:  fecha_fin >= ahora (Argentina)
+ * - historial: fecha_fin <  ahora
+ *
+ * Ambas listas están ordenadas por fecha_inicio.
+ */
 export async function getTurnosBySocio(socioId) {
   const { data, error } = await supabase
     .from("socio_turno")
     .select(`
       id,
       estado,
+      estado_texto,
       fecha_inscripcion,
       turnos (
         id,
@@ -37,7 +45,35 @@ export async function getTurnosBySocio(socioId) {
     console.error("getTurnosBySocio:", error);
     throw error;
   }
-  return data;
+
+  const ahora = new Date();
+
+  const proximos  = [];
+  const historial = [];
+
+  for (const row of data ?? []) {
+    const fechaFin = row.turnos?.fecha_fin
+      ? parseFechaAR(row.turnos.fecha_fin)
+      : row.turnos?.fecha_inicio
+        ? parseFechaAR(row.turnos.fecha_inicio)
+        : null;
+
+    if (!fechaFin || fechaFin >= ahora) {
+      proximos.push(row);
+    } else {
+      historial.push(row);
+    }
+  }
+
+  // Próximos: más cercano primero; historial: más reciente primero
+  proximos.sort((a, b) =>
+    new Date(a.turnos?.fecha_inicio ?? 0) - new Date(b.turnos?.fecha_inicio ?? 0)
+  );
+  historial.sort((a, b) =>
+    new Date(b.turnos?.fecha_inicio ?? 0) - new Date(a.turnos?.fecha_inicio ?? 0)
+  );
+
+  return { proximos, historial };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

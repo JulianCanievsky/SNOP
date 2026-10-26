@@ -89,7 +89,8 @@ const Perfil = () => {
   }
 
   const usuario = perfil?.usuario ?? user
-  const turnos  = perfil?.turnos  ?? []
+  const turnos  = perfil?.turnos  ?? []   // próximos
+  const turnosPasados = perfil?.historial ?? []
 
   if (!usuario) {
     return (
@@ -107,9 +108,8 @@ const Perfil = () => {
   const iniciales = usuario.nombre
     ?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
 
-  const ahora        = new Date()
-  const turnosActivos = turnos.filter(i => i.turnos && new Date(i.turnos.fecha_inicio) >= ahora)
-  const turnosPasados = turnos.filter(i => i.turnos && new Date(i.turnos.fecha_inicio) <  ahora)
+  const turnosActivos = turnos  // ya filtrados por el backend (próximos)
+  // turnosPasados ya viene del backend (historial)
 
   return (
     <div className="perfil-container">
