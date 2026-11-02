@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useMisClasesEntrenador } from '../../../hooks/useEntrenador'
-import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import AppNav from '../../../components/AppNav/AppNav'
 import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
+import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog'
 
 import api from '../../../lib/apiClient.js'
 import './MisClasesEntrenador.css'
@@ -35,6 +36,7 @@ export default function MisClasesEntrenador() {
   const { clases, cargando, cancelarClase, recargar } = useMisClasesEntrenador()
   const [diaIdx, setDiaIdx] = useState(0)
   const [cancelando, setCancelando] = useState(null)
+  const [confirmarCancelar, setConfirmarCancelar] = useState(null) // turnoId a confirmar
   const [accionSocio, setAccionSocio] = useState(null) // id de solicitud en proceso
   const [expandido, setExpandido] = useState(null)    // id de clase con lista abierta
 
@@ -50,7 +52,12 @@ export default function MisClasesEntrenador() {
   )
 
   const handleCancelar = async (turnoId) => {
-    if (!window.confirm('¿Cancelar esta clase?')) return
+    setConfirmarCancelar(turnoId)
+  }
+
+  const handleConfirmarCancelar = async () => {
+    const turnoId = confirmarCancelar
+    setConfirmarCancelar(null)
     try {
       setCancelando(turnoId)
       await cancelarClase(turnoId)
@@ -230,7 +237,18 @@ export default function MisClasesEntrenador() {
         )}
       </main>
 
-      <BottomNavEntrenador />
+      <AppNav />
+
+      <ConfirmDialog
+        open={confirmarCancelar !== null}
+        title="Cancelar clase"
+        message="¿Cancelar este turno? Los inscriptos serán notificados."
+        confirmLabel="Sí, cancelar"
+        cancelLabel="Volver"
+        danger
+        onConfirm={handleConfirmarCancelar}
+        onCancel={() => setConfirmarCancelar(null)}
+      />
     </div>
   )
 }

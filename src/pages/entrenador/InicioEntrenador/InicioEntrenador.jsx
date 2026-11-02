@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useInicioEntrenador, useComunicadosEntrenador } from '../../../hooks/useEntrenador'
 import api from '../../../lib/apiClient.js'
-import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import AppNav from '../../../components/AppNav/AppNav'
 import { ClipboardList, Clock, Users, Inbox, Bell } from 'lucide-react'
 import './InicioEntrenador.css'
 
@@ -168,7 +168,7 @@ export default function InicioEntrenador() {
         </section>
       )}
 
-      <BottomNavEntrenador />
+      <AppNav />
     </div>
   )
 }

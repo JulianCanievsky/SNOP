@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMisAlumnos, useNiveles } from '../../../hooks/useEntrenador'
-import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import AppNav from '../../../components/AppNav/AppNav'
 import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
 import './MisAlumnosEntrenador.css'
 
@@ -89,7 +89,7 @@ export default function MisAlumnosEntrenador() {
         </div>
       )}
 
-      <BottomNavEntrenador />
+      <AppNav />
     </div>
   )
 }

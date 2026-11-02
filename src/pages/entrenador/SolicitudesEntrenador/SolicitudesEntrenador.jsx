@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSolicitudesEntrenador } from '../../../hooks/useEntrenador'
-import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import AppNav from '../../../components/AppNav/AppNav'
 import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
 import './SolicitudesEntrenador.css'
 
@@ -123,7 +123,7 @@ export default function SolicitudesEntrenador() {
 
       </div>
 
-      <BottomNavEntrenador />
+      <AppNav />
     </div>
   )
 }

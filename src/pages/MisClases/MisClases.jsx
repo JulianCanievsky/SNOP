@@ -2,12 +2,12 @@
  * MisClases.jsx — Panel del socio: ver clases inscriptas, cancelarlas,
  * reconfirmar cuando se libera un cupo, y unirse a lista de espera.
  */
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, XCircle } from 'lucide-react'
 import api from '../../lib/apiClient.js'
 import { obtenerMensajeError } from '../../lib/errores.js'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import CreditosResumen from '../../components/CreditosResumen/CreditosResumen'
 import './MisClases.css'
 
@@ -128,7 +128,7 @@ export default function MisClases() {
           <h1>Mis clases</h1>
         </header>
         <div className="mc-cargando"><div className="mc-spinner" /><p>Cargando...</p></div>
-        <BottomNav />
+        <AppNav />
       </div>
     )
   }
@@ -144,7 +144,7 @@ export default function MisClases() {
           <p>{error}</p>
           <button className="mc-btn-primary" onClick={cargar}>Reintentar</button>
         </div>
-        <BottomNav />
+        <AppNav />
       </div>
     )
   }
@@ -295,7 +295,7 @@ export default function MisClases() {
         </div>
       </div>
 
-      <BottomNav />
+      <AppNav />
     </div>
   )
 }

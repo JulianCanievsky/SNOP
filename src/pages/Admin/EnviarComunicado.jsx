@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { enviarComunicado, getComunicados, getStats, getNiveles } from '../../services/adminApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import './Admin.css'
@@ -176,7 +176,7 @@ export default function EnviarComunicado() {
         )}
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

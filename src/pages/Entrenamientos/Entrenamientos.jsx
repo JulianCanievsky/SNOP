@@ -8,12 +8,12 @@
  *  - pendiente             → badge "Pendiente de aprobación"
  *  - confirmado            → badge "Confirmado"
  */
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, MapPin, User, Clock, Users } from 'lucide-react'
 import api from '../../lib/apiClient.js'
 import { obtenerMensajeError } from '../../lib/errores.js'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
@@ -242,7 +242,7 @@ export default function Entrenamientos() {
         procesando={procesando}
       />
 
-      <BottomNav />
+      <AppNav />
     </div>
   )
 }

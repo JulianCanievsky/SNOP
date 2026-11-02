@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import './MisTurnos.css'
 import TurnoCard from '../../components/TurnoCard/TurnoCard'
 import { getAgenda, cancelarTurno, cancelarJuegoLibre, cancelarTorneo } from '../../services/turnosApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
 import { useRating } from '../../hooks/useRating'
 import { ToastContainer } from '../../components/ui/Toast'
@@ -29,40 +29,42 @@ export default function MisTurnos() {
   const { turnoActual, enviando, cargarPendientes, enviarRating, omitirRating } = useRating()
   const { toasts, showToast, removeToast } = useToast()
 
-  const _cargarPendientesRef = useRef(cargarPendientes); _cargarPendientesRef.current = cargarPendientes
+  const cargarAgendaYRating = useCallback(async () => {
+    try {
+      const data = await getAgenda()
+      const lista = data || []
+      setAgenda(lista)
 
-  useEffect(() => {
-    async function cargar() {
-      try {
-        const data = await getAgenda()
-        const lista = data || []
-        setAgenda(lista)
-
-        // Si hoy no tiene eventos, avanzar al primer día con evento (próximos 7 días)
-        if (lista.length > 0) {
-          const hoyStr = toDateStr(new Date())
-          const tieneHoy = lista.some(e => toLocalDateStr(e.fecha_inicio) === hoyStr)
-          if (!tieneHoy) {
-            for (let i = 1; i < 7; i++) {
-              const d = new Date()
-              d.setDate(d.getDate() + i)
-              if (lista.some(e => toLocalDateStr(e.fecha_inicio) === toDateStr(d))) {
-                setDiaSeleccionado(i)
-                break
-              }
+      // Si hoy no tiene eventos, avanzar al primer día con evento (próximos 7 días)
+      if (lista.length > 0) {
+        const hoyStr = toDateStr(new Date())
+        const tieneHoy = lista.some(e => toLocalDateStr(e.fecha_inicio) === hoyStr)
+        if (!tieneHoy) {
+          for (let i = 1; i < 7; i++) {
+            const d = new Date()
+            d.setDate(d.getDate() + i)
+            if (lista.some(e => toLocalDateStr(e.fecha_inicio) === toDateStr(d))) {
+              setDiaSeleccionado(i)
+              break
             }
           }
         }
-      } catch (error) {
-        console.error(error)
-      } finally {
-        setLoading(false)
       }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
     }
-    cargar()
-    // Chequear si hay turnos para calificar cada vez que se abre la agenda
-    _cargarPendientesRef.current()
   }, [])
+
+  useEffect(() => {
+    async function init() {
+      await cargarAgendaYRating()
+      // Chequear si hay turnos para calificar cada vez que se abre la agenda
+      await cargarPendientes()
+    }
+    init()
+  }, [cargarAgendaYRating, cargarPendientes])
 
   // Próximos 7 días
   const dias = Array.from({ length: 7 }, (_, i) => {
@@ -141,7 +143,7 @@ export default function MisTurnos() {
         )}
       </main>
 
-      <BottomNav />
+      <AppNav />
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 

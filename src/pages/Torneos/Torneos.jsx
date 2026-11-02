@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Clock, MapPin, Users, UserSquare2 } from 'lucide-react'
 import { getTorneos, inscribirTorneo, cancelarTorneo } from '../../services/torneosApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import DetalleTorneo from './DetalleTorneo'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import './Torneos.css'
@@ -102,8 +102,10 @@ export default function Torneos() {
     }
   }, [])
 
-  const _cargarRef = useRef(cargar); _cargarRef.current = cargar
-  useEffect(() => { _cargarRef.current() }, [])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   async function handleInscribir(torneo) {
     if (procesando) return
@@ -183,7 +185,7 @@ export default function Torneos() {
         ))}
       </div>
 
-      <BottomNav />
+      <AppNav />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )

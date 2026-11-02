@@ -3,7 +3,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { useTheme } from '../../../context/ThemeContext'
 import { usePerfilEntrenador } from '../../../hooks/useEntrenador'
 import api from '../../../lib/apiClient.js'
-import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import AppNav from '../../../components/AppNav/AppNav'
 import './PerfilEntrenador.css'
 
 function iniciales(nombre = '') {
@@ -156,7 +156,7 @@ export default function PerfilEntrenador() {
         </button>
       </div>
 
-      <BottomNavEntrenador />
+      <AppNav />
     </div>
   )
 }

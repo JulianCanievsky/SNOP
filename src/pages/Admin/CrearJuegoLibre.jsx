@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import {
   getSedes,
   getNiveles,
@@ -13,6 +13,7 @@ import { obtenerMensajeError } from '../../lib/errores.js'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
+import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog'
 import './Admin.css'
 
 const MESAS_POR_NIVEL = 4
@@ -33,6 +34,7 @@ export default function CrearJuegoLibre() {
   const [modalEventoId, setModalEventoId] = useState(null)
   const [inscriptos,    setInscriptos]    = useState([])
   const [cargandoModal, setCargandoModal] = useState(false)
+  const [confirmarEliminar, setConfirmarEliminar] = useState(null)
 
   const [form, setForm] = useState({
     sede_id:             '',
@@ -93,7 +95,12 @@ export default function CrearJuegoLibre() {
   }
 
   async function eliminar(id) {
-    if (!window.confirm('¿Borrar este espacio de juego?')) return
+    setConfirmarEliminar(id)
+  }
+
+  async function handleConfirmarEliminar() {
+    const id = confirmarEliminar
+    setConfirmarEliminar(null)
     try {
       await borrarJuegoLibre(id)
       setPublicados(prev => prev.filter(p => p.id !== id))
@@ -299,8 +306,19 @@ export default function CrearJuegoLibre() {
         )}
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+      <ConfirmDialog
+        open={confirmarEliminar !== null}
+        title="Eliminar juego libre"
+        message="¿Borrar este espacio de juego? Esta acción no se puede deshacer."
+        confirmLabel="Sí, eliminar"
+        cancelLabel="Cancelar"
+        danger
+        onConfirm={handleConfirmarEliminar}
+        onCancel={() => setConfirmarEliminar(null)}
+      />
     </div>
   )
 }

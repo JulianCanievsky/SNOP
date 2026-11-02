@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getConfig } from '../../services/adminApi'
 import './Admin.css'
 
@@ -113,7 +113,7 @@ export default function ConfigAdmin() {
         )}
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

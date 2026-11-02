@@ -1,12 +1,13 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
+import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import { crearNotificacion, enviarEmail, emailClaseConfirmada, emailClaseRechazada } from '../src/lib/notificaciones.js'
 import { aprobarInscripcionPorId } from '../src/services/socioTurnoService.js'
 import { hoyAR, toFechaAR, formatArES } from '../src/lib/fecha.js'
 
 const router = express.Router()
-router.use(autenticar)
+router.use(autenticar, requireRole(2, 3))  // solo entrenadores (2) y admins (3)
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getStats } from '../../services/adminApi'
 import { ClipboardList, Users, Calendar, Gamepad2, Trophy, Megaphone, Star, Download, ChevronRight } from 'lucide-react'
 import './Admin.css'
@@ -100,7 +100,7 @@ export default function AdminInicio() {
         </div>
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

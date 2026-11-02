@@ -2,6 +2,17 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
+// ─── Variables de entorno obligatorias ───────────────────────────────────────
+const ENV_REQUERIDAS = ['JWT_SECRET', 'SUPABASE_URL', 'SUPABASE_SERVICE_KEY']
+const faltantes = ENV_REQUERIDAS.filter((k) => !process.env[k])
+if (faltantes.length > 0) {
+  console.error(
+    `[FATAL] Variables de entorno faltantes: ${faltantes.join(', ')}\n` +
+    'El servidor no puede arrancar sin estas variables. Revisá tu .env o la configuración del hosting.'
+  )
+  process.exit(1)
+}
+
 // ─── Advertencia de SSL — solo deshabilitar en desarrollo ────────────────────
 if (process.env.NODE_ENV !== 'production') {
   console.warn(
@@ -35,6 +46,7 @@ import adminRouter              from './rutas/admin.js'
 import agendaRouter             from './rutas/agenda.js'
 import ratingsRouter            from './rutas/ratings.js'
 import bonosRouter              from './rutas/bonos.js'
+import creditosRouter           from './rutas/creditos.js'
 
 const app = express()
 
@@ -201,56 +213,10 @@ app.use('/api/turnos',              turnosRoutes)
 app.use('/api/agenda',              agendaRouter)
 app.use('/api/ratings',             ratingsRouter)
 app.use('/api/bonos',               bonosRouter)
+app.use('/api/creditos',            creditosRouter)
 app.use('/api/clases-particulares', clasesParticularesRoutes)
 app.use('/api/perfil',              perfilRouter)
 app.use('/api/entrenador',          entrenadorRouter)
-
-// ── Créditos de recupero ──────────────────────────────────────────────────────
-// GET /api/creditos — resumen de créditos del socio autenticado
-app.get('/api/creditos', autenticar, async (req, res) => {
-  const socioId = req.userId
-  const ahora   = new Date()
-  try {
-    const { data, error } = await supabase
-      .from('creditos_clase')
-      .select('id, mes_periodo, usado, turno_origen_id, turno_usado_id, fecha_generado, fecha_vencimiento')
-      .eq('user_id', socioId)
-      .order('fecha_vencimiento', { ascending: true })
-
-    if (error) {
-      if (error.code === '42P01') return res.json({ ok: true, data: { disponibles: 0, usados: 0, vencidos: 0, creditos: [] } })
-      throw error
-    }
-
-    const creditos = (data ?? []).map(c => ({
-      ...c,
-      // 'vencido' es un campo calculado: no usado Y ya pasó la fecha de vencimiento
-      // NO modifica el campo 'usado' para no mezclar semánticas
-      vencido: !c.usado && new Date(c.fecha_vencimiento) < ahora,
-    }))
-
-    const disponibles = creditos.filter(c => !c.usado && !c.vencido).length
-    const usados      = creditos.filter(c =>  c.usado && !c.vencido).length
-    const vencidos    = creditos.filter(c =>  c.vencido).length
-    const arrastrados = creditos.filter(c => !c.usado && !c.vencido && c.arrastrado).length
-
-    // Marcar vencidos en DB con un campo dedicado (no contaminar 'usado')
-    // SUPUESTO: si la columna 'vencido_at' no existe, se omite silenciosamente.
-    const idsVencidos = creditos.filter(c => c.vencido).map(c => c.id)
-    if (idsVencidos.length > 0) {
-      supabase.from('creditos_clase')
-        .update({ usado: true }) // compatibilidad hasta migrar columna 'vencido'
-        .in('id', idsVencidos)
-        .then(() => {})
-        .catch(err => console.error('[creditos] error marcando vencidos:', err))
-    }
-
-    res.json({ ok: true, data: { disponibles, usados, vencidos, arrastrados, creditos } })
-  } catch (err) {
-    console.error('GET /api/creditos', err)
-    res.status(500).json({ ok: false, mensaje: 'Error al obtener créditos' })
-  }
-})
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {

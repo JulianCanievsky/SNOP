@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getSedes, getNiveles } from '../../services/adminApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import { crearTorneo, getTorneosAdmin, borrarTorneo, getInscriptosTorneo, quitarInscriptoTorneo } from '../../services/torneosApi'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
+import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog'
 import './Admin.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -28,6 +29,8 @@ export default function CrearTorneo() {
   const [inscriptos,     setInscriptos]      = useState([])
   const [cargandoModal,  setCargandoModal]  = useState(false)
   const [quitando,       setQuitando]       = useState(null)
+  const [confirmarEliminar, setConfirmarEliminar] = useState(null)
+  const [confirmarQuitarInsc, setConfirmarQuitarInsc] = useState(null) // { torneoId, socioId, nombre }
 
   const [form, setForm] = useState({
     nombre:              '',
@@ -91,7 +94,12 @@ export default function CrearTorneo() {
   }
 
   async function eliminar(id) {
-    if (!window.confirm('¿Borrar este torneo?')) return
+    setConfirmarEliminar(id)
+  }
+
+  async function handleConfirmarEliminar() {
+    const id = confirmarEliminar
+    setConfirmarEliminar(null)
     try {
       await borrarTorneo(id)
       setPublicados(prev => prev.filter(p => p.id !== id))
@@ -113,7 +121,12 @@ export default function CrearTorneo() {
   }
 
   async function quitarInscripto(torneoId, socioId, nombre) {
-    if (!window.confirm(`¿Quitar a ${nombre} del torneo?`)) return
+    setConfirmarQuitarInsc({ torneoId, socioId, nombre })
+  }
+
+  async function handleConfirmarQuitarInsc() {
+    const { torneoId, socioId } = confirmarQuitarInsc
+    setConfirmarQuitarInsc(null)
     setQuitando(socioId)
     try {
       await quitarInscriptoTorneo(torneoId, socioId)
@@ -338,8 +351,30 @@ export default function CrearTorneo() {
         )}
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+      <ConfirmDialog
+        open={confirmarEliminar !== null}
+        title="Eliminar torneo"
+        message="¿Borrar este torneo? Esta acción no se puede deshacer."
+        confirmLabel="Sí, eliminar"
+        cancelLabel="Cancelar"
+        danger
+        onConfirm={handleConfirmarEliminar}
+        onCancel={() => setConfirmarEliminar(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmarQuitarInsc !== null}
+        title="Quitar inscripto"
+        message={confirmarQuitarInsc ? `¿Quitar a ${confirmarQuitarInsc.nombre} del torneo?` : ''}
+        confirmLabel="Sí, quitar"
+        cancelLabel="Cancelar"
+        danger
+        onConfirm={handleConfirmarQuitarInsc}
+        onCancel={() => setConfirmarQuitarInsc(null)}
+      />
     </div>
   )
 }

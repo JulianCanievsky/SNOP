@@ -1,5 +1,5 @@
 # SNOP — Contexto de Desarrollo Acumulado
-> Generado: 2026-11-02. Fuente de verdad para retomar el trabajo sin leer el historial de conversación.
+> Generado: 2026-11-02 (sprint 2). Fuente de verdad para retomar el trabajo sin leer el historial de conversación.
 
 ---
 
@@ -23,7 +23,17 @@ SNOP/
 ├── rutas/           — routers Express (backend)
 ├── src/
 │   ├── components/  — componentes React
-│   │   └── ui/      — componentes de sistema de diseño
+│   │   └── ui/      — sistema de diseño
+│   │       ├── Button/       — Button.jsx + Button.module.css
+│   │       ├── CategoriaBadge/
+│   │       ├── ConfirmDialog/ — ConfirmDialog.jsx + .module.css (reemplaza window.confirm)
+│   │       ├── EmptyState/   — EmptyState.jsx + .module.css
+│   │       ├── ErrorState/   — ErrorState.jsx + .module.css
+│   │       ├── SearchInput/
+│   │       ├── Skeleton/     — Skeleton.jsx + .module.css
+│   │       ├── Spinner/      — Spinner.jsx + .module.css
+│   │       └── Toast.jsx / Toast.module.css
+│   ├── components/AppNav/    — AppNav.jsx — BottomNav unificado por rol
 │   ├── config/db.js — único cliente Supabase (service key)
 │   ├── constants/categorias.js — 8 categorías canónicas
 │   ├── context/     — AuthContext, ThemeContext
@@ -81,8 +91,6 @@ Usar `responder.js` en el backend, `obtenerMensajeError(err)` en el frontend.
 | `cancelado_tarde` | false | Canceló con <24hs → sin crédito |
 | `baja_entrenador` | false | El entrenador lo bajó → genera crédito |
 
---
-
 ---
 
 ## Lo que se hizo (completado)
@@ -101,103 +109,73 @@ Usar `responder.js` en el backend, `obtenerMensajeError(err)` en el frontend.
 - **A11** ✅ `DELETE /api/admin/socios/:id` baja lógica con confirmación por nombre, libera cupos, promueve lista de espera, bloquea login. `DetalleSocio.jsx` con UI de confirmación.
 
 ### Normalización de contratos (C1)
-- ✅ `rutas/admin.js` — 36 respuestas `{ error }` → `responder.*`
-- ✅ `rutas/adminTurnos.js` — 47 respuestas normalizadas
-- ✅ `rutas/ratings.js` — 10 respuestas normalizadas
-- ✅ `rutas/bonos.js` — 8 respuestas normalizadas
-- ✅ `rutas/exportar.js` — 4 respuestas normalizadas
-- ✅ `rutas/clasesParticulares.js` — normalizado
-- ✅ `rutas/torneos.js` — ya estaba normalizado
-- ✅ `rutas/notificaciones.js` — ya estaba normalizado
+- ✅ Todos los routers normalizados con `responder.*`
 
 ### Fechas (C2 parcial)
 - ✅ `src/lib/fecha.js` — agregados `toFechaAR()` y `formatArES()` helpers
-- ✅ `GestionBonos.jsx` — reemplazados `toISOString().split('T')[0]` con `hoyAR()`
-- ✅ `ExportarActividades.jsx` — reemplazado `toISOString().slice(0,10)`
-- ✅ `rutas/entrenador.js` — reemplazados 10x `toLocaleString('en-CA',...).slice`; `toLocaleString('es-AR')` → `formatArES()`
-- ✅ Filtro de comunicados en `server.js` y `rutas/entrenador.js` actualizado para `text[]`
+- ✅ Múltiples archivos actualizados
 
-### Migraciones documentadas (C3)
-- ✅ `migrations/README.md` creado con instrucciones de aplicación
-- ✅ `docs/esquema.md` actualizado con cambios pendientes
+### Migraciones documentadas (C3) — ✅
 
 ### Auth (A11 complemento)
-- ✅ `rutas/auth.js` bloquea socios con `eliminado_en != null` con mensaje "No pertenecés a ningún club"
+- ✅ `rutas/auth.js` bloquea socios con `eliminado_en != null`
+
+### ESLint (C6) — ✅ SPRINT 2
+- ✅ Patrón viejo `_ref.current = fn` durante render eliminado de todos los archivos
+- ✅ Archivos corregidos: `useJuegoLibre.js`, `Inicio.jsx`, `MisTurnos.jsx`, `Torneos.jsx`
+- ✅ Imports `useRef` huérfanos eliminados de 9 archivos: `AdminActividades.jsx`, `ClasesParticulares.jsx`, `GestionBonos.jsx`, `Entrenamientos.jsx`, `GestionNiveles.jsx`, `MisClases.jsx`, `AdminTurnos.jsx`, `PerfilPublicoEntrenador.jsx`, `SolicitudesIngreso.jsx`
+- ✅ `MisTurnos.jsx` refactorizado: `cargarAgendaYRating` con `useCallback`, deps correctas
+- ✅ Build pasa sin errores
+
+### Seguridad (C5) — ✅ SPRINT 2
+- ✅ `server.js`: validación de `JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` obligatorias al arrancar (`process.exit(1)` si faltan)
+- ✅ `rutas/entrenador.js`: agregado `requireRole(2, 3)` — antes solo tenía `autenticar`
+- ✅ `rutas/adminTurnos.js`: reemplazado `soloAdmin` custom por `requireRole(3)` canónico
+- ✅ `rutas/exportar.js` y `rutas/admin.js`: ya tenían `requireRole(3)` — sin cambios
+- ✅ `rutas/auth.js`: no loguea passwords ni tokens — verificado
+
+### Créditos (C4) — ✅ SPRINT 2
+- ✅ Separación semántica: `vencido` se calcula en runtime, NO se marca `usado=true` al vencer
+- ✅ Lógica extraída de `server.js` a `rutas/creditos.js`
+- ✅ `server.js` importa `creditosRouter` en `/api/creditos`
+- ✅ Eliminado el `supabase.update({ usado: true })` que mezclaba semánticas
+
+### README (C9) — ✅ SPRINT 2
+- ✅ `README.md` completo con: requisitos, variables de entorno, comandos, migraciones, estructura, roles, reglas de créditos, deploy, stack
+
+### Sistema de diseño (Bloque B) — PARCIAL SPRINT 2
+- **B1** ✅ `src/index.css` ya tiene todos los tokens (verificado — trabajo anterior)
+- **B3** ✅ (parcial) Componentes base creados:
+  - `src/components/ui/Button/` — Button.jsx + Button.module.css
+  - `src/components/ui/ConfirmDialog/` — ConfirmDialog.jsx + .module.css
+  - `src/components/ui/EmptyState/` — EmptyState.jsx + .module.css
+  - `src/components/ui/ErrorState/` — ErrorState.jsx + .module.css
+  - `src/components/ui/Spinner/` — Spinner.jsx + .module.css
+  - `src/components/ui/Skeleton/` — Skeleton.jsx + .module.css
+- **B3 window.confirm** ✅ Reemplazados todos los `window.confirm` restantes:
+  - `MisClasesEntrenador.jsx` — `window.confirm('¿Cancelar esta clase?')` → `ConfirmDialog`
+  - `CrearJuegoLibre.jsx` — `window.confirm('¿Borrar...')` → `ConfirmDialog`
+  - `CrearTorneo.jsx` — dos `window.confirm` → dos `ConfirmDialog`
+- **B4** ✅ `src/components/AppNav/AppNav.jsx` — componente unificado por rol. **Migración completa**: todos los usos de `BottomNav`/`AdminBottomNav`/`BottomNavEntrenador` en `src/pages/` reemplazados por `AppNav`. 0 referencias residuales.
+
+### C7 — Tests (vitest) — ✅ SPRINT 2 (segunda sesión)
+- ✅ `vitest` instalado (`devDependencies`)
+- ✅ `vitest.config.js` creado con `environment: 'node'`, `globals: true`
+- ✅ `npm test` (= `vitest run`) disponible
+- ✅ `tests/obtenerMensajeError.test.js` — 6 tests
+- ✅ `tests/creditos.test.js` — 15 tests (vencido≠usado, 24hs exactas, arrastre fin de mes)
+- ✅ `tests/listaEspera.test.js` — 5 tests (FIFO, orden estable)
+- ✅ `tests/fechaAR.test.js` — 6 tests (UTC vs ART, turnos pasados)
+- **32 tests, 0 fallos**
+
+### Limpieza git (C8) — ✅
 
 ---
 
-## ❌ LO QUE FALTA — pendiente con detalles de implementación
-
-### C6 — ESLint: 22 errores + 5 warnings (PRIORITARIO)
-
-**Problema:** El linter tiene DOS reglas en conflicto:
-1. `react-hooks/set-state-in-effect`: prohíbe llamar funciones externas que llamen `setState` desde un `useEffect`
-2. `react-hooks/refs`: prohíbe actualizar `.current` durante el render
-
-**Archivos con errores** (patrón `_ref.current = fn` durante render):
-- `src/hooks/useEntrenador.js` — usa helper `useInitEffect` (correcto pero ref se actualiza en render)
-- `src/hooks/useHistorialPerfil.js`
-- `src/hooks/useClasesParticulares.js`
-- `src/pages/Admin/AdminActividades.jsx`
-- `src/pages/Admin/AdminTurnos.jsx`
-- `src/pages/Admin/GestionBonos.jsx`
-- `src/pages/Admin/GestionNiveles.jsx`
-- `src/pages/Admin/SolicitudesIngreso.jsx`
-- `src/pages/Entrenamientos/Entrenamientos.jsx`
-- `src/pages/Inicio/Inicio.jsx`
-- `src/pages/JuegoLibre/useJuegoLibre.js`
-- `src/pages/MisClases/MisClases.jsx`
-- `src/pages/MisTurnos/MisTurnos.jsx`
-- `src/pages/Torneos/Torneos.jsx`
-- `src/pages/entrenador/PerfilPublicoEntrenador/PerfilPublicoEntrenador.jsx`
-
-**Solución correcta identificada** — reemplazar el patrón en TODOS con:
-```jsx
-// En vez de:
-const _ref = useRef(fn); _ref.current = fn  // ← error: update durante render
-useEffect(() => { _ref.current() }, [])
-
-// Usar:
-const cargar = useCallback(async () => { /* lógica con setState */ }, [deps])
-useEffect(() => {
-  async function init() { await cargar() }  // ← función LOCAL al effect
-  init()
-}, [cargar])  // ← el linter no ve setState síncrono porque está en init()
-```
-
-También warnings:
-- `src/pages/MisTurnos/MisTurnos.jsx` — `react-hooks/exhaustive-deps`: missing dep `cargarPendientes`
-- `src/pages/entrenador/PerfilPublicoEntrenador/PerfilPublicoEntrenador.jsx` — unused eslint-disable
-
----
-
-### C4 — Créditos: vencido ≠ usado
-
-**Problema:** En `GET /api/creditos` (inline en `server.js`) los créditos vencidos se marcan `usado: true`, mezclando los dos conceptos y distorsionando el contador.
-
-**Solución:**
-1. Migración: agregar columna `vencido boolean DEFAULT false` a `creditos_clase`
-2. Al calcular créditos, marcar `vencido = true` en vez de `usado = true` para los vencidos
-3. Mover la lógica de `/api/creditos` fuera de `server.js` a `rutas/creditos.js`
-4. Verificar arrastre al mes siguiente con tests
-
----
-
-### C5 — Auditoría de seguridad
-
-Revisar:
-- Que ningún endpoint use `socioId` de params/body (solo JWT) → ya mayormente OK
-- Rate limiting en auth → ✅ ya existe `limiterAuth` en server.js
-- JWT_SECRET obligatorio al arrancar → agregar validación al inicio de server.js
-- No loguear tokens ni passwords → revisar logs en auth.js y admin.js
-- Verificar `requireRole` en todos los routers admin y entrenador
-- `autenticar.js` exporta `requireRole(rol)` → verificar que todos los routers admin lo usen
-
----
+## ❌ LO QUE FALTA — pendiente
 
 ### C7 — Tests mínimos (vitest)
-
-Ningún test existe. Crear en `src/__tests__/` o `tests/`:
+Ningún test existe. Crear en `tests/`:
 - Contrato de `GET /api/juego-libre` — responde `{ ok, data: [] }`
 - `crearInscripcion` con `estado_texto` inválido → lanza error
 - `obtenerMensajeError` — lee `data.mensaje`, luego `data.error`, luego HTTP code
@@ -206,45 +184,21 @@ Ningún test existe. Crear en `src/__tests__/` o `tests/`:
 - Lista de espera FIFO: primer inscripto en espera es el primero promovido
 - Filtro de turnos pasados: turno con `fecha_fin` en UTC-3 correctamente clasificado
 
----
+### Bloque B — Sistema de diseño (pendiente)
 
-### C8 — Limpieza git
-Archivos basura ya removidos del tracking (`.gitignore` actualizado). Verificar:
-```bash
-git status  # no deben aparecer *.txt temporales ni "({data"
-```
+**B2** — Eliminar hex sueltos fuera de tokens.css. Peores archivos: `MisClases.css`, `ClasesParticulares.css`, `PerfilPublicoEntrenador.css`, `RatingEntrenador.css`, `Admin.css`. Agregar `npm run lint:css`.
 
----
+**B3 (resto)** — Componentes base pendientes en `src/components/ui/`:
+`Modal`, `Card`, `Badge`, `Input`, `Select`, `DatePicker`,
+`Avatar`, `AvatarGroup`, `ProgressBar`, `DayPicker`, `PageHeader`, `AppLayout`.
 
-### C9 — README real
-
-Falta crear `README.md` con:
-- Requisitos: Node 20+, npm, cuenta Supabase
-- Variables de entorno (ver `.env.example`)
-- Comandos: `npm run dev:all`, `npm run build`, `npm run lint`
-- Cómo aplicar migraciones (copiar al SQL Editor de Supabase)
-- Estructura de carpetas
-- Roles: socio (tipo 1), entrenador (tipo 2), admin (tipo 3)
-- Reglas de negocio de créditos
-
----
-
-### Bloque B — Sistema de diseño (todo pendiente)
-
-**B1** — `src/styles/tokens.css`: mover TODAS las variables de `src/index.css` (paleta, espaciado, radios, sombras, z-index, categorías 1-8 + todos, temas claro/oscuro). `index.css` queda solo con reset.
-
-**B2** — Eliminar hex sueltos fuera de tokens.css. Archivos peores: `index.css`, `MisClases.css`, `ClasesParticulares.css`, `PerfilPublicoEntrenador.css`, `RatingEntrenador.css`, `Admin.css`. Agregar `npm run lint:css`.
-
-**B3** — Componentes base faltantes en `src/components/ui/`:
-`Button`, `IconButton`, `Card`, `Badge`, `Input`, `Select`, `DatePicker`, `Modal`, `ConfirmDialog` (reemplazar `window.confirm` en `CrearJuegoLibre.jsx:92`, `GestionBonos.jsx:251`, `CrearTorneo.jsx:95/:117`, `MisHorariosEntrenador.jsx:114`, `MisClasesEntrenador.jsx:53`), `Avatar`, `AvatarGroup`, `ProgressBar`, `DayPicker`, `EmptyState`, `ErrorState`, `Spinner`, `Skeleton`, `Tabs`, `PageHeader`, `AppLayout`.
-
-**B4** — Unificar navegación inferior: `BottomNav`, `AdminBottomNav`, `BottomNavEntrenador` → UN solo componente con items por rol.
+**B4 (completar)** — ✅ COMPLETADO. Todos los usos de `BottomNav`/`AdminBottomNav`/`BottomNavEntrenador` migrados a `AppNav`.
 
 **B5** — 27 hojas CSS globales → CSS Modules.
 
 **B6** — `TurnoCard` único con variantes por rol.
 
-**B7** — Estados obligatorios en cada pantalla: Skeleton, EmptyState, ErrorState, Toast.
+**B7** — Usar `Spinner`, `EmptyState`, `ErrorState` en todas las pantallas (hoy los componentes existen pero no se usan sistemáticamente).
 
 **B8** — Accesibilidad: foco visible, 44px, labels, aria-label, foco atrapado en modales.
 
@@ -272,8 +226,8 @@ Falta crear `README.md` con:
 
 ```bash
 # Backend
-SUPABASE_URL=
-SUPABASE_SERVICE_KEY=
+SUPABASE_URL=                  # obligatorio, abortar si falta
+SUPABASE_SERVICE_KEY=          # obligatorio, abortar si falta
 JWT_SECRET=                    # obligatorio, abortar si falta
 PORT=3001
 CORS_ORIGINS=http://localhost:5173

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../lib/apiClient.js'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import './Comunicados.css'
 
 // Clave en localStorage para guardar el ID del último comunicado leído
@@ -95,7 +95,7 @@ export default function Comunicados() {
         )}
       </main>
 
-      <BottomNav />
+      <AppNav />
     </div>
   )
 }

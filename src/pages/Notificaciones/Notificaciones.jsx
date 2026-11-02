@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, XCircle, CheckCircle, AlertTriangle, Bell, Users, Megaphone, CircleDot, ChevronLeft } from 'lucide-react'
 import { useNotificaciones } from '../../hooks/useNotificaciones'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import './Notificaciones.css'
 
 // Mapeo tipo → ícono Lucide
@@ -100,7 +100,7 @@ export default function Notificaciones() {
         )}
       </div>
 
-      <BottomNav />
+      <AppNav />
     </div>
   )
 }

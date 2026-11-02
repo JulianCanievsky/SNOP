@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDetalleAlumno, useNiveles } from '../../../hooks/useEntrenador'
-import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import AppNav from '../../../components/AppNav/AppNav'
 import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
 import './DetalleAlumnoEntrenador.css'
 
@@ -52,7 +52,7 @@ export default function DetalleAlumnoEntrenador() {
           </button>
           <h1>Cargando...</h1>
         </header>
-        <BottomNavEntrenador />
+        <AppNav />
       </div>
     )
   }
@@ -69,7 +69,7 @@ export default function DetalleAlumnoEntrenador() {
           </button>
           <h1>Alumno no encontrado</h1>
         </header>
-        <BottomNavEntrenador />
+        <AppNav />
       </div>
     )
   }
@@ -132,7 +132,7 @@ export default function DetalleAlumnoEntrenador() {
         </div>
       </div>
 
-      <BottomNavEntrenador />
+      <AppNav />
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { Clock } from 'lucide-react'
 import { useJuegoLibre } from './useJuegoLibre'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import DetalleJuegoLibre from './DetalleJuegoLibre'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getSedesPublicas } from '../../services/adminApi'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
@@ -219,7 +219,7 @@ const JuegoLibre = () => {
           />
         ))}
       </div>
-      <BottomNav />
+      <AppNav />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )

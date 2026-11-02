@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useClasesParticulares } from '../../hooks/useClasesParticulares'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import ConfirmarClase from '../../components/TurnoCard/ConfirmarClase'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
 import { useRating } from '../../hooks/useRating'
 import { ToastContainer } from '../../components/ui/Toast'
@@ -303,7 +303,7 @@ const ClasesParticulares = () => {
           </>
         )}
       </div>
-      <BottomNav />
+      <AppNav />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
       {turnoActual && (
         <RatingEntrenador

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useMisHorarios } from '../../../hooks/useEntrenador'
 import { obtenerMensajeError } from '../../../lib/errores.js'
-import BottomNavEntrenador from '../../../components/BottomNavEntrenador/BottomNavEntrenador'
+import AppNav from '../../../components/AppNav/AppNav'
 import { ToastContainer } from '../../../components/ui/Toast'
 import { useToast } from '../../../hooks/useToast'
 import { MapPin, CalendarDays } from 'lucide-react'
@@ -327,7 +327,7 @@ export default function MisHorariosEntrenador() {
 
       </div>
 
-      <BottomNavEntrenador />
+      <AppNav />
       <ToastContainer toasts={toasts} onRemove={removeToast} />    </div>
   )
 }

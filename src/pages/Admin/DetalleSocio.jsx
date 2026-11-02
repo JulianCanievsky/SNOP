@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import api from '../../lib/apiClient.js'
@@ -146,7 +146,7 @@ export default function DetalleSocio() {
         <div className="admin-body">
           <div className="estado-carga"><div className="spinner-admin" /></div>
         </div>
-        <AdminBottomNav />
+        <AppNav />
       </div>
     )
   }
@@ -360,7 +360,7 @@ export default function DetalleSocio() {
         )}
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

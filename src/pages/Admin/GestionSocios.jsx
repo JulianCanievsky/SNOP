@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import SearchInput from '../../components/ui/SearchInput/SearchInput.jsx'
 import { getSocios } from '../../services/adminApi'
@@ -113,7 +113,7 @@ export default function GestionSocios() {
         </button>
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

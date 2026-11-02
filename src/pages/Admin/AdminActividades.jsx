@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Gamepad2, Trophy } from 'lucide-react'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getJuegosLibres, getInscriptosJuegoLibre } from '../../services/adminApi'
 import { getTorneosAdmin, getInscriptosTorneo } from '../../services/torneosApi'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
@@ -359,7 +359,7 @@ export default function AdminActividades() {
         )}
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

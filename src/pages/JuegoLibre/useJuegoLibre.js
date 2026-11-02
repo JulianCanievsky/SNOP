@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import api from '../../lib/apiClient.js'
 import { obtenerMensajeError } from '../../lib/errores.js'
 
@@ -23,8 +23,10 @@ export const useJuegoLibre = () => {
     }
   }, [])
 
-  const cargarRef = useRef(cargarEventos); cargarRef.current = cargarEventos
-  useEffect(() => { cargarRef.current() }, [])
+  useEffect(() => {
+    async function init() { await cargarEventos() }
+    init()
+  }, [cargarEventos])
 
   const inscribirse = async (eventoId) => {
     const { data } = await api.post(`/juego-libre/${eventoId}/inscribir`, {})

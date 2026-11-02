@@ -1,0 +1,36 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+}
+
+.icon {
+  font-size: 32px;
+  margin-bottom: var(--space-3);
+}
+
+.message {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  margin: 0 0 var(--space-4);
+  line-height: 1.5;
+  max-width: 320px;
+}
+
+.retryBtn {
+  padding: 12px var(--space-6);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  min-height: 44px;
+}
+.retryBtn:hover { background: var(--color-primary-light); }

@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getSolicitudes, aceptarSolicitud, rechazarSolicitud } from '../../services/adminApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import './Admin.css'
@@ -187,7 +187,7 @@ export default function SolicitudesIngreso() {
         </div>
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

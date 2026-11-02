@@ -1,0 +1,82 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: none;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), opacity var(--transition-fast);
+  white-space: nowrap;
+  text-decoration: none;
+  min-height: 44px; /* accesibilidad: tap target mínimo */
+}
+
+/* ── Variantes ─────────────────────────────────────────────── */
+.primary {
+  background: var(--color-primary);
+  color:      var(--color-on-primary);
+}
+.primary:hover:not(:disabled) { background: var(--color-primary-light); }
+.primary:active:not(:disabled){ background: var(--color-primary-dark); }
+
+.secondary {
+  background: var(--color-surface);
+  color:      var(--color-primary);
+  border:     1.5px solid var(--color-primary);
+}
+.secondary:hover:not(:disabled) { background: var(--color-primary-subtle); }
+
+.danger {
+  background: var(--color-danger);
+  color:      #fff;
+}
+.danger:hover:not(:disabled) { opacity: 0.88; }
+
+.ghost {
+  background: transparent;
+  color:      var(--color-text-muted);
+  border:     1.5px solid var(--color-border);
+}
+.ghost:hover:not(:disabled) { background: var(--color-surface-alt); }
+
+/* ── Tamaños ─────────────────────────────────────────────────── */
+.sm {
+  padding:   9px var(--space-4);
+  font-size: var(--font-size-xs);
+  min-height: 36px;
+}
+.md {
+  padding:   13px var(--space-5);
+  font-size: var(--font-size-md);
+}
+.lg {
+  padding:   16px var(--space-6);
+  font-size: var(--font-size-lg);
+}
+
+/* ── Modificadores ───────────────────────────────────────────── */
+.fullWidth { width: 100%; }
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Spinner de carga ────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: btnSpin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}

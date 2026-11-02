@@ -5,11 +5,11 @@
  *
  * Ruta: /entrenadores/:entrenadorId  (rol 1)
  */
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../../../lib/apiClient.js'
 import { obtenerMensajeError } from '../../../lib/errores.js'
-import BottomNav from '../../../components/BottomNav/BottomNav'
+import AppNav from '../../../components/AppNav/AppNav'
 import './PerfilPublicoEntrenador.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -89,7 +89,7 @@ export default function PerfilPublicoEntrenador() {
           <div className="ppe-spinner" />
           <p>Cargando perfil...</p>
         </div>
-        <BottomNav />
+        <AppNav />
       </div>
     )
   }
@@ -105,7 +105,7 @@ export default function PerfilPublicoEntrenador() {
           <p>{error || 'Entrenador no encontrado'}</p>
           <button className="ppe-btn-secondary" onClick={cargar}>Reintentar</button>
         </div>
-        <BottomNav />
+        <AppNav />
       </div>
     )
   }
@@ -218,7 +218,7 @@ export default function PerfilPublicoEntrenador() {
 
       </div>
 
-      <BottomNav />
+      <AppNav />
     </div>
   )
 }

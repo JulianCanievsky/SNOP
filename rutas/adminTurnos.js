@@ -19,6 +19,7 @@
 
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
+import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import responder from '../src/lib/responder.js'
 import {
@@ -35,14 +36,7 @@ import { crearInscripcion } from '../src/services/socioTurnoService.js'
 const router = express.Router()
 
 // ── Middleware: solo admins ───────────────────────────────────────────────────
-function soloAdmin(req, res, next) {
-  if (req.userTipo !== 3) {
-    return responder.sinPermiso(res, 'Acceso restringido a administradores')
-  }
-  next()
-}
-
-router.use(autenticar, soloAdmin)
+router.use(autenticar, requireRole(3))
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Gamepad2, Trophy, Dumbbell } from 'lucide-react'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getSedes, exportarExcel } from '../../services/adminApi'
 import { hoyAR } from '../../lib/fecha.js'
 import './Admin.css'
@@ -163,7 +163,7 @@ export default function ExportarActividades() {
         </button>
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

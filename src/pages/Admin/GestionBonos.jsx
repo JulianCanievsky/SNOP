@@ -3,9 +3,9 @@
  * Panel de administración de bonos.
  * Acceso: /admin/socios/:id/bonos (desde DetalleSocio) o /admin/bonos/:socioId
  */
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getSocio }                          from '../../services/adminApi'
 import { crearBono, getBonosSocio, desactivarBono } from '../../services/bonosApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
@@ -307,7 +307,7 @@ export default function GestionBonos() {
         <div className="admin-body">
           <div className="estado-carga"><div className="spinner-admin" /></div>
         </div>
-        <AdminBottomNav />
+        <AppNav />
       </div>
     )
   }
@@ -467,7 +467,7 @@ export default function GestionBonos() {
         )}
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

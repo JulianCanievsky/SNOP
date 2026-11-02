@@ -3,9 +3,9 @@
  * Permite crear, editar, asignar socios, reasignar entrenador,
  * cancelar solo la próxima semana o dar de baja definitivamente.
  */
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import api from '../../lib/apiClient.js'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import {
@@ -427,7 +427,7 @@ export default function AdminTurnos() {
             <h1>Detalle de turno</h1>
           </div>
           <div className="admin-body"><div className="estado-carga"><div className="spinner-admin" /></div></div>
-          <AdminBottomNav />
+          <AppNav />
         </div>
       )
     }
@@ -664,7 +664,7 @@ export default function AdminTurnos() {
           </div>
         )}
 
-        <AdminBottomNav />
+        <AppNav />
       </div>
     )
   }
@@ -757,7 +757,7 @@ export default function AdminTurnos() {
         )}
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
     </div>
   )
 }

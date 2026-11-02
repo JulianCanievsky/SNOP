@@ -1,10 +1,10 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { Calendar, Gamepad2, Users, Trophy, User, Bell, Search, BookOpen, Dumbbell, Target } from 'lucide-react'
 import api from '../../lib/apiClient.js'
 import { obtenerMensajeError } from '../../lib/errores.js'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getNoLeidas } from '../../services/notificacionesApi.js'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
@@ -88,9 +88,8 @@ export default function Inicio() {
     }
   }, [user])
 
-  const _cargarDatosRef = useRef(cargarDatos); _cargarDatosRef.current = cargarDatos
   useEffect(() => {
-    async function init() { await _cargarDatosRef.current() }
+    async function init() { await cargarDatos() }
     init()
 
     async function fetchComunicados() {
@@ -318,7 +317,7 @@ export default function Inicio() {
         </div>
       </section>
 
-      <BottomNav badge={noLeidos} />
+      <AppNav badge={noLeidos} />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )

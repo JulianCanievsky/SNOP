@@ -4,7 +4,7 @@ import { useTheme } from '../../context/ThemeContext'
 import { usePerfil } from '../../hooks/usePerfil'
 import { useHistorialPerfil } from '../../hooks/useHistorialPerfil'
 import { getMiBono } from '../../services/bonosApi'
-import BottomNav from '../../components/BottomNav/BottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { Clock, MapPin, User, Sun, Moon, RefreshCw } from 'lucide-react'
 import './Perfil.css'
@@ -147,7 +147,7 @@ const Perfil = () => {
           </div>
         )}
         <div className="estado-carga">Cargando información...</div>
-        <BottomNav />
+        <AppNav />
       </div>
     )
   }
@@ -163,7 +163,7 @@ const Perfil = () => {
           No se pudo cargar el perfil.
           <button className="btn-reintentar" onClick={cargarPerfil}>Reintentar</button>
         </div>
-        <BottomNav />
+        <AppNav />
       </div>
     )
   }
@@ -364,7 +364,7 @@ const Perfil = () => {
         Cerrar sesión
       </button>
 
-      <BottomNav />
+      <AppNav />
     </div>
   )
 }

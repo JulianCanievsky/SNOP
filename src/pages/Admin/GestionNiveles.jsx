@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
+import AppNav from '../../components/AppNav/AppNav'
 import { getSocios, editarSocio, getNivelesStats, getNiveles } from '../../services/adminApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import SearchInput, { normalizar } from '../../components/ui/SearchInput/SearchInput.jsx'
@@ -169,7 +169,7 @@ export default function GestionNiveles() {
         </div>
       </div>
 
-      <AdminBottomNav />
+      <AppNav />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )
