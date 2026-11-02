@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Gamepad2, Trophy } from 'lucide-react'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
@@ -174,7 +174,10 @@ export default function AdminActividades() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   async function togglePanel(tipo, id, _capacidad) {
     const key = `${tipo}-${id}`

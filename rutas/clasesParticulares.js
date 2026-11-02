@@ -1,6 +1,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
 import { crearNotificacion, enviarEmail, emailNuevaSolicitudClase } from '../src/lib/notificaciones.js'
 import { crearInscripcion } from '../src/services/socioTurnoService.js'
 
@@ -93,9 +94,7 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
       .single();
 
     if (error || !entrenador) {
-      return res.status(404).json({
-        error: 'Entrenador no encontrado',
-      });
+      return responder.noEncontrado(res, 'Entrenador no encontrado')
     }
 
     const hoyDetAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
@@ -139,9 +138,7 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      error: 'Error al obtener entrenador',
-    });
+    responder.interno(res, 'Error al obtener entrenador')
   }
 });
 
@@ -234,9 +231,9 @@ router.post('/solicitar', autenticar, async (req, res) => {
   } catch (error) {
     console.error('[clasesParticulares POST /solicitar]', error)
     if (error.code === '23505') {
-      return res.status(409).json({ ok: false, mensaje: 'Ya solicitaste este turno' })
+      return responder.conflicto(res, 'Ya solicitaste este turno')
     }
-    res.status(500).json({ ok: false, mensaje: 'Error al enviar la solicitud' })
+    responder.interno(res, 'Error al enviar la solicitud')
   }
 });
 
@@ -255,21 +252,12 @@ router.delete('/liberar/:id', autenticar, async (req, res) => {
 
     if (error) throw error;
 
-    res.json({
-      mensaje: 'Solicitud cancelada.'
-    });
+    res.json({ ok: true, mensaje: 'Solicitud cancelada.' })
 
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      error: 'No se pudo liberar el turno.'
-    });
-
+    console.error(error)
+    responder.interno(res, 'No se pudo liberar el turno.')
   }
-  
-
 });
 
 // MIS SOLICITUDES
@@ -303,19 +291,11 @@ router.get('/mis-solicitudes', autenticar, async (req, res) => {
   .order('fecha_inscripcion', { ascending: false });
     if (error) throw error;
 
-    res.json({
-      data
-    });
+    responder.ok(res, data)
 
   } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      error: 'Error al obtener las solicitudes.'
-    });
-
+    console.error(error)
+    responder.interno(res, 'Error al obtener las solicitudes.')
   }
-
 });
 export default router;

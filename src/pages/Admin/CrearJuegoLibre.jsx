@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import {
   getSedes,
+  getNiveles,
   crearJuegoLibre,
   getJuegosLibres,
   borrarJuegoLibre,
@@ -11,25 +12,27 @@ import {
 import { obtenerMensajeError } from '../../lib/errores.js'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
+import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import './Admin.css'
 
 const MESAS_POR_NIVEL = 4
+const TZ = 'America/Argentina/Buenos_Aires'
 
 export default function CrearJuegoLibre() {
   const navigate = useNavigate()
   const { toasts, showToast, removeToast } = useToast()
 
   const [sedes,      setSedes]      = useState([])
+  const [niveles,    setNiveles]    = useState([])
   const [publicados, setPublicados] = useState([])
   const [cargando,   setCargando]   = useState(true)
   const [enviando,   setEnviando]   = useState(false)
   const [exito,      setExito]      = useState(false)
   const [error,      setError]      = useState('')
 
-  // Modal de inscriptos
-  const [modalEventoId,   setModalEventoId]   = useState(null)
-  const [inscriptos,      setInscriptos]      = useState([])
-  const [cargandoModal,   setCargandoModal]   = useState(false)
+  const [modalEventoId, setModalEventoId] = useState(null)
+  const [inscriptos,    setInscriptos]    = useState([])
+  const [cargandoModal, setCargandoModal] = useState(false)
 
   const [form, setForm] = useState({
     sede_id:             '',
@@ -37,14 +40,14 @@ export default function CrearJuegoLibre() {
     hora_inicio:         '20:00',
     hora_fin:            '21:30',
     cantidad_mesas:      3,
-    niveles_habilitados: ['Rojo', 'Intermedio', 'Azul'],
+    niveles_habilitados: [], // array de IDs (int), vacío = apto para todos
   })
 
   const capacidad = form.cantidad_mesas * MESAS_POR_NIVEL
 
   useEffect(() => {
-    Promise.all([getSedes(), getJuegosLibres()])
-      .then(([s, p]) => { setSedes(s); setPublicados(p) })
+    Promise.all([getSedes(), getJuegosLibres(), getNiveles()])
+      .then(([s, p, n]) => { setSedes(s); setPublicados(p); setNiveles(n ?? []) })
       .catch(console.error)
       .finally(() => setCargando(false))
   }, [])
@@ -55,14 +58,14 @@ export default function CrearJuegoLibre() {
     setError('')
   }
 
-  function toggleNivel(nivel) {
+  function toggleNivel(nivelId) {
     setForm(prev => {
-      const ya = prev.niveles_habilitados.includes(nivel)
+      const ya = prev.niveles_habilitados.includes(nivelId)
       return {
         ...prev,
         niveles_habilitados: ya
-          ? prev.niveles_habilitados.filter(n => n !== nivel)
-          : [...prev.niveles_habilitados, nivel],
+          ? prev.niveles_habilitados.filter(id => id !== nivelId)
+          : [...prev.niveles_habilitados, nivelId],
       }
     })
   }
@@ -80,7 +83,7 @@ export default function CrearJuegoLibre() {
       setExito(true)
       const nuevos = await getJuegosLibres()
       setPublicados(nuevos)
-      setForm(prev => ({ ...prev, fecha: '', sede_id: '' }))
+      setForm(prev => ({ ...prev, fecha: '', sede_id: '', niveles_habilitados: [] }))
       setTimeout(() => setExito(false), 3000)
     } catch (err) {
       setError(obtenerMensajeError(err, 'Error al crear espacio'))
@@ -101,48 +104,28 @@ export default function CrearJuegoLibre() {
   }
 
   async function verInscriptos(eventoId) {
-    // Toggle: cerrar si ya está abierto
-    if (modalEventoId === eventoId) {
-      setModalEventoId(null)
-      return
-    }
+    if (modalEventoId === eventoId) { setModalEventoId(null); return }
     setModalEventoId(eventoId)
     setCargandoModal(true)
     try {
-      const { data } = await getInscriptosJuegoLibre(eventoId)
-      setInscriptos(data ?? [])
-    } catch (err) {
-      console.error(err)
-      setInscriptos([])
-    } finally {
-      setCargandoModal(false)
-    }
+      const res = await getInscriptosJuegoLibre(eventoId)
+      setInscriptos(res.data?.inscriptos ?? res.data ?? [])
+    } catch { setInscriptos([]) }
+    finally { setCargandoModal(false) }
   }
 
-  const TZ = 'America/Argentina/Buenos_Aires'
-
   function formatFechaHora(iso) {
-    const d    = new Date(iso)
-    const dia  = d.toLocaleDateString('es-AR', {
-      weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ,
-    })
-    const hora = d.toLocaleTimeString('es-AR', {
-      hour: '2-digit', minute: '2-digit', timeZone: TZ,
-    })
+    const d   = new Date(iso)
+    const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ })
+    const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
     return `${dia} · ${hora} hs`
   }
 
   function formatFechaInsc(iso) {
-    return new Date(iso).toLocaleDateString('es-AR', {
-      day: '2-digit', month: '2-digit', year: '2-digit', timeZone: TZ,
-    })
+    return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: TZ })
   }
 
-  const NIVEL_STYLE = {
-    Rojo:        { background: '#fee2e2', color: '#b91c1c' },
-    Intermedio:  { background: '#fef9c3', color: '#92400e' },
-    Azul:        { background: '#dbeafe', color: '#1d4ed8' },
-  }
+  const aptosParaTodos = form.niveles_habilitados.length === 0
 
   return (
     <div className="admin-page">
@@ -197,16 +180,29 @@ export default function CrearJuegoLibre() {
           </div>
 
           <div className="form-group">
-            <label>Niveles habilitados</label>
-            <div className="checkboxes-row">
-              {['Rojo', 'Intermedio', 'Azul'].map(n => (
-                <label key={n} className="checkbox-nivel">
+            <label>Categorías habilitadas</label>
+            <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '4px 0 8px' }}>
+              Sin selección = apto para todas las categorías
+            </p>
+
+            <label className="checkbox-nivel" style={{ marginBottom: 8 }}>
+              <input
+                type="checkbox"
+                checked={aptosParaTodos}
+                onChange={() => setForm(prev => ({ ...prev, niveles_habilitados: [] }))}
+              />
+              <span style={{ fontSize: 13, fontWeight: 600 }}>✓ Apto para todos</span>
+            </label>
+
+            <div className="checkboxes-row" style={{ flexWrap: 'wrap', gap: 8 }}>
+              {niveles.map(n => (
+                <label key={n.id} className="checkbox-nivel" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <input
                     type="checkbox"
-                    checked={form.niveles_habilitados.includes(n)}
-                    onChange={() => toggleNivel(n)}
+                    checked={form.niveles_habilitados.includes(n.id)}
+                    onChange={() => toggleNivel(n.id)}
                   />
-                  {n}
+                  <CategoriaBadge nivelId={n.id} />
                 </label>
               ))}
             </div>
@@ -235,11 +231,17 @@ export default function CrearJuegoLibre() {
                           <p className="juego-libre-sub">
                             {p.sedes?.nombre ?? 'Sede'} · {p.capacidad_maxima} lugares
                           </p>
-                          {/* Contador de inscriptos */}
                           {p._inscriptos !== undefined && (
                             <p style={{ fontSize: 12, color: '#4f46e5', fontWeight: 600, margin: '2px 0 0' }}>
                               {p._inscriptos} anotado{p._inscriptos !== 1 ? 's' : ''}
                             </p>
+                          )}
+                          {Array.isArray(p.niveles_habilitados) && p.niveles_habilitados.length > 0 && (
+                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                              {p.niveles_habilitados.map(id => (
+                                <CategoriaBadge key={id} nivelId={id} />
+                              ))}
+                            </div>
                           )}
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -254,7 +256,6 @@ export default function CrearJuegoLibre() {
                         </div>
                       </div>
 
-                      {/* ── Panel desplegable de inscriptos ── */}
                       {abierto && (
                         <div className="inscriptos-panel">
                           {cargandoModal ? (
@@ -270,22 +271,15 @@ export default function CrearJuegoLibre() {
                                 {inscriptos.length} anotado{inscriptos.length !== 1 ? 's' : ''}
                               </p>
                               {inscriptos.map((insc, idx) => (
-                                <div key={insc.id} className="inscripto-row">
+                                <div key={insc.id ?? idx} className="inscripto-row">
                                   <div className="inscripto-num">{idx + 1}</div>
                                   <div className="inscripto-info">
                                     <span className="inscripto-nombre">{insc.nombre}</span>
                                     <span className="inscripto-email">{insc.email}</span>
-                                    {insc.telefono && (
-                                      <span className="inscripto-email">{insc.telefono}</span>
-                                    )}
+                                    {insc.telefono && <span className="inscripto-email">{insc.telefono}</span>}
                                   </div>
                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                                    <span
-                                      className="badge-nivel"
-                                      style={NIVEL_STYLE[insc.nivel] ?? { background: '#f3f4f6', color: '#6b7280' }}
-                                    >
-                                      {insc.nivel}
-                                    </span>
+                                    <CategoriaBadge nivelId={insc.nivel_id ?? null} />
                                     <span style={{ fontSize: 10, color: '#9ca3af' }}>
                                       {formatFechaInsc(insc.fecha_inscripcion)}
                                     </span>

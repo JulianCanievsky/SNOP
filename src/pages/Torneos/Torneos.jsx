@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Clock, MapPin, Users, UserSquare2 } from 'lucide-react'
 import { getTorneos, inscribirTorneo, cancelarTorneo } from '../../services/torneosApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
@@ -102,7 +102,8 @@ export default function Torneos() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  const _cargarRef = useRef(cargar); _cargarRef.current = cargar
+  useEffect(() => { _cargarRef.current() }, [])
 
   async function handleInscribir(torneo) {
     if (procesando) return

@@ -1,24 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
-import { getSedes } from '../../services/adminApi'
+import { getSedes, getNiveles } from '../../services/adminApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import { crearTorneo, getTorneosAdmin, borrarTorneo, getInscriptosTorneo, quitarInscriptoTorneo } from '../../services/torneosApi'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
+import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import './Admin.css'
 
-const NIVEL_STYLE = {
-  Rojo:       { background: '#fee2e2', color: '#b91c1c' },
-  Intermedio: { background: '#fef9c3', color: '#92400e' },
-  Azul:       { background: '#dbeafe', color: '#1d4ed8' },
-}
+const TZ = 'America/Argentina/Buenos_Aires'
 
 export default function CrearTorneo() {
   const navigate = useNavigate()
   const { toasts, showToast, removeToast } = useToast()
 
   const [sedes,      setSedes]      = useState([])
+  const [niveles,    setNiveles]    = useState([])
   const [publicados, setPublicados] = useState([])
   const [cargando,   setCargando]   = useState(true)
   const [enviando,   setEnviando]   = useState(false)
@@ -27,9 +25,9 @@ export default function CrearTorneo() {
 
   // Modal inscriptos
   const [modalId,        setModalId]        = useState(null)
-  const [inscriptos,     setInscriptos]     = useState([])
+  const [inscriptos,     setInscriptos]      = useState([])
   const [cargandoModal,  setCargandoModal]  = useState(false)
-  const [quitando,       setQuitando]       = useState(null) // id de inscripto siendo eliminado
+  const [quitando,       setQuitando]       = useState(null)
 
   const [form, setForm] = useState({
     nombre:              '',
@@ -39,12 +37,12 @@ export default function CrearTorneo() {
     hora_fin:            '13:00',
     modalidad:           'singles',
     capacidad_maxima:    16,
-    niveles_habilitados: ['Rojo', 'Intermedio', 'Azul'],
+    niveles_habilitados: [], // array de IDs (int), vacío = apto para todos
   })
 
   useEffect(() => {
-    Promise.all([getSedes(), getTorneosAdmin()])
-      .then(([s, p]) => { setSedes(s); setPublicados(p) })
+    Promise.all([getSedes(), getTorneosAdmin(), getNiveles()])
+      .then(([s, p, n]) => { setSedes(s); setPublicados(p); setNiveles(n ?? []) })
       .catch(console.error)
       .finally(() => setCargando(false))
   }, [])
@@ -58,14 +56,14 @@ export default function CrearTorneo() {
     setError('')
   }
 
-  function toggleNivel(nivel) {
+  function toggleNivel(nivelId) {
     setForm(prev => {
-      const ya = prev.niveles_habilitados.includes(nivel)
+      const ya = prev.niveles_habilitados.includes(nivelId)
       return {
         ...prev,
         niveles_habilitados: ya
-          ? prev.niveles_habilitados.filter(n => n !== nivel)
-          : [...prev.niveles_habilitados, nivel],
+          ? prev.niveles_habilitados.filter(id => id !== nivelId)
+          : [...prev.niveles_habilitados, nivelId],
       }
     })
   }
@@ -83,7 +81,7 @@ export default function CrearTorneo() {
       setExito(true)
       const nuevos = await getTorneosAdmin()
       setPublicados(nuevos)
-      setForm(prev => ({ ...prev, nombre: '', fecha: '', sede_id: '' }))
+      setForm(prev => ({ ...prev, nombre: '', fecha: '', sede_id: '', niveles_habilitados: [] }))
       setTimeout(() => setExito(false), 3000)
     } catch (err) {
       setError(obtenerMensajeError(err, 'Error al crear torneo'))
@@ -108,8 +106,8 @@ export default function CrearTorneo() {
     setModalId(id)
     setCargandoModal(true)
     try {
-      const { data } = await getInscriptosTorneo(id)
-      setInscriptos(data ?? [])
+      const res = await getInscriptosTorneo(id)
+      setInscriptos(res.data?.inscriptos ?? res.data ?? [])
     } catch { setInscriptos([]) }
     finally { setCargandoModal(false) }
   }
@@ -119,8 +117,7 @@ export default function CrearTorneo() {
     setQuitando(socioId)
     try {
       await quitarInscriptoTorneo(torneoId, socioId)
-      setInscriptos(prev => prev.filter(i => i.id !== socioId && i.nombre !== nombre))
-      // Refrescar conteo en la lista de publicados
+      setInscriptos(prev => prev.filter(i => i.socio_id !== socioId))
       setPublicados(prev => prev.map(p =>
         p.id === torneoId ? { ...p, inscriptos: Math.max(0, (p.inscriptos ?? 1) - 1) } : p
       ))
@@ -131,24 +128,18 @@ export default function CrearTorneo() {
     }
   }
 
-  const TZ = 'America/Argentina/Buenos_Aires'
-
   function formatFechaHora(iso) {
-    const d    = new Date(iso)
-    const dia  = d.toLocaleDateString('es-AR', {
-      weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ,
-    })
-    const hora = d.toLocaleTimeString('es-AR', {
-      hour: '2-digit', minute: '2-digit', timeZone: TZ,
-    })
+    const d   = new Date(iso)
+    const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ })
+    const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
     return `${dia} · ${hora} hs`
   }
 
   function formatFechaInsc(iso) {
-    return new Date(iso).toLocaleDateString('es-AR', {
-      day: '2-digit', month: '2-digit', year: '2-digit', timeZone: TZ,
-    })
+    return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: TZ })
   }
+
+  const aptosParaTodos = form.niveles_habilitados.length === 0
 
   return (
     <div className="admin-page">
@@ -221,16 +212,30 @@ export default function CrearTorneo() {
           </div>
 
           <div className="form-group">
-            <label>Niveles habilitados</label>
-            <div className="checkboxes-row">
-              {['Rojo', 'Intermedio', 'Azul'].map(n => (
-                <label key={n} className="checkbox-nivel">
+            <label>Categorías habilitadas</label>
+            <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: '4px 0 8px' }}>
+              Sin selección = apto para todas las categorías
+            </p>
+
+            {/* Botón "Apto para todos" */}
+            <label className="checkbox-nivel" style={{ marginBottom: 8 }}>
+              <input
+                type="checkbox"
+                checked={aptosParaTodos}
+                onChange={() => setForm(prev => ({ ...prev, niveles_habilitados: [] }))}
+              />
+              <span style={{ fontSize: 13, fontWeight: 600 }}>✓ Apto para todos</span>
+            </label>
+
+            <div className="checkboxes-row" style={{ flexWrap: 'wrap', gap: 8 }}>
+              {niveles.map(n => (
+                <label key={n.id} className="checkbox-nivel" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <input
                     type="checkbox"
-                    checked={form.niveles_habilitados.includes(n)}
-                    onChange={() => toggleNivel(n)}
+                    checked={form.niveles_habilitados.includes(n.id)}
+                    onChange={() => toggleNivel(n.id)}
                   />
-                  {n}
+                  <CategoriaBadge nivelId={n.id} />
                 </label>
               ))}
             </div>
@@ -267,6 +272,13 @@ export default function CrearTorneo() {
                           <p className="juego-libre-sub">
                             {p.inscriptos ?? 0}/{p.capacidad_maxima} inscriptos
                           </p>
+                          {Array.isArray(p.niveles_habilitados) && p.niveles_habilitados.length > 0 && (
+                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                              {p.niveles_habilitados.map(id => (
+                                <CategoriaBadge key={id} nivelId={id} />
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                           <button
@@ -292,7 +304,7 @@ export default function CrearTorneo() {
                             <>
                               <p className="inscriptos-titulo">{inscriptos.length} inscripto{inscriptos.length !== 1 ? 's' : ''}</p>
                               {inscriptos.map((insc, idx) => (
-                                <div key={insc.id} className="inscripto-row">
+                                <div key={insc.id ?? idx} className="inscripto-row">
                                   <div className="inscripto-num">{idx + 1}</div>
                                   <div className="inscripto-info" style={{ flex: 1 }}>
                                     <span className="inscripto-nombre">{insc.nombre}</span>
@@ -300,9 +312,7 @@ export default function CrearTorneo() {
                                     {insc.telefono && <span className="inscripto-email">{insc.telefono}</span>}
                                   </div>
                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                                    <span className="badge-nivel" style={NIVEL_STYLE[insc.nivel] ?? { background: '#f3f4f6', color: '#6b7280' }}>
-                                      {insc.nivel}
-                                    </span>
+                                    <CategoriaBadge nivelId={insc.nivel_id ?? null} />
                                     <span style={{ fontSize: 10, color: '#9ca3af' }}>{formatFechaInsc(insc.fecha_inscripcion)}</span>
                                     <button
                                       className="btn-danger"

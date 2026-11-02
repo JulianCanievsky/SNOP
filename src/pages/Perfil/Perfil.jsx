@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { usePerfil } from '../../hooks/usePerfil'
+import { useHistorialPerfil } from '../../hooks/useHistorialPerfil'
 import { getMiBono } from '../../services/bonosApi'
 import BottomNav from '../../components/BottomNav/BottomNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
-import { Clock, MapPin, User, Sun, Moon } from 'lucide-react'
+import { Clock, MapPin, User, Sun, Moon, RefreshCw } from 'lucide-react'
 import './Perfil.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -15,6 +16,22 @@ const formatHora = (iso) =>
 
 const formatFecha = (iso) =>
   new Date(iso).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
+
+// Etiquetas legibles para estado_texto
+const LABEL_ESTADO = {
+  activo:             { texto: 'Asistió',          clase: 'estado-activo'    },
+  cancelado_a_tiempo: { texto: 'Canceló a tiempo', clase: 'estado-cancelado' },
+  cancelado_tarde:    { texto: 'Canceló tarde',    clase: 'deuda'            },
+  baja_entrenador:    { texto: 'Baja',             clase: 'deuda'            },
+  pendiente:          { texto: 'Pendiente',         clase: 'estado-pendiente' },
+}
+
+const LABEL_TIPO = {
+  turno:       'Entrenamiento',
+  particular:  'Clase particular',
+  juego_libre: 'Juego libre',
+  torneo:      'Torneo',
+}
 
 function TurnoCardPerfil({ inscripcion, pasado }) {
   const turno = inscripcion.turnos
@@ -56,12 +73,59 @@ function TurnoCardPerfil({ inscripcion, pasado }) {
   )
 }
 
+// Card para items del historial paginado (formato plano del endpoint)
+function HistorialItemCard({ item }) {
+  const fecha    = item.fecha ? formatFecha(item.fecha) : '—'
+  const hora     = item.fecha ? formatHora(item.fecha)  : ''
+  const estado   = LABEL_ESTADO[item.estado_texto] ?? { texto: item.estado_texto, clase: '' }
+  const tipoText = LABEL_TIPO[item.tipo] ?? item.tipo
+
+  return (
+    <div className="turno-card-perfil turno-card-perfil-pasado">
+      <div className="turno-card-perfil-header">
+        <h3 className="turno-card-perfil-fecha">{fecha}</h3>
+        <span className={estado.clase}>{estado.texto}</span>
+      </div>
+      <div className="turno-card-perfil-horario">
+        <Clock size={15} strokeWidth={1.8} className="turno-card-perfil-icono" />
+        <div>
+          <strong>{hora} hs</strong>
+          <p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>{tipoText}</p>
+        </div>
+      </div>
+      {(item.sede || item.contraparte || item.nombre) && (
+        <div className="turno-card-perfil-info">
+          {item.contraparte && <span><User size={12} strokeWidth={1.8} /> {item.contraparte}</span>}
+          {item.sede        && <span><MapPin size={12} strokeWidth={1.8} /> {item.sede}</span>}
+          {item.nombre      && <span>{item.nombre}</span>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Genera opciones de mes: últimos 6 meses
+function generarMeses() {
+  const opts = []
+  const hoy  = new Date()
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1)
+    const valor = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = d.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
+    opts.push({ valor, label })
+  }
+  return opts
+}
+
+const MESES = generarMeses()
+
 const Perfil = () => {
   const { user, logout } = useAuth()
   const { dark, toggleTheme } = useTheme()
   const { perfil, cargando, cargarPerfil } = usePerfil()
-  const [tab, setTab] = useState('resumen') // 'resumen' | 'historial'
-  const [bono, setBono] = useState(undefined) // undefined = cargando, null = sin bono
+  const historial = useHistorialPerfil()
+  const [tab, setTab] = useState('resumen')
+  const [bono, setBono] = useState(undefined)
 
   useEffect(() => {
     getMiBono()
@@ -88,9 +152,8 @@ const Perfil = () => {
     )
   }
 
-  const usuario = perfil?.usuario ?? user
-  const turnos  = perfil?.turnos  ?? []   // próximos
-  const turnosPasados = perfil?.historial ?? []
+  const usuario     = perfil?.usuario ?? user
+  const turnosActivos = perfil?.turnos ?? []
 
   if (!usuario) {
     return (
@@ -108,9 +171,6 @@ const Perfil = () => {
   const iniciales = usuario.nombre
     ?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '?'
 
-  const turnosActivos = turnos  // ya filtrados por el backend (próximos)
-  // turnosPasados ya viene del backend (historial)
-
   return (
     <div className="perfil-container">
       <div className="perfil-header">
@@ -122,13 +182,12 @@ const Perfil = () => {
         <div className="perfil-avatar">{iniciales}</div>
         <h3>{usuario.nombre}</h3>
         <p>{usuario.email}</p>
-        {/* Badge de nivel */}
         <div style={{ marginTop: 10 }}>
           <CategoriaBadge nivelId={usuario.nivel_id ?? null} />
         </div>
       </div>
 
-      {/* Tabs Resumen / Historial */}
+      {/* Tabs */}
       <div className="perfil-tabs">
         <button
           className={`perfil-tab${tab === 'resumen' ? ' perfil-tab--activo' : ''}`}
@@ -137,9 +196,10 @@ const Perfil = () => {
         <button
           className={`perfil-tab${tab === 'historial' ? ' perfil-tab--activo' : ''}`}
           onClick={() => setTab('historial')}
-        >Historial {turnosPasados.length > 0 && <span className="perfil-tab-badge">{turnosPasados.length}</span>}</button>
+        >Historial</button>
       </div>
 
+      {/* ── TAB RESUMEN ── */}
       {tab === 'resumen' && (
         <>
           <div className="perfil-seccion-header">
@@ -158,7 +218,6 @@ const Perfil = () => {
             ))
           )}
 
-          {/* Estado de cuenta */}
           <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Estado de cuenta</h4>
           <div className="cuota-card">
             <span>Cuota social</span>
@@ -167,14 +226,11 @@ const Perfil = () => {
             </span>
           </div>
 
-          {/* Bono activo */}
           {bono !== undefined && (
             <>
               <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Bono de créditos</h4>
               {bono === null ? (
-                <div className="cuota-card" style={{ color: '#9ca3af', fontSize: 14 }}>
-                  Sin bono activo
-                </div>
+                <div className="cuota-card" style={{ color: '#9ca3af', fontSize: 14 }}>Sin bono activo</div>
               ) : (
                 <div className="bono-card">
                   <div className="bono-card-header">
@@ -183,8 +239,7 @@ const Perfil = () => {
                     </span>
                     <span className="bono-vencimiento">
                       Vence {new Date(`${bono.fecha_vencimiento}T12:00:00`).toLocaleDateString('es-AR', {
-                        day: '2-digit', month: '2-digit', year: 'numeric',
-                        timeZone: 'America/Argentina/Buenos_Aires',
+                        day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TZ,
                       })}
                     </span>
                   </div>
@@ -201,9 +256,7 @@ const Perfil = () => {
                         width: `${Math.min((bono.creditos_usados / bono.creditos_total) * 100, 100)}%`,
                         background: bono.creditos_disponibles === 0
                           ? '#ef4444'
-                          : bono.creditos_disponibles <= 2
-                            ? '#f59e0b'
-                            : '#2563eb',
+                          : bono.creditos_disponibles <= 2 ? '#f59e0b' : '#2563eb',
                       }}
                     />
                   </div>
@@ -215,18 +268,83 @@ const Perfil = () => {
         </>
       )}
 
+      {/* ── TAB HISTORIAL ── */}
       {tab === 'historial' && (
         <div className="perfil-historial">
-          {turnosPasados.length === 0 ? (
-            <div className="turno-card sin-turnos-perfil">No hay historial de turnos.</div>
+          {/* Filtros */}
+          <div className="historial-filtros">
+            <select
+              className="historial-select"
+              value={historial.filtros.mes}
+              onChange={e => historial.cambiarFiltro('mes', e.target.value)}
+              aria-label="Filtrar por mes"
+            >
+              <option value="">Todos los meses</option>
+              {MESES.map(m => (
+                <option key={m.valor} value={m.valor}>{m.label}</option>
+              ))}
+            </select>
+
+            <select
+              className="historial-select"
+              value={historial.filtros.tipo}
+              onChange={e => historial.cambiarFiltro('tipo', e.target.value)}
+              aria-label="Filtrar por tipo"
+            >
+              <option value="">Todos los tipos</option>
+              <option value="turno">Entrenamiento</option>
+              <option value="particular">Clase particular</option>
+              <option value="juego_libre">Juego libre</option>
+              <option value="torneo">Torneo</option>
+            </select>
+
+            <button
+              className="btn-secundario-chico"
+              onClick={historial.recargar}
+              aria-label="Actualizar historial"
+              disabled={historial.cargando}
+            >
+              <RefreshCw size={14} strokeWidth={2} />
+            </button>
+          </div>
+
+          {/* Contenido */}
+          {historial.cargando ? (
+            <div className="estado-carga" style={{ marginTop: 24 }}>Cargando historial...</div>
+          ) : historial.error ? (
+            <div className="estado-error">
+              {historial.error}
+              <button className="btn-reintentar" onClick={historial.recargar}>Reintentar</button>
+            </div>
+          ) : historial.items.length === 0 ? (
+            <div className="turno-card sin-turnos-perfil">
+              No hay actividad en el período seleccionado.
+            </div>
           ) : (
-            turnosPasados.map(inscripcion => (
-              <TurnoCardPerfil
-                key={`h-${inscripcion.turno_id ?? inscripcion.turnos?.id}`}
-                inscripcion={inscripcion}
-                pasado
-              />
-            ))
+            <>
+              {historial.items.map(item => (
+                <HistorialItemCard key={item.id} item={item} />
+              ))}
+
+              {/* Paginación */}
+              {historial.meta.paginas > 1 && (
+                <div className="historial-paginacion">
+                  <button
+                    className="btn-pag"
+                    disabled={historial.filtros.page <= 1}
+                    onClick={() => historial.cambiarFiltro('page', historial.filtros.page - 1)}
+                  >‹ Anterior</button>
+                  <span className="historial-pag-info">
+                    {historial.filtros.page} / {historial.meta.paginas}
+                  </span>
+                  <button
+                    className="btn-pag"
+                    disabled={historial.filtros.page >= historial.meta.paginas}
+                    onClick={() => historial.cambiarFiltro('page', historial.filtros.page + 1)}
+                  >Siguiente ›</button>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

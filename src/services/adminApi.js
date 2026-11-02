@@ -8,6 +8,8 @@ export const getSocios        = (params) => api.get('/admin/socios', { params })
 export const getSocio         = (id)     => api.get(`/admin/socios/${id}`).then(r => r.data.data)
 export const crearSocio       = (body)   => api.post('/admin/socios', body).then(r => r.data)
 export const editarSocio      = (id, b)  => api.patch(`/admin/socios/${id}`, b).then(r => r.data)
+export const eliminarSocio    = (id, nombreConfirmacion) =>
+  api.delete(`/admin/socios/${id}`, { data: { nombre_confirmacion: nombreConfirmacion } }).then(r => r.data)
 
 // Entrenadores
 export const getEntrenadores  = ()       => api.get('/admin/entrenadores').then(r => r.data.data)

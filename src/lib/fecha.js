@@ -161,3 +161,29 @@ export function periodoMesAR(isoString) {
 
   return fecha.toLocaleString('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit' }).replace('/', '-').slice(0, 7)
 }
+
+/**
+ * Convierte cualquier Date a "YYYY-MM-DD" en Argentina.
+ * Reemplaza los `d.toLocaleString('en-CA', { timeZone:... }).slice(0,10)` del backend.
+ * @param {Date} [date] - por defecto: ahora
+ */
+export function toFechaAR(date = new Date()) {
+  return date.toLocaleString('en-CA', { timeZone: TZ }).slice(0, 10)
+}
+
+/**
+ * Formatea una fecha ISO como string legible en español (Argentina).
+ * Reemplaza los `toLocaleString('es-AR', {...})` del backend.
+ * @param {string} isoString
+ * @param {Intl.DateTimeFormatOptions} [opciones]
+ */
+export function formatArES(isoString, opciones = {}) {
+  const fecha = parseFechaAR(isoString)
+  if (!fecha || isNaN(fecha.getTime())) return '—'
+  const defaults = {
+    weekday: 'long', day: 'numeric', month: 'long',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: TZ,
+  }
+  return fecha.toLocaleString('es-AR', { ...defaults, ...opciones })
+}

@@ -8,7 +8,7 @@
  *  - pendiente             → badge "Pendiente de aprobación"
  *  - confirmado            → badge "Confirmado"
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calendar, MapPin, User, Clock, Users } from 'lucide-react'
 import api from '../../lib/apiClient.js'
@@ -95,7 +95,10 @@ export default function Entrenamientos() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   async function handleSolicitar() {
     if (!turnoSel || procesando) return

@@ -625,14 +625,14 @@
   color: var(--admin-primary);
 }
 
-/* ── RADIO DESTINATARIOS ── */
-.radio-group {
+/* ── RADIO / CHECKBOX DESTINATARIOS ── */
+.radio-group, .checkbox-group {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.radio-option {
+.radio-option, .checkbox-option {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -646,14 +646,14 @@
   transition: border-color .15s;
 }
 
-.radio-option.sel {
+.radio-option.sel, .checkbox-option.sel {
   border-color: var(--admin-primary);
   background: var(--admin-primary-l);
   color: var(--admin-primary);
   font-weight: 700;
 }
 
-.radio-option input { cursor: pointer; }
+.radio-option input, .checkbox-option input { cursor: pointer; }
 
 /* ── DETALLE SOCIO ── */
 .detalle-campo {
@@ -797,8 +797,8 @@
 [data-theme="dark"] .nivel-btn           { color: var(--admin-muted); background: var(--admin-white); border-color: var(--admin-border); }
 [data-theme="dark"] .nivel-btn.sel       { background: var(--admin-primary-l); border-color: var(--admin-primary); color: var(--admin-primary); }
 [data-theme="dark"] .filtro-pill          { background: var(--admin-white); color: var(--admin-muted); border-color: var(--admin-border); }
-[data-theme="dark"] .radio-option         { background: var(--admin-white); color: var(--admin-text); }
-[data-theme="dark"] .radio-option.sel     { background: var(--admin-primary-l); color: var(--admin-primary); }
+[data-theme="dark"] .radio-option, [data-theme="dark"] .checkbox-option { background: var(--admin-white); color: var(--admin-text); }
+[data-theme="dark"] .radio-option.sel, [data-theme="dark"] .checkbox-option.sel { background: var(--admin-primary-l); color: var(--admin-primary); }
 [data-theme="dark"] .form-input,
 [data-theme="dark"] .form-select,
 [data-theme="dark"] .form-textarea        { background: #22263a; border-color: var(--admin-border); color: var(--admin-text); }

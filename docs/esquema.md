@@ -577,3 +577,33 @@ comunicados ────────── users (enviado_por)
 torneos ────────────── sedes (sede_id)
 juego_libre ────────── sedes (sede_id)
 ```
+
+
+---
+
+## Cambios pendientes de aplicar (migración)
+
+> Las siguientes columnas existen en el código pero **todavía no se aplicaron a Supabase**.
+> Ver `/migrations/README.md` para instrucciones.
+
+### `users` — nuevas columnas (migración 003)
+| Columna         | Tipo       | Descripción                                  |
+|-----------------|------------|----------------------------------------------|
+| `eliminado_en`  | timestamptz| nullable; si != NULL el socio está dado de baja lógica |
+| `eliminado_por` | int (FK)   | → `users.id` del admin que ejecutó la baja  |
+
+### `socio_turno` — columna ya aplicada (migración 001 ✅)
+| Columna         | Tipo | Descripción |
+|-----------------|------|-------------|
+| `estado_texto`  | text | NOT NULL DEFAULT 'pendiente'; CHECK (activo, pendiente, cancelado_a_tiempo, cancelado_tarde, baja_entrenador) |
+
+### `juego_libre` y `torneos` — nuevas columnas (migración 002)
+| Tabla         | Columna                  | Tipo   | Default |
+|---------------|--------------------------|--------|---------|
+| `juego_libre` | `niveles_habilitados`    | int[]  | `{}`    |
+| `torneos`     | `niveles_habilitados`    | int[]  | `{}`    |
+
+### `comunicados` — cambio de tipo (migración 004)
+| Columna          | Tipo anterior | Tipo nuevo | Notas |
+|------------------|---------------|------------|-------|
+| `destinatarios`  | text          | text[]     | Los valores antiguos se migran envolviendo en array |

@@ -3,24 +3,23 @@ import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import { crearNotificacion, enviarEmail, emailClaseConfirmada, emailClaseRechazada } from '../src/lib/notificaciones.js'
 import { aprobarInscripcionPorId } from '../src/services/socioTurnoService.js'
+import { hoyAR, toFechaAR, formatArES } from '../src/lib/fecha.js'
 
 const router = express.Router()
-
-// Todas las rutas requieren autenticación
 router.use(autenticar)
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
-/** Inicio del día actual en Argentina (UTC-3) como ISO string */
+/** Inicio del día actual en Argentina como ISO string */
 function inicioDelDia() {
-  const ahoraAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-  return new Date(`${ahoraAR}T00:00:00-03:00`).toISOString()
+  const hoy = hoyAR()
+  return new Date(`${hoy}T00:00:00-03:00`).toISOString()
 }
 
-/** Fin del día actual en Argentina (UTC-3) como ISO string */
+/** Fin del día actual en Argentina como ISO string */
 function finDelDia() {
-  const ahoraAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-  return new Date(`${ahoraAR}T23:59:59-03:00`).toISOString()
+  const hoy = hoyAR()
+  return new Date(`${hoy}T23:59:59-03:00`).toISOString()
 }
 
 // ─── GET /resumen-hoy ─────────────────────────────────────────────────────────
@@ -83,7 +82,7 @@ router.get('/mis-clases', async (req, res) => {
   try {
     const entrenadorId = req.userId
 
-    const desdeAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const desdeAR = hoyAR()
     const desde   = new Date(`${desdeAR}T00:00:00-03:00`)
     const hasta   = new Date(desde.getTime() + 7 * 24 * 60 * 60 * 1000) // +7 días exactos
 
@@ -327,7 +326,7 @@ router.get('/mis-horarios', async (req, res) => {
   try {
     const entrenadorId = req.userId
 
-    const desdeAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const desdeAR = hoyAR()
     const desde   = new Date(`${desdeAR}T00:00:00-03:00`)
 
     const { data: turnos, error } = await supabase
@@ -389,8 +388,8 @@ router.post('/mis-horarios', async (req, res) => {
     }
 
     // Validar que la fecha no sea en el pasado (hora argentina)
-    const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-    if (fecha < hoyAR) {
+    const hoyStr = hoyAR()
+    if (fecha < hoyStr) {
       return res.status(400).json({ ok: false, mensaje: 'No podés agregar horarios en fechas pasadas' })
     }
 
@@ -606,8 +605,8 @@ router.patch('/solicitudes/:solicitudId/confirmar', async (req, res) => {
       const socioId   = solConDatos?.user_id
       const t         = solConDatos?.turnos
       const fechaStr  = t?.fecha_inicio
-        ? new Date(t.fecha_inicio).toLocaleString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
-        : 'próximamente'
+        ? formatArES(t.fecha_inicio)
+        : 'próximamente': 'próximamente'
       const sedeStr   = t?.sedes?.nombre ?? 'la sede'
       const entrenStr = t?.users?.nombre ?? 'el entrenador'
 
@@ -680,7 +679,7 @@ router.patch('/solicitudes/:solicitudId/rechazar', async (req, res) => {
         .from('users').select('nombre, email').eq('id', sol.user_id).maybeSingle()
 
       if (socioData && turnoData) {
-        const fechaStr  = new Date(turnoData.fecha_inicio).toLocaleString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+        const fechaStr  = formatArES(turnoData.fecha_inicio)
         const entrenStr = turnoData.users?.nombre ?? 'el entrenador'
 
         await crearNotificacion({
@@ -790,7 +789,6 @@ router.get('/comunicados', async (req, res) => {
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
-      .in('destinatarios', ['entrenadores', 'todos'])
       .gte('fecha', hace5Dias.toISOString())
       .order('fecha', { ascending: false })
 
@@ -798,7 +796,14 @@ router.get('/comunicados', async (req, res) => {
       if (error.code === '42P01') return res.json({ ok: true, data: [] })
       throw error
     }
-    res.json({ ok: true, data: data ?? [] })
+
+    // Filtrar en memoria: comunicados dirigidos a entrenadores o todos
+    const visibles = (data ?? []).filter(c => {
+      const dest = Array.isArray(c.destinatarios) ? c.destinatarios : [c.destinatarios]
+      return dest.includes('entrenadores') || dest.includes('todos')
+    })
+
+    res.json({ ok: true, data: visibles })
   } catch (err) {
     console.error('GET /entrenador/comunicados', err)
     res.status(500).json({ ok: false, mensaje: 'Error al obtener comunicados' })

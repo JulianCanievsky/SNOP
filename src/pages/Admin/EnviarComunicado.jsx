@@ -5,43 +5,64 @@ import { enviarComunicado, getComunicados, getStats, getNiveles } from '../../se
 import { obtenerMensajeError } from '../../lib/errores.js'
 import './Admin.css'
 
+// Normaliza destinatarios antiguos (string) a array
+function normalizarDestinatarios(dest) {
+  if (!dest) return []
+  if (Array.isArray(dest)) return dest
+  return [dest]
+}
+
 export default function EnviarComunicado() {
   const navigate = useNavigate()
 
-  const [titulo,       setTitulo]       = useState('')
-  const [mensaje,      setMensaje]      = useState('')
-  const [destinatario, setDestinatario] = useState('todos')
-  const [recientes,    setRecientes]    = useState([])
-  const [stats,        setStats]        = useState(null)
-  const [niveles,      setNiveles]      = useState([])
-  const [enviando,     setEnviando]     = useState(false)
-  const [exito,        setExito]        = useState(false)
-  const [error,        setError]        = useState('')
+  const [titulo,          setTitulo]          = useState('')
+  const [mensaje,         setMensaje]         = useState('')
+  const [seleccionados,   setSeleccionados]   = useState(['todos']) // array de keys
+  const [recientes,       setRecientes]       = useState([])
+  const [stats,           setStats]           = useState(null)
+  const [niveles,         setNiveles]         = useState([])
+  const [enviando,        setEnviando]        = useState(false)
+  const [exito,           setExito]           = useState(false)
+  const [error,           setError]           = useState('')
 
   useEffect(() => {
     Promise.all([getComunicados(), getStats(), getNiveles()])
-      .then(([c, s, n]) => { setRecientes(c); setStats(s); setNiveles(n ?? []) })
+      .then(([c, s, n]) => { setRecientes(c ?? []); setStats(s); setNiveles(n ?? []) })
       .catch(console.error)
   }, [])
 
-  // Opciones fijas + una por cada categoría cargada dinámicamente
-  const opcionesDestinatarios = [
+  // Opciones disponibles
+  const opcionesFijas = [
     { key: 'todos',        label: 'Todos los socios',  conteo: stats?.socios_activos },
-    { key: 'entrenadores', label: 'Entrenadores',       conteo: stats?.entrenadores },
-    { key: 'con_deuda',    label: 'Socios con deuda',   conteo: stats?.con_deuda },
-    ...niveles.map(n => ({
-      key:   `nivel_${n.id}`,
-      label: n.nombre,
-      conteo: null,
-    })),
+    { key: 'entrenadores', label: 'Entrenadores',       conteo: stats?.entrenadores  },
+    { key: 'con_deuda',    label: 'Socios con deuda',   conteo: stats?.con_deuda     },
   ]
+  const opcionesNivel = niveles.map(n => ({
+    key:   `nivel_${n.id}`,
+    label: n.nombre,
+    conteo: null,
+  }))
+  const todasLasOpciones = [...opcionesFijas, ...opcionesNivel]
 
-  // Labels para mostrar en la lista de recientes
-  const labelDestinatario = (key) => {
-    const op = opcionesDestinatarios.find(o => o.key === key)
-    if (op) return op.label
-    // Fallback: puede ser un valor antiguo como 'nivel_rojo'
-    return key
+  // Label para mostrar en recientes (puede venir como string o array)
+  function labelDestinatarios(dest) {
+    const arr = normalizarDestinatarios(dest)
+    if (arr.length === 0) return 'Sin destinatarios'
+    return arr.map(key => {
+      const op = todasLasOpciones.find(o => o.key === key)
+      return op ? op.label : key
+    }).join(', ')
+  }
+
+  function toggleOpcion(key) {
+    setSeleccionados(prev => {
+      if (prev.includes(key)) {
+        // No permitir deseleccionar todo
+        if (prev.length === 1) return prev
+        return prev.filter(k => k !== key)
+      }
+      return [...prev, key]
+    })
   }
 
   async function handleSubmit(e) {
@@ -51,14 +72,19 @@ export default function EnviarComunicado() {
       setError('Completá título y mensaje')
       return
     }
+    if (seleccionados.length === 0) {
+      setError('Seleccioná al menos un destinatario')
+      return
+    }
     setEnviando(true)
     try {
-      await enviarComunicado({ titulo, mensaje, destinatarios: destinatario })
+      await enviarComunicado({ titulo, mensaje, destinatarios: seleccionados })
       setExito(true)
       setTitulo('')
       setMensaje('')
+      setSeleccionados(['todos'])
       const nuevos = await getComunicados()
-      setRecientes(nuevos)
+      setRecientes(nuevos ?? [])
       setTimeout(() => setExito(false), 4000)
     } catch (err) {
       setError(obtenerMensajeError(err, 'Error al enviar comunicado'))
@@ -68,8 +94,7 @@ export default function EnviarComunicado() {
   }
 
   function formatFecha(iso) {
-    const d = new Date(iso)
-    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+    return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
   }
 
   return (
@@ -98,20 +123,18 @@ export default function EnviarComunicado() {
           </div>
 
           <div className="form-group">
-            <label>Destinatarios</label>
-            <div className="radio-group">
-              {opcionesDestinatarios.map(op => (
+            <label>Destinatarios <span style={{ fontWeight: 400, fontSize: 12, color: 'var(--color-text-muted)' }}>(podés elegir más de uno)</span></label>
+            <div className="checkbox-group">
+              {todasLasOpciones.map(op => (
                 <label
                   key={op.key}
-                  className={`radio-option ${destinatario === op.key ? 'sel' : ''}`}
-                  onClick={() => setDestinatario(op.key)}
+                  className={`checkbox-option${seleccionados.includes(op.key) ? ' sel' : ''}`}
+                  onClick={() => toggleOpcion(op.key)}
                 >
                   <input
-                    type="radio"
-                    name="destinatario"
-                    value={op.key}
-                    checked={destinatario === op.key}
-                    onChange={() => setDestinatario(op.key)}
+                    type="checkbox"
+                    checked={seleccionados.includes(op.key)}
+                    onChange={() => toggleOpcion(op.key)}
                   />
                   {op.label}
                   {op.conteo != null && (
@@ -120,6 +143,11 @@ export default function EnviarComunicado() {
                 </label>
               ))}
             </div>
+            {seleccionados.length > 1 && (
+              <p style={{ fontSize: 12, color: 'var(--color-text-muted)', marginTop: 6 }}>
+                Se envía a {seleccionados.length} grupos (sin duplicar destinatarios).
+              </p>
+            )}
           </div>
 
           <button type="submit" className="btn-primary" disabled={enviando}>
@@ -137,7 +165,9 @@ export default function EnviarComunicado() {
                   <div className="comunicado-dot" />
                   <div>
                     <p className="comunicado-titulo">{c.titulo}</p>
-                    <p className="comunicado-meta">{labelDestinatario(c.destinatarios)} · {formatFecha(c.fecha)}</p>
+                    <p className="comunicado-meta">
+                      {labelDestinatarios(c.destinatarios)} · {formatFecha(c.fecha)}
+                    </p>
                   </div>
                 </div>
               ))}

@@ -5,7 +5,7 @@
  *
  * Ruta: /entrenadores/:entrenadorId  (rol 1)
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../../../lib/apiClient.js'
 import { obtenerMensajeError } from '../../../lib/errores.js'
@@ -69,7 +69,10 @@ export default function PerfilPublicoEntrenador() {
     }
   }, [entrenadorId])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar]) // cargar depende de entrenadorId → se re-ejecuta cuando cambia
 
   const promedio   = ratingDetalle?.promedio ?? entrenador?.rating ?? null
   const totalVotos = ratingDetalle?.total    ?? entrenador?.total_ratings ?? 0

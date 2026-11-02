@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useClasesParticulares } from '../../hooks/useClasesParticulares'
 import { obtenerMensajeError } from '../../lib/errores.js'
@@ -129,7 +129,8 @@ const ClasesParticulares = () => {
 
   // Chequear pendientes de calificación al abrir la pantalla
   useEffect(() => {
-    cargarPendientes()
+    async function init() { await cargarPendientes() }
+    init()
   }, [cargarPendientes])
 
   const handleReservar = (entrenador, turno) => {

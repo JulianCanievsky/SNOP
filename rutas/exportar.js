@@ -3,6 +3,7 @@ import ExcelJS from 'exceljs'
 import autenticar from '../src/middlewares/autenticar.js'
 import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
 
 const router = express.Router()
 
@@ -169,7 +170,7 @@ router.get('/turnos', async (req, res) => {
     await enviarExcel(res, workbook, `turnos_entrenamiento_${fmtNombreArchivo(fechaDesde, fechaHasta)}.xlsx`)
   } catch (err) {
     console.error('GET /admin/exportar/turnos', err)
-    res.status(500).json({ error: 'Error al exportar turnos' })
+    responder.interno(res, 'Error al exportar turnos')
   }
 })
 
@@ -268,7 +269,7 @@ router.get('/juego-libre', async (req, res) => {
     await enviarExcel(res, workbook, `juego_libre_${fmtNombreArchivo(fechaDesde, fechaHasta)}.xlsx`)
   } catch (err) {
     console.error('GET /admin/exportar/juego-libre', err)
-    res.status(500).json({ error: 'Error al exportar juego libre' })
+    responder.interno(res, 'Error al exportar juego libre')
   }
 })
 
@@ -379,7 +380,7 @@ router.get('/torneos', async (req, res) => {
     await enviarExcel(res, workbook, `torneos_${fmtNombreArchivo(fechaDesde, fechaHasta)}.xlsx`)
   } catch (err) {
     console.error('GET /admin/exportar/torneos', err)
-    res.status(500).json({ error: 'Error al exportar torneos' })
+    responder.interno(res, 'Error al exportar torneos')
   }
 })
 

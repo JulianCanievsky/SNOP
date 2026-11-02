@@ -4,15 +4,14 @@ import { obtenerMensajeError } from '../lib/errores.js'
 
 export const useClasesParticulares = () => {
   const [entrenadores, setEntrenadores] = useState([])
-  const [solicitudes, setSolicitudes] = useState([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState(null)
+  const [solicitudes,  setSolicitudes]  = useState([])
+  const [cargando,     setCargando]     = useState(true)
+  const [error,        setError]        = useState(null)
 
   const cargarEntrenadores = useCallback(async () => {
     try {
       setCargando(true)
       setError(null)
-      // endpoint público — el interceptor omite el token si no hay sesión
       const { data } = await api.get('/clases-particulares/entrenadores')
       setEntrenadores(data.data || [])
     } catch (err) {
@@ -33,8 +32,10 @@ export const useClasesParticulares = () => {
   }, [])
 
   useEffect(() => {
-    cargarEntrenadores()
-    obtenerSolicitudes()
+    async function init() {
+      await Promise.all([cargarEntrenadores(), obtenerSolicitudes()])
+    }
+    init()
   }, [cargarEntrenadores, obtenerSolicitudes])
 
   const obtenerEntrenador = async (entrenadorId) => {
@@ -43,9 +44,7 @@ export const useClasesParticulares = () => {
   }
 
   const enviarSolicitud = async ({ turno_id }) => {
-    const { data } = await api.post('/clases-particulares/solicitar', {
-      turno_id,
-    })
+    const { data } = await api.post('/clases-particulares/solicitar', { turno_id })
     await obtenerSolicitudes()
     await cargarEntrenadores()
     return data
@@ -58,14 +57,8 @@ export const useClasesParticulares = () => {
   }
 
   return {
-    entrenadores,
-    solicitudes,
-    cargando,
-    error,
-    cargarEntrenadores,
-    obtenerEntrenador,
-    enviarSolicitud,
-    obtenerSolicitudes,
-    liberarSolicitud,
+    entrenadores, solicitudes, cargando, error,
+    cargarEntrenadores, obtenerEntrenador,
+    enviarSolicitud, obtenerSolicitudes, liberarSolicitud,
   }
 }

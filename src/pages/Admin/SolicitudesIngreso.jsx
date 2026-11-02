@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSolicitudes, aceptarSolicitud, rechazarSolicitud } from '../../services/adminApi'
@@ -39,7 +39,10 @@ export default function SolicitudesIngreso() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   function mostrar(msg, esError = false) {
     if (esError) setError(msg)

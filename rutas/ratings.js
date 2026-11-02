@@ -1,6 +1,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
 
 const router = express.Router()
 
@@ -15,14 +16,12 @@ router.post('/', autenticar, async (req, res) => {
     const { entrenador_id, turno_id, estrellas, comentario } = req.body
 
     if (!entrenador_id || !turno_id || !estrellas) {
-      return res.status(400).json({ error: 'entrenador_id, turno_id y estrellas son requeridos' })
+      return responder.error(res, 'entrenador_id, turno_id y estrellas son requeridos')
     }
-
     if (estrellas < 1 || estrellas > 5 || !Number.isInteger(Number(estrellas))) {
-      return res.status(400).json({ error: 'Las estrellas deben ser un número entero entre 1 y 5' })
+      return responder.error(res, 'Las estrellas deben ser un número entero entre 1 y 5')
     }
 
-    // Verificar que el turno pertenece al socio y ya terminó
     const { data: inscripcion, error: errInsc } = await supabase
       .from('socio_turno')
       .select('id, turnos(id, fecha_fin, users(id, nombre))')
@@ -32,21 +31,19 @@ router.post('/', autenticar, async (req, res) => {
       .single()
 
     if (errInsc || !inscripcion) {
-      return res.status(404).json({ error: 'Turno no encontrado para este socio' })
+      return responder.noEncontrado(res, 'Turno no encontrado para este socio')
     }
 
     const fechaFin = inscripcion.turnos?.fecha_fin
     if (fechaFin && new Date(fechaFin) > new Date()) {
-      return res.status(400).json({ error: 'El turno todavía no terminó' })
+      return responder.error(res, 'El turno todavía no terminó')
     }
 
-    // Verificar que el entrenador del turno coincide
     const entrenadorDelTurno = inscripcion.turnos?.users?.id
     if (entrenadorDelTurno && String(entrenadorDelTurno) !== String(entrenador_id)) {
-      return res.status(400).json({ error: 'El entrenador no corresponde a este turno' })
+      return responder.error(res, 'El entrenador no corresponde a este turno')
     }
 
-    // Verificar que no calificó este turno antes (unique constraint: socio + turno)
     const { data: yaCalificado } = await supabase
       .from('ratings_entrenador')
       .select('id')
@@ -55,10 +52,9 @@ router.post('/', autenticar, async (req, res) => {
       .maybeSingle()
 
     if (yaCalificado) {
-      return res.status(409).json({ error: 'Ya calificaste este turno' })
+      return responder.conflicto(res, 'Ya calificaste este turno')
     }
 
-    // Insertar calificación
     const { data, error: errInsert } = await supabase
       .from('ratings_entrenador')
       .insert({
@@ -72,14 +68,11 @@ router.post('/', autenticar, async (req, res) => {
       .single()
 
     if (errInsert) {
-      // unique_violation — doble submit simultáneo
-      if (errInsert.code === '23505') {
-        return res.status(409).json({ error: 'Ya calificaste este turno' })
-      }
+      if (errInsert.code === '23505') return responder.conflicto(res, 'Ya calificaste este turno')
       throw errInsert
     }
 
-    // Recalcular y actualizar el rating promedio en users
+    // Recalcular promedio en users
     const { data: ratings } = await supabase
       .from('ratings_entrenador')
       .select('estrellas')
@@ -93,16 +86,15 @@ router.post('/', autenticar, async (req, res) => {
         .eq('id', entrenador_id)
     }
 
-    res.status(201).json({ data, mensaje: 'Calificación enviada' })
+    responder.creado(res, data)
   } catch (err) {
     console.error('POST /api/ratings:', err)
-    res.status(500).json({ error: 'Error al guardar la calificación' })
+    responder.interno(res, 'Error al guardar la calificación')
   }
 })
 
 // ─────────────────────────────────────────────────────────────
 // GET /api/ratings/entrenador/:id
-// Rating promedio + historial de un entrenador
 // ─────────────────────────────────────────────────────────────
 router.get('/entrenador/:id', autenticar, async (req, res) => {
   try {
@@ -121,34 +113,30 @@ router.get('/entrenador/:id', autenticar, async (req, res) => {
       ? Math.round((ratings.reduce((acc, r) => acc + r.estrellas, 0) / total) * 10) / 10
       : 0
 
-    // Distribución por estrella
     const distribucion = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
     for (const r of ratings ?? []) {
       distribucion[r.estrellas] = (distribucion[r.estrellas] || 0) + 1
     }
 
-    res.json({
-      data: {
-        promedio,
-        total,
-        distribucion,
-        recientes: (ratings ?? []).slice(0, 5).map(r => ({
-          estrellas:  r.estrellas,
-          comentario: r.comentario,
-          fecha:      r.created_at,
-          socio:      r.users?.nombre ?? 'Socio',
-        })),
-      }
+    responder.ok(res, {
+      promedio,
+      total,
+      distribucion,
+      recientes: (ratings ?? []).slice(0, 5).map(r => ({
+        estrellas:  r.estrellas,
+        comentario: r.comentario,
+        fecha:      r.created_at,
+        socio:      r.users?.nombre ?? 'Socio',
+      })),
     })
   } catch (err) {
     console.error('GET /api/ratings/entrenador:', err)
-    res.status(500).json({ error: 'Error al obtener ratings' })
+    responder.interno(res, 'Error al obtener ratings')
   }
 })
 
 // ─────────────────────────────────────────────────────────────
 // GET /api/ratings/pendientes
-// Turnos terminados en las últimas 48hs que el socio no calificó aún
 // ─────────────────────────────────────────────────────────────
 router.get('/pendientes', autenticar, async (req, res) => {
   try {
@@ -156,17 +144,12 @@ router.get('/pendientes', autenticar, async (req, res) => {
     const ahora   = new Date()
     const hace48h = new Date(ahora.getTime() - 48 * 60 * 60 * 1000)
 
-    // Turnos que terminaron en las últimas 48hs
     const { data: inscripciones, error: errInsc } = await supabase
       .from('socio_turno')
       .select(`
-        id,
-        turno_id,
+        id, turno_id,
         turnos!inner (
-          id,
-          fecha_inicio,
-          fecha_fin,
-          duracion_min,
+          id, fecha_inicio, fecha_fin, duracion_min,
           sedes ( nombre ),
           users ( id, nombre, foto_url )
         )
@@ -177,10 +160,8 @@ router.get('/pendientes', autenticar, async (req, res) => {
       .lt('turnos.fecha_fin', ahora.toISOString())
 
     if (errInsc) throw errInsc
+    if (!inscripciones?.length) return responder.ok(res, [])
 
-    if (!inscripciones?.length) return res.json({ data: [] })
-
-    // IDs de turnos ya calificados por este socio
     const turnoIds = inscripciones.map(i => i.turno_id)
     const { data: yaCalificados } = await supabase
       .from('ratings_entrenador')
@@ -190,7 +171,6 @@ router.get('/pendientes', autenticar, async (req, res) => {
 
     const calificadosSet = new Set((yaCalificados ?? []).map(r => String(r.turno_id)))
 
-    // Filtrar solo los no calificados que tienen entrenador asignado
     const pendientes = inscripciones
       .filter(i => !calificadosSet.has(String(i.turno_id)) && i.turnos?.users?.id)
       .map(i => ({
@@ -204,10 +184,10 @@ router.get('/pendientes', autenticar, async (req, res) => {
         foto_url:      i.turnos.users.foto_url ?? null,
       }))
 
-    res.json({ data: pendientes })
+    responder.ok(res, pendientes)
   } catch (err) {
     console.error('GET /api/ratings/pendientes:', err)
-    res.status(500).json({ error: 'Error al obtener pendientes' })
+    responder.interno(res, 'Error al obtener pendientes')
   }
 })
 

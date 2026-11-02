@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import './MisTurnos.css'
 import TurnoCard from '../../components/TurnoCard/TurnoCard'
 import { getAgenda, cancelarTurno, cancelarJuegoLibre, cancelarTorneo } from '../../services/turnosApi'
@@ -28,6 +28,8 @@ export default function MisTurnos() {
 
   const { turnoActual, enviando, cargarPendientes, enviarRating, omitirRating } = useRating()
   const { toasts, showToast, removeToast } = useToast()
+
+  const _cargarPendientesRef = useRef(cargarPendientes); _cargarPendientesRef.current = cargarPendientes
 
   useEffect(() => {
     async function cargar() {
@@ -59,7 +61,7 @@ export default function MisTurnos() {
     }
     cargar()
     // Chequear si hay turnos para calificar cada vez que se abre la agenda
-    cargarPendientes()
+    _cargarPendientesRef.current()
   }, [])
 
   // Próximos 7 días

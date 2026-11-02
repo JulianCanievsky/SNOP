@@ -3,7 +3,7 @@
  * Permite crear, editar, asignar socios, reasignar entrenador,
  * cancelar solo la próxima semana o dar de baja definitivamente.
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import api from '../../lib/apiClient.js'
@@ -310,7 +310,10 @@ export default function AdminTurnos() {
     }
   }, [])
 
-  useEffect(() => { cargarTurnos() }, [cargarTurnos])
+  useEffect(() => {
+    async function init() { await cargarTurnos() }
+    init()
+  }, [cargarTurnos])
 
   async function abrirDetalle(id) {
     setVistaDetalle(id)

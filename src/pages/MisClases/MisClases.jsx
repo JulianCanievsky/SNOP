@@ -2,7 +2,7 @@
  * MisClases.jsx — Panel del socio: ver clases inscriptas, cancelarlas,
  * reconfirmar cuando se libera un cupo, y unirse a lista de espera.
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, XCircle } from 'lucide-react'
 import api from '../../lib/apiClient.js'
@@ -54,7 +54,10 @@ export default function MisClases() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   function mostrarMensaje(msg, esError = false) {
     if (esError) setErrorLocal(msg)

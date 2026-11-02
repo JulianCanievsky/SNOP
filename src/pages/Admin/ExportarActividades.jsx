@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Gamepad2, Trophy, Dumbbell } from 'lucide-react'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSedes, exportarExcel } from '../../services/adminApi'
+import { hoyAR } from '../../lib/fecha.js'
 import './Admin.css'
 
 const TIPOS = [
@@ -16,7 +17,7 @@ function rangoMesActual() {
   const hoy   = new Date()
   const desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
   const hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0)
-  const fmt   = (d) => d.toISOString().slice(0, 10)
+  const fmt   = (d) => d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
   return { desde: fmt(desde), hasta: fmt(hasta) }
 }
 

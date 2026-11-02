@@ -13,6 +13,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
 
 const router = express.Router()
 router.use(autenticar)
@@ -21,22 +22,22 @@ router.use(autenticar)
 
 function soloAdmin(req, res, next) {
   if (req.userTipo !== 3) {
-    return res.status(403).json({ error: 'Acceso restringido a administradores' })
+    return responder.sinPermiso(res, 'Acceso restringido a administradores')
   }
   next()
 }
 
 /** Devuelve el bono activo y vigente de un socio, o null si no tiene. */
 async function getBonoActivo(socioId) {
-  const hoy = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+  const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
   const { data, error } = await supabase
     .from('bonos')
     .select('id, tipo, creditos_total, creditos_usados, fecha_inicio, fecha_vencimiento, notas')
     .eq('socio_id', socioId)
     .eq('activo', true)
-    .lte('fecha_inicio',      hoy)
-    .gte('fecha_vencimiento', hoy)
-    .order('fecha_vencimiento', { ascending: true }) // el que vence antes primero
+    .lte('fecha_inicio',      hoyAR)
+    .gte('fecha_vencimiento', hoyAR)
+    .order('fecha_vencimiento', { ascending: true })
     .limit(1)
     .maybeSingle()
 
@@ -50,32 +51,22 @@ async function getBonoActivo(socioId) {
 router.get('/mio', async (req, res) => {
   try {
     const bono = await getBonoActivo(req.userId)
+    if (!bono) return responder.ok(res, null)
 
-    if (!bono) {
-      return res.json({ data: null })
-    }
-
-    // Turno usados: filas en bono_turno para este bono
     const { data: usos } = await supabase
       .from('bono_turno')
-      .select(`
-        id,
-        fecha_uso,
-        turnos ( id, fecha_inicio, fecha_fin, sedes(nombre) )
-      `)
+      .select('id, fecha_uso, turnos ( id, fecha_inicio, fecha_fin, sedes(nombre) )')
       .eq('bono_id', bono.id)
       .order('fecha_uso', { ascending: false })
 
-    res.json({
-      data: {
-        ...bono,
-        creditos_disponibles: bono.creditos_total - bono.creditos_usados,
-        usos: usos ?? [],
-      },
+    responder.ok(res, {
+      ...bono,
+      creditos_disponibles: bono.creditos_total - bono.creditos_usados,
+      usos: usos ?? [],
     })
   } catch (err) {
     console.error('GET /bonos/mio', err)
-    res.status(500).json({ error: 'Error al obtener bono' })
+    responder.interno(res, 'Error al obtener bono')
   }
 })
 
@@ -96,18 +87,18 @@ router.get('/socio/:socioId', soloAdmin, async (req, res) => {
 
     if (error) throw error
 
-    const hoy = new Date().toISOString().split('T')[0]
+    const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
     const bonos = (data ?? []).map(b => ({
       ...b,
       creditos_disponibles: b.creditos_total - b.creditos_usados,
-      vigente: b.activo && b.fecha_inicio <= hoy && b.fecha_vencimiento >= hoy,
+      vigente: b.activo && b.fecha_inicio <= hoyAR && b.fecha_vencimiento >= hoyAR,
       creado_por_nombre: b.users?.nombre ?? '—',
     }))
 
-    res.json({ data: bonos })
+    responder.ok(res, bonos)
   } catch (err) {
     console.error('GET /bonos/socio/:socioId', err)
-    res.status(500).json({ error: 'Error al obtener bonos del socio' })
+    responder.interno(res, 'Error al obtener bonos del socio')
   }
 })
 
@@ -119,19 +110,16 @@ router.post('/', soloAdmin, async (req, res) => {
   const { socio_id, tipo, creditos_total, fecha_inicio, fecha_vencimiento, notas } = req.body
 
   if (!socio_id || !creditos_total || !fecha_inicio || !fecha_vencimiento) {
-    return res.status(400).json({
-      error: 'socio_id, creditos_total, fecha_inicio y fecha_vencimiento son requeridos',
-    })
+    return responder.error(res, 'socio_id, creditos_total, fecha_inicio y fecha_vencimiento son requeridos')
   }
   if (fecha_vencimiento < fecha_inicio) {
-    return res.status(400).json({ error: 'La fecha de vencimiento debe ser posterior al inicio' })
+    return responder.error(res, 'La fecha de vencimiento debe ser posterior al inicio')
   }
   if (creditos_total < 1 || creditos_total > 200) {
-    return res.status(400).json({ error: 'creditos_total debe estar entre 1 y 200' })
+    return responder.error(res, 'creditos_total debe estar entre 1 y 200')
   }
 
   try {
-    // Verificar que el socio existe
     const { data: socio, error: errSocio } = await supabase
       .from('users')
       .select('id, nombre')
@@ -139,9 +127,7 @@ router.post('/', soloAdmin, async (req, res) => {
       .eq('tipo_usuario_id', 1)
       .single()
 
-    if (errSocio || !socio) {
-      return res.status(404).json({ error: 'Socio no encontrado' })
-    }
+    if (errSocio || !socio) return responder.noEncontrado(res, 'Socio no encontrado')
 
     const { data, error } = await supabase
       .from('bonos')
@@ -161,18 +147,15 @@ router.post('/', soloAdmin, async (req, res) => {
 
     if (error) throw error
 
-    res.status(201).json({
-      data: { ...data, creditos_disponibles: data.creditos_total },
-      mensaje: `Bono creado para ${socio.nombre}`,
-    })
+    responder.creado(res, { ...data, creditos_disponibles: data.creditos_total })
   } catch (err) {
     console.error('POST /bonos', err)
-    res.status(500).json({ error: err.message || 'Error al crear bono' })
+    responder.interno(res, 'Error al crear bono')
   }
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DELETE /api/bonos/:id — admin desactiva un bono (no borra, soft-delete)
+// DELETE /api/bonos/:id — admin desactiva un bono (soft-delete)
 // ─────────────────────────────────────────────────────────────────────────────
 router.delete('/:id', soloAdmin, async (req, res) => {
   try {
@@ -182,15 +165,15 @@ router.delete('/:id', soloAdmin, async (req, res) => {
       .eq('id', req.params.id)
 
     if (error) throw error
-    res.json({ mensaje: 'Bono desactivado' })
+    responder.ok(res, null)
   } catch (err) {
     console.error('DELETE /bonos/:id', err)
-    res.status(500).json({ error: 'Error al desactivar bono' })
+    responder.interno(res, 'Error al desactivar bono')
   }
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Exportar helper para uso interno en admin.js y adminTurnos.js
+// Exportar helper para uso interno en adminTurnos.js
 // ─────────────────────────────────────────────────────────────────────────────
 export { getBonoActivo }
 export default router

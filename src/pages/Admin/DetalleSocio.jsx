@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { obtenerMensajeError } from '../../lib/errores.js'
+import api from '../../lib/apiClient.js'
 import {
   getSocio,
   editarSocio,
@@ -47,6 +48,12 @@ export default function DetalleSocio() {
   const [error,      setError]      = useState('')
   const [nivelId,    setNivelId]    = useState('')
   const [cuota,      setCuota]      = useState(true)
+
+  // Estado para el diálogo de confirmación de eliminación
+  const [mostrarEliminar,   setMostrarEliminar]   = useState(false)
+  const [nombreConfirm,     setNombreConfirm]     = useState('')
+  const [eliminando,        setEliminando]        = useState(false)
+  const confirmInputRef = useRef(null)
 
   useEffect(() => {
     Promise.all([getSocio(id), getNiveles(), getTurnosDisponibles()])
@@ -108,6 +115,24 @@ export default function DetalleSocio() {
       setError(obtenerMensajeError(err, 'Error al quitar turno'))
     } finally {
       setQuitando(null)
+    }
+  }
+
+  async function handleEliminar() {
+    if (!socio) return
+    if (nombreConfirm.trim() !== socio.nombre.trim()) {
+      setError('El nombre no coincide. Escribilo exactamente como aparece.')
+      return
+    }
+    setEliminando(true)
+    setError('')
+    try {
+      await api.delete(`/admin/socios/${id}`, { data: { nombre_confirmacion: nombreConfirm.trim() } })
+      navigate('/admin/socios')
+    } catch (err) {
+      setError(obtenerMensajeError(err, 'Error al eliminar socio'))
+    } finally {
+      setEliminando(false)
     }
   }
 
@@ -286,6 +311,53 @@ export default function DetalleSocio() {
             })
           )}
         </div>
+      </div>
+
+      {/* ── Zona peligrosa: eliminar socio ── */}
+      <div className="admin-card admin-card-body" style={{ border: '1.5px solid #ef4444', marginTop: 24 }}>
+        <p className="admin-label" style={{ color: '#ef4444', marginBottom: 8 }}>⚠ Zona peligrosa</p>
+        {!mostrarEliminar ? (
+          <button
+            className="btn-danger"
+            style={{ width: '100%' }}
+            onClick={() => { setMostrarEliminar(true); setNombreConfirm(''); setTimeout(() => confirmInputRef.current?.focus(), 100) }}
+          >
+            Eliminar socio del club
+          </button>
+        ) : (
+          <div>
+            <p style={{ fontSize: 13, color: 'var(--admin-muted)', marginBottom: 12 }}>
+              Esta acción es permanente (baja lógica). El socio no podrá volver a ingresar.<br />
+              Para confirmar, escribí exactamente el nombre: <strong>{socio?.nombre}</strong>
+            </p>
+            <input
+              ref={confirmInputRef}
+              className="form-input"
+              placeholder={`Escribí "${socio?.nombre}" para confirmar`}
+              value={nombreConfirm}
+              onChange={e => setNombreConfirm(e.target.value)}
+              style={{ marginBottom: 10 }}
+              onKeyDown={e => e.key === 'Enter' && handleEliminar()}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                className="btn-danger"
+                style={{ flex: 1 }}
+                disabled={eliminando || nombreConfirm.trim() !== socio?.nombre.trim()}
+                onClick={handleEliminar}
+              >
+                {eliminando ? 'Eliminando...' : 'Confirmar eliminación'}
+              </button>
+              <button
+                className="btn-secondary"
+                style={{ flex: 1 }}
+                onClick={() => { setMostrarEliminar(false); setNombreConfirm(''); setError('') }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <AdminBottomNav />

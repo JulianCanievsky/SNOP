@@ -20,6 +20,7 @@
 import express from 'express'
 import autenticar from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
 import {
   crearNotificacion,
   enviarEmail,
@@ -36,7 +37,7 @@ const router = express.Router()
 // ── Middleware: solo admins ───────────────────────────────────────────────────
 function soloAdmin(req, res, next) {
   if (req.userTipo !== 3) {
-    return res.status(403).json({ error: 'Acceso restringido a administradores' })
+    return responder.sinPermiso(res, 'Acceso restringido a administradores')
   }
   next()
 }
@@ -107,7 +108,7 @@ router.get('/mesas', async (_req, res) => {
     res.json({ data: data ?? [] })
   } catch (err) {
     console.error('GET /admin/mesas', err)
-    res.status(500).json({ error: 'Error al obtener mesas' })
+    responder.interno(res, 'Error al obtener mesas')
   }
 })
 
@@ -164,7 +165,7 @@ router.get('/plantillas', async (_req, res) => {
     res.json({ data: resultado })
   } catch (err) {
     console.error('GET /admin/turnos/plantillas', err)
-    res.status(500).json({ error: 'Error al obtener plantillas', detalle: err?.message ?? String(err) })
+    responder.interno(res, 'Error al obtener plantillas')
   }
 })
 
@@ -214,7 +215,7 @@ router.get('/disponibles', async (_req, res) => {
     res.json({ data: disponibles })
   } catch (err) {
     console.error('GET /admin/turnos/disponibles', err)
-    res.status(500).json({ error: 'Error al obtener turnos disponibles' })
+    responder.interno(res, 'Error al obtener turnos disponibles')
   }
 })
 
@@ -228,7 +229,7 @@ router.post('/asignar/:socioId', async (req, res) => {
   const { turno_id } = req.body
 
   if (!turno_id) {
-    return res.status(400).json({ error: 'turno_id es requerido' })
+    return responder.error(res, 'turno_id es requerido')
   }
 
   try {
@@ -239,7 +240,7 @@ router.post('/asignar/:socioId', async (req, res) => {
       .eq('id', socioId)
       .eq('tipo_usuario_id', 1)
       .single()
-    if (errSocio || !socio) return res.status(404).json({ error: 'Socio no encontrado' })
+    if (errSocio || !socio) return responder.noEncontrado(res, 'Socio no encontrado')
 
     // Verificar turno — solo tipo_turno_id = 1 (entrenamiento)
     const { data: turno, error: errTurno } = await supabase
@@ -247,15 +248,15 @@ router.post('/asignar/:socioId', async (req, res) => {
       .select('id, tipo_turno_id, capacidad_maxima, nivel_minimo_id, nivel_maximo_id, sedes(nombre), socio_turno(id, estado)')
       .eq('id', turno_id)
       .single()
-    if (errTurno || !turno) return res.status(404).json({ error: 'Turno no encontrado' })
+    if (errTurno || !turno) return responder.noEncontrado(res, 'Turno no encontrado')
 
     if (turno.tipo_turno_id !== 1) {
-      return res.status(400).json({ error: 'Solo se pueden asignar turnos de entrenamiento desde este panel' })
+      return responder.error(res, 'Solo se pueden asignar turnos de entrenamiento desde este panel')
     }
 
     const inscriptosActivos = (turno.socio_turno ?? []).filter(s => s.estado === true).length
     if (inscriptosActivos >= turno.capacidad_maxima) {
-      return res.status(400).json({ error: 'El turno no tiene cupo disponible' })
+      return responder.error(res, 'El turno no tiene cupo disponible')
     }
 
     // Verificar nivel del socio dentro del rango permitido
@@ -270,10 +271,10 @@ router.post('/asignar/:socioId', async (req, res) => {
         const ordenMin   = turno.nivel_minimo_id != null ? (nivelMap[turno.nivel_minimo_id] ?? 0) : null
         const ordenMax   = turno.nivel_maximo_id != null ? (nivelMap[turno.nivel_maximo_id] ?? Infinity) : null
         if (ordenMin != null && ordenSocio < ordenMin) {
-          return res.status(400).json({ error: 'El nivel del socio no cumple el mínimo requerido para este turno' })
+          return responder.error(res, 'El nivel del socio no cumple el mínimo requerido para este turno')
         }
         if (ordenMax != null && ordenSocio > ordenMax) {
-          return res.status(400).json({ error: 'El nivel del socio supera el máximo permitido para este turno' })
+          return responder.error(res, 'El nivel del socio supera el máximo permitido para este turno')
         }
       }
     }
@@ -285,7 +286,7 @@ router.post('/asignar/:socioId', async (req, res) => {
       .eq('user_id', socioId)
       .eq('turno_id', turno_id)
       .maybeSingle()
-    if (yaInscripto) return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
+    if (yaInscripto) return responder.conflicto(res, 'El socio ya está inscripto en este turno')
 
     // Insertar inscripción confirmada (vía socioTurnoService → siempre escribe estado_texto)
     const inscripcion = await crearInscripcion({
@@ -351,7 +352,7 @@ router.post('/asignar/:socioId', async (req, res) => {
     res.status(201).json({ data: inscripcionConJoins ?? inscripcion, bonoInfo, mensaje: 'Turno asignado correctamente' })
   } catch (err) {
     console.error('POST /admin/turnos/asignar/:socioId', err)
-    res.status(500).json({ error: 'Error al asignar turno' })
+    responder.interno(res, 'Error al asignar turno')
   }
 })
 
@@ -371,7 +372,7 @@ router.delete('/asignar/:socioId/:socioTurnoId', async (req, res) => {
       .eq('user_id', socioId)
       .single()
 
-    if (errInsc || !insc) return res.status(404).json({ error: 'Inscripción no encontrada' })
+    if (errInsc || !insc) return responder.noEncontrado(res, 'Inscripción no encontrada')
 
     const { error } = await supabase.from('socio_turno').delete().eq('id', socioTurnoId)
     if (error) throw error
@@ -433,7 +434,7 @@ router.delete('/asignar/:socioId/:socioTurnoId', async (req, res) => {
     res.json({ mensaje: 'Turno desasignado correctamente' })
   } catch (err) {
     console.error('DELETE /admin/turnos/asignar/:socioId/:socioTurnoId', err)
-    res.status(500).json({ error: 'Error al quitar turno' })
+    responder.interno(res, 'Error al quitar turno')
   }
 })
 
@@ -477,7 +478,7 @@ router.get('/todos', async (_req, res) => {
     res.json({ data: resultado })
   } catch (err) {
     console.error('GET /admin/turnos/todos', err)
-    res.status(500).json({ error: 'Error al obtener turnos' })
+    responder.interno(res, 'Error al obtener turnos')
   }
 })
 
@@ -511,7 +512,7 @@ router.get('/:id/inscriptos', async (req, res) => {
     res.json({ data: inscriptos, total: inscriptos.length })
   } catch (err) {
     console.error('GET /admin/turnos/:id/inscriptos', err)
-    res.status(500).json({ error: 'Error al obtener inscriptos del turno' })
+    responder.interno(res, 'Error al obtener inscriptos del turno')
   }
 })
 
@@ -542,7 +543,7 @@ router.get('/:id', async (req, res) => {
 
     if (error) {
       console.error('GET /admin/turnos/:id — Supabase error:', JSON.stringify(error))
-      return res.status(404).json({ error: 'Turno no encontrado' })
+      return responder.noEncontrado(res, 'Turno no encontrado')
     }
 
     // Intentar cargar turno_excepciones por separado (tabla nueva, puede no existir aún)
@@ -575,7 +576,7 @@ router.get('/:id', async (req, res) => {
     })
   } catch (err) {
     console.error('GET /admin/turnos/:id', err)
-    res.status(500).json({ error: 'Error al obtener turno', detalle: err?.message ?? String(err) })
+    responder.interno(res, 'Error al obtener turno')
   }
 })
 
@@ -615,7 +616,7 @@ router.post('/', async (req, res) => {
   }
 
   if (hora_inicio >= hora_fin) {
-    return res.status(400).json({ error: 'hora_inicio debe ser anterior a hora_fin' })
+    return responder.error(res, 'hora_inicio debe ser anterior a hora_fin')
   }
 
   try {
@@ -627,10 +628,10 @@ router.post('/', async (req, res) => {
       .single()
 
     if (errEnt || !entrenador) {
-      return res.status(404).json({ error: 'Entrenador no encontrado' })
+      return responder.noEncontrado(res, 'Entrenador no encontrado')
     }
     if (entrenador.tipo_usuario_id !== 2) {
-      return res.status(400).json({ error: 'El usuario seleccionado no es un entrenador' })
+      return responder.error(res, 'El usuario seleccionado no es un entrenador')
     }
 
     // Verificar solapamiento solo para turnos recurrentes
@@ -639,10 +640,7 @@ router.post('/', async (req, res) => {
         sede_id, dia_semana: diaSemanaFinal, hora_inicio, hora_fin,
       })
       if (conflictoId) {
-        return res.status(409).json({
-          error: `Ya existe un turno recurrente en esa sede y horario (turno id: ${conflictoId}). Revisá los turnos existentes o crealo como turno puntual.`,
-          turno_conflicto_id: conflictoId,
-        })
+        return responder.conflicto(res, `Ya existe un turno recurrente en esa sede y horario (turno id: ${conflictoId}). Revisá los turnos existentes o crealo como turno puntual.`)
       }
     }
 
@@ -706,7 +704,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ data, mensaje: 'Turno creado correctamente' })
   } catch (err) {
     console.error('POST /admin/turnos', err)
-    res.status(500).json({ error: err.message || 'Error al crear turno' })
+    responder.interno(res, 'Error al crear turno')
   }
 })
 
@@ -725,21 +723,21 @@ router.put('/:id', async (req, res) => {
       const { data: ent } = await supabase
         .from('users').select('tipo_usuario_id').eq('id', entrenador_id).single()
       if (!ent || ent.tipo_usuario_id !== 2) {
-        return res.status(400).json({ error: 'El usuario seleccionado no es un entrenador' })
+        return responder.error(res, 'El usuario seleccionado no es un entrenador')
       }
     }
 
     // Verificar solapamiento si cambia horario/sede/mesa
     if (sede_id && dia_semana != null && hora_inicio && hora_fin) {
       if (hora_inicio >= hora_fin) {
-        return res.status(400).json({ error: 'hora_inicio debe ser anterior a hora_fin' })
+        return responder.error(res, 'hora_inicio debe ser anterior a hora_fin')
       }
       const solapa = await verificarSolapamiento({
         sede_id, dia_semana, hora_inicio, hora_fin,
         excluir_id: req.params.id,
       })
       if (solapa) {
-        return res.status(409).json({ error: 'Ya existe un turno en ese horario. Revisá los turnos existentes.' })
+        return responder.conflicto(res, 'Ya existe un turno en ese horario. Revisá los turnos existentes.')
       }
     }
 
@@ -776,7 +774,7 @@ router.put('/:id', async (req, res) => {
     res.json({ data, mensaje: 'Turno actualizado correctamente' })
   } catch (err) {
     console.error('PUT /admin/turnos/:id', err)
-    res.status(500).json({ error: err.message || 'Error al actualizar turno' })
+    responder.interno(res, 'Error al actualizar turno')
   }
 })
 
@@ -828,7 +826,7 @@ router.delete('/:id', async (req, res) => {
     res.json({ mensaje: 'Turno dado de baja definitivamente' })
   } catch (err) {
     console.error('DELETE /admin/turnos/:id', err)
-    res.status(500).json({ error: 'Error al dar de baja el turno' })
+    responder.interno(res, 'Error al dar de baja el turno')
   }
 })
 
@@ -847,8 +845,8 @@ router.post('/:id/cancelar-semana', async (req, res) => {
       .eq('id', req.params.id)
       .single()
 
-    if (errT || !turno) return res.status(404).json({ error: 'Turno no encontrado' })
-    if (!turno.estado)  return res.status(400).json({ error: 'El turno está inactivo' })
+    if (errT || !turno) return responder.noEncontrado(res, 'Turno no encontrado')
+    if (!turno.estado)  return responder.error(res, 'El turno está inactivo')
 
     // Calcular la fecha de la próxima instancia
     const fechaProxima = proximaFecha(turno.dia_semana, turno.hora_inicio)
@@ -863,7 +861,7 @@ router.post('/:id/cancelar-semana', async (req, res) => {
       .maybeSingle()
 
     if (existente) {
-      return res.status(409).json({ error: `Ya hay una excepción registrada para el ${fechaStr}` })
+      return responder.conflicto(res, `Ya hay una excepción registrada para el ${fechaStr}`)
     }
 
     const { error: errExc } = await supabase
@@ -917,12 +915,13 @@ router.post('/:id/cancelar-semana', async (req, res) => {
     }
 
     res.json({
+      ok: true,
+      data: { fecha_cancelada: fechaStr },
       mensaje: `Instancia del ${fechaStr} cancelada. El turno recurrente sigue activo para las semanas siguientes.`,
-      fecha_cancelada: fechaStr,
     })
   } catch (err) {
     console.error('POST /admin/turnos/:id/cancelar-semana', err)
-    res.status(500).json({ error: 'Error al cancelar la instancia semanal' })
+    responder.interno(res, 'Error al cancelar la instancia semanal')
   }
 })
 
@@ -935,14 +934,14 @@ router.post('/:id/socios', async (req, res) => {
   const { socio_id } = req.body
 
   if (!socio_id) {
-    return res.status(400).json({ error: 'socio_id es requerido' })
+    return responder.error(res, 'socio_id es requerido')
   }
 
   try {
     // Verificar socio
     const { data: socio } = await supabase
       .from('users').select('id, nombre, email, nivel_id').eq('id', socio_id).eq('tipo_usuario_id', 1).single()
-    if (!socio) return res.status(404).json({ error: 'Socio no encontrado' })
+    if (!socio) return responder.noEncontrado(res, 'Socio no encontrado')
 
     // Verificar cupo y niveles del turno
     const { data: turno } = await supabase
@@ -950,11 +949,11 @@ router.post('/:id/socios', async (req, res) => {
       .select('id, capacidad_maxima, estado, hora_inicio, hora_fin, dia_semana, nivel_minimo_id, nivel_maximo_id, sedes(nombre), socio_turno(id, estado)')
       .eq('id', turnoId).single()
 
-    if (!turno || !turno.estado) return res.status(404).json({ error: 'Turno no encontrado o inactivo' })
+    if (!turno || !turno.estado) return responder.noEncontrado(res, 'Turno no encontrado o inactivo')
 
     const inscriptos = (turno.socio_turno ?? []).filter(s => s.estado === true).length
     if (inscriptos >= turno.capacidad_maxima) {
-      return res.status(400).json({ error: 'El turno no tiene cupo disponible' })
+      return responder.error(res, 'El turno no tiene cupo disponible')
     }
 
     // Verificar nivel del socio dentro del rango permitido por el turno
@@ -966,17 +965,17 @@ router.post('/:id/socios', async (req, res) => {
       const ordenMin   = turno.nivel_minimo_id != null ? (nivelMap[turno.nivel_minimo_id] ?? 0)        : null
       const ordenMax   = turno.nivel_maximo_id != null ? (nivelMap[turno.nivel_maximo_id] ?? Infinity) : null
       if (ordenMin != null && ordenSocio < ordenMin) {
-        return res.status(400).json({ error: 'El nivel del socio no cumple el mínimo requerido para este turno' })
+        return responder.error(res, 'El nivel del socio no cumple el mínimo requerido para este turno')
       }
       if (ordenMax != null && ordenSocio > ordenMax) {
-        return res.status(400).json({ error: 'El nivel del socio supera el máximo permitido para este turno' })
+        return responder.error(res, 'El nivel del socio supera el máximo permitido para este turno')
       }
     }
 
     // Verificar inscripción duplicada
     const { data: dup } = await supabase
       .from('socio_turno').select('id').eq('user_id', socio_id).eq('turno_id', turnoId).maybeSingle()
-    if (dup) return res.status(409).json({ error: 'El socio ya está inscripto en este turno' })
+    if (dup) return responder.conflicto(res, 'El socio ya está inscripto en este turno')
 
     // Insertar inscripción confirmada (vía socioTurnoService → siempre escribe estado_texto)
     const data = await crearInscripcion({
@@ -1032,7 +1031,7 @@ router.post('/:id/socios', async (req, res) => {
     res.status(201).json({ data, bonoInfo, mensaje: 'Socio asignado al turno correctamente' })
   } catch (err) {
     console.error('POST /admin/turnos/:id/socios', err)
-    res.status(500).json({ error: err.message || 'Error al asignar socio' })
+    responder.interno(res, 'Error al asignar socio')
   }
 })
 
@@ -1109,10 +1108,10 @@ router.delete('/:id/socios/:socioId', async (req, res) => {
       console.error('[admin/turnos] notif quitar socio:', notifErr)
     }
 
-    res.json({ mensaje: 'Socio quitado del turno correctamente' })
+    res.json({ ok: true, mensaje: 'Socio quitado del turno correctamente' })
   } catch (err) {
     console.error('DELETE /admin/turnos/:id/socios/:socioId', err)
-    res.status(500).json({ error: 'Error al quitar socio del turno' })
+    responder.interno(res, 'Error al quitar socio del turno')
   }
 })
 
@@ -1122,14 +1121,14 @@ router.delete('/:id/socios/:socioId', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.patch('/:id/entrenador', async (req, res) => {
   const { entrenador_id } = req.body
-  if (!entrenador_id) return res.status(400).json({ error: 'entrenador_id es requerido' })
+  if (!entrenador_id) return responder.error(res, 'entrenador_id es requerido')
 
   try {
     const { data: ent } = await supabase
       .from('users').select('id, nombre, tipo_usuario_id').eq('id', entrenador_id).single()
 
     if (!ent || ent.tipo_usuario_id !== 2) {
-      return res.status(400).json({ error: 'El usuario seleccionado no es un entrenador' })
+      return responder.error(res, 'El usuario seleccionado no es un entrenador')
     }
 
     const { data, error } = await supabase
@@ -1140,10 +1139,10 @@ router.patch('/:id/entrenador', async (req, res) => {
       .single()
 
     if (error) throw error
-    res.json({ data, mensaje: `Entrenador reasignado a ${ent.nombre}` })
+    res.json({ ok: true, data, mensaje: `Entrenador reasignado a ${ent.nombre}` })
   } catch (err) {
     console.error('PATCH /admin/turnos/:id/entrenador', err)
-    res.status(500).json({ error: 'Error al reasignar entrenador' })
+    responder.interno(res, 'Error al reasignar entrenador')
   }
 })
 
@@ -1174,10 +1173,10 @@ router.get('/:id/lista-espera', async (req, res) => {
       user_id:          e.users?.id,
     }))
 
-    res.json({ data: resultado, total: resultado.length })
+    res.json({ ok: true, data: resultado, total: resultado.length })
   } catch (err) {
     console.error('GET /admin/turnos/:id/lista-espera', err)
-    res.status(500).json({ error: 'Error al obtener lista de espera' })
+    responder.interno(res, 'Error al obtener lista de espera')
   }
 })
 

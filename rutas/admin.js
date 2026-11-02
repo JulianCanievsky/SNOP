@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import autenticar from '../src/middlewares/autenticar.js'
 import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
 import { crearNotificacion, enviarEmail, emailSolicitudAceptada, emailSolicitudRechazada } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
@@ -32,17 +33,15 @@ router.get('/stats', async (_req, res) => {
       .gte('fecha_inicio', hoyInicio.toISOString())
       .lte('fecha_inicio', hoyFin.toISOString())
 
-    res.json({
-      data: {
-        socios_activos: sociosRes.count ?? 0,
-        turnos_hoy:     turnosHoy   ?? 0,
-        entrenadores:   entrenadoresRes.count ?? 0,
-        con_deuda:      deudaRes.count ?? 0,
-      }
+    responder.ok(res, {
+      socios_activos: sociosRes.count ?? 0,
+      turnos_hoy:     turnosHoy   ?? 0,
+      entrenadores:   entrenadoresRes.count ?? 0,
+      con_deuda:      deudaRes.count ?? 0,
     })
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al obtener estadísticas' })
+    responder.interno(res, 'Error al obtener estadísticas')
   }
 })
 
@@ -57,6 +56,7 @@ router.get('/socios', async (req, res) => {
       .from('users')
       .select('id, nombre, email, telefono, nivel_id, cuota_al_dia, activo, tipo_usuario_id, niveles(id, nombre)')
       .eq('tipo_usuario_id', 1)
+      .is('eliminado_en', null)   // excluir bajas lógicas
       .order('nombre', { ascending: true })
 
     if (filtro === 'activos')    query = query.eq('activo', true)
@@ -70,10 +70,10 @@ router.get('/socios', async (req, res) => {
       throw error
     }
 
-    res.json({ data: data ?? [] })
+    responder.ok(res, data ?? [])
   } catch (err) {
     console.error('GET /admin/socios — catch:', err)
-    res.status(500).json({ error: 'Error al obtener socios' })
+    responder.interno(res, 'Error al obtener socios')
   }
 })
 
@@ -88,7 +88,7 @@ router.get('/socios/:id', async (req, res) => {
       .eq('id', req.params.id)
       .single()
 
-    if (error || !usuario) return res.status(404).json({ error: 'Socio no encontrado' })
+    if (error || !usuario) return responder.noEncontrado(res, 'Socio no encontrado')
 
     // Turno asignado
     const { data: turnos } = await supabase
@@ -98,10 +98,10 @@ router.get('/socios/:id', async (req, res) => {
       .order('created_at', { ascending: false })
       .limit(5)
 
-    res.json({ data: { usuario, turnos: turnos ?? [] } })
+    responder.ok(res, { usuario, turnos: turnos ?? [] })
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al obtener socio' })
+    responder.interno(res, 'Error al obtener socio')
   }
 })
 
@@ -113,13 +113,13 @@ router.post('/socios', async (req, res) => {
     const { nombre, email, telefono, nivel_id, password } = req.body
 
     if (!nombre?.trim() || !email?.trim()) {
-      return res.status(400).json({ error: 'Nombre y email son requeridos' })
+      return responder.error(res, 'Nombre y email son requeridos')
     }
 
     // Verifica duplicado
     const { data: existente } = await supabase
       .from('users').select('id').eq('email', email.trim().toLowerCase()).maybeSingle()
-    if (existente) return res.status(409).json({ error: 'Ya existe un socio con ese email' })
+    if (existente) return responder.conflicto(res, 'Ya existe un socio con ese email')
 
     const rawPassword = password || 'snop1234'
     const hash = await bcrypt.hash(rawPassword, BCRYPT_ROUNDS)
@@ -141,10 +141,10 @@ router.post('/socios', async (req, res) => {
       .single()
 
     if (error) throw error
-    res.status(201).json({ data, mensaje: 'Socio creado correctamente' })
+    responder.creado(res, data)
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al crear socio' })
+    responder.interno(res, 'Error al crear socio')
   }
 })
 
@@ -167,10 +167,10 @@ router.patch('/socios/:id', async (req, res) => {
       .single()
 
     if (error) throw error
-    res.json({ data, mensaje: 'Socio actualizado' })
+    responder.ok(res, data)
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al actualizar socio' })
+    responder.interno(res, 'Error al actualizar socio')
   }
 })
 
@@ -187,10 +187,10 @@ router.get('/entrenadores', async (_req, res) => {
       .order('nombre')
 
     if (error) throw error
-    res.json({ data: data ?? [] })
+    responder.ok(res, data ?? [])
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al obtener entrenadores' })
+    responder.interno(res, 'Error al obtener entrenadores')
   }
 })
 
@@ -201,10 +201,10 @@ router.get('/sedes', async (_req, res) => {
   try {
     const { data, error } = await supabase.from('sedes').select('id, nombre').order('nombre')
     if (error) throw error
-    res.json({ data: data ?? [] })
+    responder.ok(res, data ?? [])
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al obtener sedes' })
+    responder.interno(res, 'Error al obtener sedes')
   }
 })
 
@@ -218,10 +218,10 @@ router.get('/niveles', async (_req, res) => {
       .select('id, nombre, orden')
       .order('orden', { ascending: true })
     if (error) throw error
-    res.json({ data: data ?? [] })
+    responder.ok(res, data ?? [])
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al obtener niveles' })
+    responder.interno(res, 'Error al obtener niveles')
   }
 })
 
@@ -244,10 +244,10 @@ router.get('/niveles/stats', async (_req, res) => {
       conteo[nombre] = (conteo[nombre] || 0) + 1
     }
 
-    res.json({ data: conteo })
+    responder.ok(res, conteo)
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al obtener stats de niveles' })
+    responder.interno(res, 'Error al obtener stats de niveles')
   }
 })
 
@@ -258,7 +258,156 @@ router.post('/comunicados', async (req, res) => {
   try {
     const { titulo, mensaje, destinatarios } = req.body
     if (!titulo?.trim() || !mensaje?.trim()) {
-      return res.status(400).json({ error: 'Título y mensaje son requeridos' })
+      return responder.error(res, 'Título y mensaje son requeridos')
+    }
+
+    // destinatarios puede ser un array o un string (compatibilidad)
+    const dest = Array.isArray(destinatarios)
+      ? destinatarios
+      : (destinatarios ? [destinatarios] : ['todos'])
+
+    const { data, error } = await supabase
+      .from('comunicados')
+      .insert({
+        titulo:        titulo.trim(),
+        mensaje:       mensaje.trim(),
+        destinatarios: dest,
+        enviado_por:   req.userId,
+        fecha:         new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) {
+      if (error.code === '42P01') {
+        console.warn('Tabla comunicados no existe aún — comunicado no persistido')
+        return responder.creado(res, null)
+      }
+      throw error
+    }
+
+    // Enviar email + notificación in-app en background (no bloquea la respuesta)
+    enviarEmailComunicado({ titulo: titulo.trim(), mensaje: mensaje.trim(), destinatarios: dest })
+      .catch(err => console.error('[comunicado] error enviando emails:', err))
+
+    responder.creado(res, data)
+  } catch (err) {
+    console.error(err)
+    responder.interno(res, 'Error al enviar comunicado')
+  }
+})
+
+// ─────────────────────────────────────────────
+// COMUNICADOS RECIENTES — GET /api/admin/comunicados
+// ─────────────────────────────────────────────
+router.get('/comunicados', async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('comunicados')
+      .select('id, titulo, destinatarios, fecha, mensaje')
+      .order('fecha', { ascending: false })
+      .limit(10)
+
+    if (error) {
+      if (error.code === '42P01') return responder.ok(res, [])
+      throw error
+    }
+    responder.ok(res, data ?? [])
+  } catch (err) {
+    console.error(err)
+    responder.interno(res, 'Error al obtener comunicados')
+  }
+})
+
+// ─────────────────────────────────────────────
+// CONFIG CLUB — GET /api/admin/config
+// ─────────────────────────────────────────────
+router.get('/config', async (req, res) => {
+  try {
+    const { data: adminUser, error: errAdmin } = await supabase
+      .from('users')
+      .select('id, nombre, email, foto_url')
+      .eq('id', req.userId)
+      .single()
+
+    if (errAdmin) throw errAdmin
+
+    const { data: club, error: errClub } = await supabase
+      .from('clubes')
+      .select('id, nombre, whatsapp_link')
+      .single()
+
+    // Counts
+    const [, entresRes, sociosRes] = await Promise.all([
+      supabase.from('sedes').select('id', { count: 'exact', head: true }),
+      supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario_id', 2).eq('activo', true),
+      supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario_id', 1).eq('activo', true),
+    ])
+
+    // Sedes list para mostrar nombres
+    const { data: sedesList } = await supabase.from('sedes').select('nombre').order('nombre')
+
+    responder.ok(res, {
+      admin: adminUser,
+      club: errClub ? null : club,
+      sedes: sedesList ?? [],
+      entrenadores_activos: entresRes.count ?? 0,
+      socios_activos:       sociosRes.count ?? 0,
+    })
+  } catch (err) {
+    console.error(err)
+    responder.interno(res, 'Error al obtener configuración')
+  }
+})
+
+// ─────────────────────────────────────────────
+// JUEGO LIBRE — POST /api/admin/juego-libre
+// ─────────────────────────────────────────────
+router.post('/juego-libre', async (req, res) => {
+  try {
+    const { sede_id, fecha, hora_inicio, hora_fin, capacidad_maxima, niveles_habilitados } = req.body
+
+    if (!sede_id || !fecha || !hora_inicio || !hora_fin) {
+      return responder.error(res, 'Sede, fecha, hora inicio y hora fin son requeridos')
+    }
+
+    const fecha_inicio = new Date(`${fecha}T${hora_inicio}:00-03:00`).toISOString()
+    const fecha_fin    = new Date(`${fecha}T${hora_fin}:00-03:00`).toISOString()
+
+    const { data, error } = await supabase
+      .from('juego_libre')
+      .insert({
+        sede_id,
+        fecha_inicio,
+        fecha_fin,
+        capacidad_maxima: capacidad_maxima || 12,
+        niveles_habilitados: niveles_habilitados ?? [],
+        activo: true,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Supabase error al crear juego libre:', JSON.stringify(error, null, 2))
+      throw error
+    }
+
+    responder.creado(res, data)
+  } catch (err) {
+    console.error('POST /juego-libre catch:', err)
+    responder.interno(res, 'Error al crear juego libre')
+  }
+})
+
+// JUEGO LIBRE PUBLICADOS — GET /api/admin/juego-libre
+router.get('/juego-libre', async (_req, res) => {
+  try {
+    const hoy = new Date()
+    const hoyAR = hoy.toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoyInicioDia = new Date(`${hoyAR}T00:00:00-03:00`)
+
+    const { data, error } = await supabase
+      .from('juego_libre')
     }
 
     const dest = destinatarios || 'todos'
@@ -425,10 +574,10 @@ router.get('/juego-libre', async (_req, res) => {
       _inscriptos: (ev.inscripciones_juego_libre ?? []).filter(i => i.estado === 'activo').length,
     }))
 
-    res.json({ data: resultado })
+    responder.ok(res, resultado)
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al obtener juegos libres' })
+    responder.interno(res, 'Error al obtener juegos libres')
   }
 })
 
@@ -440,10 +589,10 @@ router.delete('/juego-libre/:id', async (req, res) => {
       .update({ activo: false })
       .eq('id', req.params.id)
     if (error) throw error
-    res.json({ mensaje: 'Espacio eliminado' })
+    responder.ok(res, null)
   } catch (err) {
     console.error(err)
-    res.status(500).json({ error: 'Error al eliminar juego libre' })
+    responder.interno(res, 'Error al eliminar juego libre')
   }
 })
 
@@ -482,10 +631,10 @@ router.get('/juego-libre/:id/inscriptos', async (req, res) => {
       fecha_inscripcion: i.fecha_inscripcion,
     }))
 
-    res.json({ data: inscriptos, total: inscriptos.length })
+    responder.ok(res, { inscriptos, total: inscriptos.length })
   } catch (err) {
     console.error('GET /admin/juego-libre/:id/inscriptos', err)
-    res.status(500).json({ error: 'Error al obtener inscriptos' })
+    responder.interno(res, 'Error al obtener inscriptos')
   }
 })
 
@@ -517,10 +666,10 @@ router.get('/turnos-inscriptos/:turnoId', async (req, res) => {
       fecha_inscripcion: i.fecha_inscripcion,
     }))
 
-    res.json({ data: inscriptos, total: inscriptos.length })
+    responder.ok(res, { inscriptos, total: inscriptos.length })
   } catch (err) {
     console.error('GET /admin/turnos-inscriptos/:turnoId', err)
-    res.status(500).json({ error: 'Error al obtener inscriptos del turno' })
+    responder.interno(res, 'Error al obtener inscriptos del turno')
   }
 })
 
@@ -548,7 +697,7 @@ router.get('/solicitudes', async (req, res) => {
 
     // Si el admin no tiene club_id asignado, no mostrar solicitudes de otros clubes
     if (!clubId) {
-      return res.status(400).json({ error: 'El administrador no tiene club asignado' })
+      return responder.error(res, 'El administrador no tiene club asignado')
     }
 
     const { data, error } = await supabase
@@ -561,14 +710,14 @@ router.get('/solicitudes', async (req, res) => {
       .order('fecha_solicitud', { ascending: false })
 
     if (error) {
-      if (error.code === '42P01') return res.json({ data: [] })
+      if (error.code === '42P01') return responder.ok(res, [])
       throw error
     }
 
-    res.json({ data: data ?? [] })
+    responder.ok(res, data ?? [])
   } catch (err) {
     console.error('GET /admin/solicitudes', err)
-    res.status(500).json({ error: 'Error al obtener solicitudes' })
+    responder.interno(res, 'Error al obtener solicitudes')
   }
 })
 
@@ -591,8 +740,8 @@ router.patch('/solicitudes/:id/aceptar', async (req, res) => {
       .eq('id', solicitudId)
       .single()
 
-    if (errSol || !sol) return res.status(404).json({ error: 'Solicitud no encontrada' })
-    if (sol.estado !== 'pendiente') return res.status(400).json({ error: 'La solicitud ya fue resuelta' })
+    if (errSol || !sol) return responder.noEncontrado(res, 'Solicitud no encontrada')
+    if (sol.estado !== 'pendiente') return responder.error(res, 'La solicitud ya fue resuelta')
 
     const clubId = sol.club_id ?? adminUser?.club_id
 
@@ -635,10 +784,10 @@ router.patch('/solicitudes/:id/aceptar', async (req, res) => {
       console.error('Notif solicitud aceptada:', notifErr)
     }
 
-    res.json({ mensaje: 'Solicitud aceptada. El socio ya puede iniciar sesión.' })
+    responder.ok(res, null)
   } catch (err) {
     console.error('PATCH /admin/solicitudes/:id/aceptar', err)
-    res.status(500).json({ error: 'Error al aceptar solicitud' })
+    responder.interno(res, 'Error al aceptar solicitud')
   }
 })
 
@@ -654,8 +803,8 @@ router.patch('/solicitudes/:id/rechazar', async (req, res) => {
       .eq('id', solicitudId)
       .single()
 
-    if (errSol || !sol) return res.status(404).json({ error: 'Solicitud no encontrada' })
-    if (sol.estado !== 'pendiente') return res.status(400).json({ error: 'La solicitud ya fue resuelta' })
+    if (errSol || !sol) return responder.noEncontrado(res, 'Solicitud no encontrada')
+    if (sol.estado !== 'pendiente') return responder.error(res, 'La solicitud ya fue resuelta')
 
     await supabase
       .from('solicitudes_club')
@@ -690,10 +839,10 @@ router.patch('/solicitudes/:id/rechazar', async (req, res) => {
       console.error('Notif solicitud rechazada:', notifErr)
     }
 
-    res.json({ mensaje: 'Solicitud rechazada.' })
+    responder.ok(res, null)
   } catch (err) {
     console.error('PATCH /admin/solicitudes/:id/rechazar', err)
-    res.status(500).json({ error: 'Error al rechazar solicitud' })
+    responder.interno(res, 'Error al rechazar solicitud')
   }
 })
 
@@ -705,7 +854,7 @@ router.post('/torneos', async (req, res) => {
     const { nombre, sede_id, fecha, hora_inicio, hora_fin, modalidad, capacidad_maxima, niveles_habilitados } = req.body
 
     if (!nombre?.trim() || !sede_id || !fecha || !hora_inicio || !hora_fin || !modalidad) {
-      return res.status(400).json({ error: 'Nombre, sede, fecha, horario y modalidad son requeridos' })
+      return responder.error(res, 'Nombre, sede, fecha, horario y modalidad son requeridos')
     }
 
     const fecha_inicio = new Date(`${fecha}T${hora_inicio}:00-03:00`).toISOString()
@@ -728,10 +877,10 @@ router.post('/torneos', async (req, res) => {
       .single()
 
     if (error) throw error
-    res.status(201).json({ data, mensaje: 'Torneo creado correctamente' })
+    responder.creado(res, data)
   } catch (err) {
     console.error('POST /admin/torneos', err)
-    res.status(500).json({ error: err.message || 'Error al crear torneo' })
+    responder.interno(res, 'Error al crear torneo')
   }
 })
 
@@ -754,7 +903,7 @@ router.get('/torneos', async (_req, res) => {
       .order('fecha_inicio', { ascending: true })
 
     if (error) {
-      if (error.code === '42P01') return res.json({ data: [] })
+      if (error.code === '42P01') return responder.ok(res, [])
       throw error
     }
 
@@ -763,10 +912,10 @@ router.get('/torneos', async (_req, res) => {
       inscriptos: (t.inscripciones_torneo ?? []).filter(i => i.estado === 'activo').length,
     }))
 
-    res.json({ data: resultado })
+    responder.ok(res, resultado)
   } catch (err) {
     console.error('GET /admin/torneos', err)
-    res.status(500).json({ error: 'Error al obtener torneos' })
+    responder.interno(res, 'Error al obtener torneos')
   }
 })
 
@@ -795,10 +944,10 @@ router.get('/torneos/:id/inscriptos', async (req, res) => {
       fecha_inscripcion: i.fecha_inscripcion,
     }))
 
-    res.json({ data: inscriptos, total: inscriptos.length })
+    responder.ok(res, { inscriptos, total: inscriptos.length })
   } catch (err) {
     console.error('GET /admin/torneos/:id/inscriptos', err)
-    res.status(500).json({ error: 'Error al obtener inscriptos' })
+    responder.interno(res, 'Error al obtener inscriptos')
   }
 })
 
@@ -844,10 +993,10 @@ router.delete('/torneos/:id/inscriptos/:socioId', async (req, res) => {
       console.error('[admin/torneos] notif baja inscripto:', notifErr)
     }
 
-    res.json({ mensaje: 'Inscripción cancelada correctamente' })
+    responder.ok(res, null)
   } catch (err) {
     console.error('DELETE /admin/torneos/:id/inscriptos/:socioId', err)
-    res.status(500).json({ error: 'Error al quitar inscripto del torneo' })
+    responder.interno(res, 'Error al quitar inscripto del torneo')
   }
 })
 
@@ -859,46 +1008,66 @@ router.delete('/torneos/:id', async (req, res) => {
       .update({ activo: false })
       .eq('id', req.params.id)
     if (error) throw error
-    res.json({ mensaje: 'Torneo eliminado' })
+    responder.ok(res, null)
   } catch (err) {
     console.error('DELETE /admin/torneos', err)
-    res.status(500).json({ error: 'Error al eliminar torneo' })
+    responder.interno(res, 'Error al eliminar torneo')
   }
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: enviar email + notificación in-app a los destinatarios de un comunicado
+// Acepta destinatarios como array ['todos', 'entrenadores', 'nivel_3', etc.]
+// Deduplica: un socio que cae en dos segmentos recibe UN SOLO email/notif.
 // ─────────────────────────────────────────────────────────────────────────────
 async function enviarEmailComunicado({ titulo, mensaje, destinatarios }) {
-  // Construir filtro de usuarios según segmento
-  let query = supabase
-    .from('users')
-    .select('id, nombre, email, tipo_usuario_id, cuota_al_dia, nivel_id, niveles(nombre)')
-    .eq('activo', true)
-    .not('email', 'is', null)
+  // Normalizar a array siempre
+  const segs = Array.isArray(destinatarios)
+    ? destinatarios
+    : [destinatarios || 'todos']
 
-  if (destinatarios === 'todos') {
-    query = query.eq('tipo_usuario_id', 1).eq('estado_cuenta', 'activa')
-  } else if (destinatarios === 'entrenadores') {
-    query = query.eq('tipo_usuario_id', 2)
-  } else if (destinatarios === 'con_deuda') {
-    query = query.eq('tipo_usuario_id', 1).eq('cuota_al_dia', false).eq('estado_cuenta', 'activa')
-  } else {
-    // Formato 'nivel_<id>' — ej. 'nivel_3' para 3ª categoría
-    const matchNivel = destinatarios.match(/^nivel_(\d+)$/)
-    if (matchNivel) {
-      const nivelId = parseInt(matchNivel[1], 10)
-      query = query.eq('tipo_usuario_id', 1).eq('nivel_id', nivelId).eq('estado_cuenta', 'activa')
+  // Recopilar ids únicos de usuarios por segmento
+  const idsSet = new Set()
+  const usuariosMap = new Map()
+
+  for (const seg of segs) {
+    let query = supabase
+      .from('users')
+      .select('id, nombre, email, tipo_usuario_id, cuota_al_dia, nivel_id')
+      .eq('activo', true)
+      .not('email', 'is', null)
+
+    if (seg === 'todos') {
+      query = query.eq('tipo_usuario_id', 1).eq('estado_cuenta', 'activa')
+    } else if (seg === 'entrenadores') {
+      query = query.eq('tipo_usuario_id', 2)
+    } else if (seg === 'con_deuda') {
+      query = query.eq('tipo_usuario_id', 1).eq('cuota_al_dia', false).eq('estado_cuenta', 'activa')
     } else {
-      // Segmento desconocido — no enviar a nadie
-      console.warn(`[comunicado] segmento desconocido: ${destinatarios}`)
-      return
+      const matchNivel = seg.match(/^nivel_(\d+)$/)
+      if (matchNivel) {
+        const nivelId = parseInt(matchNivel[1], 10)
+        query = query.eq('tipo_usuario_id', 1).eq('nivel_id', nivelId).eq('estado_cuenta', 'activa')
+      } else {
+        console.warn(`[comunicado] segmento desconocido: ${seg}`)
+        continue
+      }
+    }
+
+    const { data: usuarios, error } = await query
+    if (error) { console.error(`[comunicado] error segmento ${seg}:`, error); continue }
+    for (const u of usuarios ?? []) {
+      if (!idsSet.has(u.id)) {
+        idsSet.add(u.id)
+        usuariosMap.set(u.id, u)
+      }
     }
   }
 
-  const { data: usuarios, error } = await query
-  if (error) { console.error('[comunicado] error al obtener usuarios:', error); return }
-  if (!usuarios?.length) return
+  if (usuariosMap.size === 0) {
+    console.log('[comunicado] Sin destinatarios para los segmentos:', segs)
+    return
+  }
 
   const FRONTEND_URL = (process.env.FRONTEND_URL || 'https://snop-psi.vercel.app').replace(/\/$/, '')
 
@@ -922,9 +1091,8 @@ async function enviarEmailComunicado({ titulo, mensaje, destinatarios }) {
     </div>
   `
 
-  // Enviar en serie para no saturar Brevo (300 emails/día plan free)
   let enviados = 0
-  for (const u of usuarios) {
+  for (const u of usuariosMap.values()) {
     try {
       await crearNotificacion({
         user_id: u.id,
@@ -940,7 +1108,172 @@ async function enviarEmailComunicado({ titulo, mensaje, destinatarios }) {
     }
   }
 
-  console.log(`[comunicado] Enviado a ${enviados}/${usuarios.length} usuario(s) — segmento: ${destinatarios}`)
+  console.log(`[comunicado] Enviado a ${enviados}/${usuariosMap.size} usuario(s) — segmentos: ${segs.join(', ')}`)
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ELIMINAR SOCIO (baja lógica) — DELETE /api/admin/socios/:id
+// Requiere confirmación: el body debe incluir { nombre_confirmacion } igual al nombre del socio.
+// No permite eliminar al propio admin ni al último admin del sistema.
+// Al eliminar: cancela inscripciones futuras, libera cupos (dispara lista de espera),
+// marca eliminado_en y eliminado_por.
+// ─────────────────────────────────────────────────────────────────────────────
+router.delete('/socios/:id', async (req, res) => {
+  const socioId      = parseInt(req.params.id, 10)
+  const adminId      = req.userId
+  const { nombre_confirmacion } = req.body
+
+  // No puede eliminarse a sí mismo
+  if (socioId === adminId) {
+    return responder.error(res, 'No podés eliminarte a vos mismo')
+  }
+
+  try {
+    // Verificar que el socio existe y no está ya eliminado
+    const { data: socio, error: errSocio } = await supabase
+      .from('users')
+      .select('id, nombre, email, tipo_usuario_id, eliminado_en')
+      .eq('id', socioId)
+      .single()
+
+    if (errSocio || !socio) return responder.noEncontrado(res, 'Socio no encontrado')
+    if (socio.eliminado_en)  return responder.error(res, 'El socio ya fue eliminado')
+
+    // Si es admin, proteger al último admin
+    if (socio.tipo_usuario_id === 3) {
+      const { count } = await supabase
+        .from('users')
+        .select('id', { count: 'exact', head: true })
+        .eq('tipo_usuario_id', 3)
+        .eq('activo', true)
+        .is('eliminado_en', null)
+      if ((count ?? 0) <= 1) {
+        return responder.error(res, 'No podés eliminar al único administrador del sistema')
+      }
+    }
+
+    // Verificar confirmación de nombre
+    if (!nombre_confirmacion || nombre_confirmacion.trim() !== socio.nombre.trim()) {
+      return responder.error(res, 'El nombre de confirmación no coincide con el del socio')
+    }
+
+    const ahora = new Date().toISOString()
+
+    // 1. Cancelar todas las inscripciones futuras (socio_turno, inscripciones_juego_libre, inscripciones_torneo)
+    // Turnos: marcar como cancelado_tarde las inscripciones activas con fecha futura
+    const ahoraAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const desdeAR = new Date(`${ahoraAR}T00:00:00-03:00`).toISOString()
+
+    // Obtener inscripciones activas futuras para notificar / gestionar lista de espera
+    const { data: inscripcionesFuturas } = await supabase
+      .from('socio_turno')
+      .select('id, turno_id, turnos!inner(id, fecha_inicio, capacidad_maxima, sedes(nombre))')
+      .eq('user_id', socioId)
+      .eq('estado', true)
+      .gte('turnos.fecha_inicio', desdeAR)
+
+    // Actualizar estado a cancelado_tarde (libera cupo)
+    if ((inscripcionesFuturas ?? []).length > 0) {
+      await supabase
+        .from('socio_turno')
+        .update({ estado: false, estado_texto: 'cancelado_tarde' })
+        .eq('user_id', socioId)
+        .eq('estado', true)
+    }
+
+    // Cancelar inscripciones de juego libre futuras
+    await supabase
+      .from('inscripciones_juego_libre')
+      .update({ estado: 'cancelado' })
+      .eq('socio_id', socioId)
+      .eq('estado', 'activo')
+
+    // Cancelar inscripciones de torneos futuras
+    try {
+      await supabase
+        .from('inscripciones_torneo')
+        .update({ estado: 'cancelado' })
+        .eq('socio_id', socioId)
+        .eq('estado', 'activo')
+    } catch { /* tabla puede no existir */ }
+
+    // 2. Promover lista de espera para los turnos liberados
+    try {
+      for (const insc of inscripcionesFuturas ?? []) {
+        const turno = insc.turnos
+        if (!turno) continue
+
+        // Ver cuántos activos quedan
+        const { count: activosActuales } = await supabase
+          .from('socio_turno')
+          .select('id', { count: 'exact', head: true })
+          .eq('turno_id', turno.id)
+          .eq('estado', true)
+
+        const hayLugar = (activosActuales ?? 0) < (turno.capacidad_maxima ?? 0)
+        if (!hayLugar) continue
+
+        // Primer usuario en lista de espera
+        const { data: listaEspera } = await supabase
+          .from('lista_espera_turno')
+          .select('id, user_id, users!lista_espera_turno_user_id_fkey(id, nombre, email)')
+          .eq('turno_id', turno.id)
+          .eq('estado', 'esperando')
+          .order('posicion', { ascending: true })
+          .limit(1)
+
+        const primero = listaEspera?.[0]
+        if (!primero?.user_id) continue
+
+        // Inscribir al primero
+        await supabase.from('socio_turno').insert({
+          user_id:           primero.user_id,
+          turno_id:          turno.id,
+          estado:            true,
+          estado_texto:      'activo',
+          fecha_inscripcion: ahora,
+        })
+
+        // Actualizar lista de espera
+        await supabase
+          .from('lista_espera_turno')
+          .update({ estado: 'confirmado' })
+          .eq('id', primero.id)
+
+        // Notificar
+        if (primero.users?.id) {
+          await crearNotificacion({
+            user_id: primero.users.id,
+            titulo:  '¡Lugar disponible!',
+            mensaje: `Se liberó un lugar en el turno del ${new Date(turno.fecha_inicio).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Argentina/Buenos_Aires' })} en ${turno.sedes?.nombre ?? 'la sede'}. Quedaste inscripto/a.`,
+            tipo:    'lista_espera_promovido',
+            link:    '/mis-clases',
+          }).catch(() => {})
+        }
+      }
+    } catch (listaErr) {
+      console.error('[admin/eliminar-socio] lista de espera:', listaErr)
+    }
+
+    // 3. Baja lógica: marcar eliminado_en y eliminado_por
+    const { error: errBaja } = await supabase
+      .from('users')
+      .update({
+        eliminado_en:  ahora,
+        eliminado_por: adminId,
+        activo:        false,
+      })
+      .eq('id', socioId)
+
+    if (errBaja) throw errBaja
+
+    console.log(`[admin] Socio ${socio.nombre} (id:${socioId}) dado de baja por admin ${adminId} a las ${ahora}`)
+
+    responder.ok(res, null)
+  } catch (err) {
+    console.error('DELETE /admin/socios/:id', err)
+    responder.interno(res, 'Error al eliminar socio')
+  }
+})
 
 export default router

@@ -29,7 +29,10 @@ export function useInicioEntrenador() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   return { resumen, solicitudesPendientes, cargando, error, recargar: cargar }
 }
@@ -54,7 +57,10 @@ export function useMisClasesEntrenador() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   const cancelarClase = async (turnoId) => {
     await api.patch(`/entrenador/clases/${turnoId}/cancelar`, {})
@@ -84,7 +90,10 @@ export function useMisAlumnos() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   const cambiarNivel = async (alumnoId, nivelId) => {
     await api.patch(`/entrenador/alumnos/${alumnoId}/nivel`, { nivel_id: nivelId })
@@ -115,7 +124,10 @@ export function useDetalleAlumno(alumnoId) {
     }
   }, [alumnoId])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   const cambiarNivel = async (nivelId) => {
     await api.patch(`/entrenador/alumnos/${alumnoId}/nivel`, { nivel_id: nivelId })
@@ -151,7 +163,10 @@ export function useMisHorarios() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   const agregarHorario = async ({ fecha, hora, sede_id, duracion_min }) => {
     try {
@@ -191,7 +206,10 @@ export function useSolicitudesEntrenador() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   const responderSolicitud = async (solicitudId, accion) => {
     await api.patch(`/entrenador/solicitudes/${solicitudId}/${accion}`, {})
@@ -221,7 +239,10 @@ export function usePerfilEntrenador() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   return { perfil, cargando, error, recargar: cargar }
 }

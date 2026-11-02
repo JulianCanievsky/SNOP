@@ -35,7 +35,7 @@ router.post('/login', async (req, res) => {
   try {
     const { data: usuario, error } = await supabase
       .from('users')
-      .select('id, nombre, email, password, tipo_usuario_id, club_id, activo, estado_cuenta, cuota_al_dia, foto_url, nivel_id, niveles(id, nombre)')
+      .select('id, nombre, email, password, tipo_usuario_id, club_id, activo, estado_cuenta, cuota_al_dia, foto_url, nivel_id, eliminado_en, niveles(id, nombre)')
       .eq('email', email.trim().toLowerCase())
       .single()
 
@@ -45,6 +45,11 @@ router.post('/login', async (req, res) => {
 
     if (!usuario.activo) {
       return res.status(403).json({ ok: false, mensaje: 'Tu cuenta está desactivada. Contactá al club.' })
+    }
+
+    // Baja lógica: socio eliminado no puede loguearse
+    if (usuario.eliminado_en) {
+      return res.status(403).json({ ok: false, mensaje: 'No pertenecés a ningún club. Para más información contactá al club.' })
     }
 
     const estadoCuenta = usuario.estado_cuenta ?? 'activa'

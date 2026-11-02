@@ -148,15 +148,19 @@ app.get('/api/comunicados', autenticar, async (req, res) => {
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
-      .in('destinatarios', filtros)
       .gte('fecha', hace5Dias.toISOString())
       .order('fecha', { ascending: false })
-      .limit(5)
+      .limit(20)
     if (error) {
       if (error.code === '42P01') return res.json({ ok: true, data: [] })
       throw error
     }
-    res.json({ ok: true, data: data ?? [] })
+    // Filtrar en memoria: solo los comunicados dirigidos a este socio
+    const visibles = (data ?? []).filter(c => {
+      const dest = Array.isArray(c.destinatarios) ? c.destinatarios : [c.destinatarios]
+      return filtros.some(f => dest.includes(f))
+    }).slice(0, 5)
+    res.json({ ok: true, data: visibles })
   } catch (err) {
     console.error('GET /api/comunicados', err)
     res.status(500).json({ ok: false, mensaje: 'Error al obtener comunicados' })
@@ -174,13 +178,17 @@ app.get('/api/comunicados/todos', autenticar, async (req, res) => {
     const { data, error } = await supabase
       .from('comunicados')
       .select('id, titulo, mensaje, fecha, destinatarios')
-      .in('destinatarios', filtros)
       .order('fecha', { ascending: false })
     if (error) {
       if (error.code === '42P01') return res.json({ ok: true, data: [] })
       throw error
     }
-    res.json({ ok: true, data: data ?? [] })
+    // Filtrar en memoria: solo los comunicados dirigidos a este socio
+    const visibles = (data ?? []).filter(c => {
+      const dest = Array.isArray(c.destinatarios) ? c.destinatarios : [c.destinatarios]
+      return filtros.some(f => dest.includes(f))
+    })
+    res.json({ ok: true, data: visibles })
   } catch (err) {
     console.error('GET /api/comunicados/todos', err)
     res.status(500).json({ ok: false, mensaje: 'Error al obtener comunicados' })

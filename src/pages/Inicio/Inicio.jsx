@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { Calendar, Gamepad2, Users, Trophy, User, Bell, Search, BookOpen, Dumbbell, Target } from 'lucide-react'
@@ -88,8 +88,10 @@ export default function Inicio() {
     }
   }, [user])
 
+  const _cargarDatosRef = useRef(cargarDatos); _cargarDatosRef.current = cargarDatos
   useEffect(() => {
-    cargarDatos()
+    async function init() { await _cargarDatosRef.current() }
+    init()
 
     async function fetchComunicados() {
       try {

@@ -7,6 +7,7 @@ export function useNotificaciones() {
   const [cargando,       setCargando]       = useState(true)
 
   const cargar = useCallback(async () => {
+    setCargando(true)
     try {
       const { data, no_leidas } = await getNotificaciones()
       setNotificaciones(data ?? [])
@@ -18,16 +19,17 @@ export function useNotificaciones() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   const marcarTodas = useCallback(async () => {
     try {
       await leerTodas()
       setNotificaciones(prev => prev.map(n => ({ ...n, leida: true })))
       setNoLeidas(0)
-    } catch (err) {
-      console.error(err)
-    }
+    } catch (err) { console.error(err) }
   }, [])
 
   const marcarUna = useCallback(async (id) => {
@@ -35,9 +37,7 @@ export function useNotificaciones() {
       await leerUna(id)
       setNotificaciones(prev => prev.map(n => n.id === id ? { ...n, leida: true } : n))
       setNoLeidas(prev => Math.max(0, prev - 1))
-    } catch (err) {
-      console.error(err)
-    }
+    } catch (err) { console.error(err) }
   }, [])
 
   return { notificaciones, noLeidas, cargando, cargar, marcarTodas, marcarUna }

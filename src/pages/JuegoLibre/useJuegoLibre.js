@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../../lib/apiClient.js'
 import { obtenerMensajeError } from '../../lib/errores.js'
 
@@ -14,9 +14,7 @@ export const useJuegoLibre = () => {
       const params = new URLSearchParams()
       if (filtros.sede_id) params.append('sede_id', filtros.sede_id)
       if (filtros.fecha) params.append('fecha', filtros.fecha)
-
       const { data } = await api.get(`/juego-libre?${params}`)
-      // El backend responde { ok, data: [...] } — leer data.data
       setEventos(Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []))
     } catch (err) {
       setError(obtenerMensajeError(err, 'Error al cargar los eventos'))
@@ -25,9 +23,8 @@ export const useJuegoLibre = () => {
     }
   }, [])
 
-  useEffect(() => {
-    cargarEventos()
-  }, [cargarEventos])
+  const cargarRef = useRef(cargarEventos); cargarRef.current = cargarEventos
+  useEffect(() => { cargarRef.current() }, [])
 
   const inscribirse = async (eventoId) => {
     const { data } = await api.post(`/juego-libre/${eventoId}/inscribir`, {})

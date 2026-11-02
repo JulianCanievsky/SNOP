@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSocios, editarSocio, getNivelesStats, getNiveles } from '../../services/adminApi'
@@ -38,7 +38,10 @@ export default function GestionNiveles() {
     }
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar])
 
   // Filtrado local con debounce implícito (búsqueda en memoria)
   const sociosFiltrados = useMemo(() => {

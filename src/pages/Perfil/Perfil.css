@@ -162,3 +162,77 @@
 .perfil-tab--activo { background:var(--color-surface); color:var(--color-text); box-shadow:0 1px 3px rgba(0,0,0,.1); }
 .perfil-tab-badge { background:var(--color-primary); color:#fff; font-size:10px; font-weight:700; padding:1px 6px; border-radius:var(--radius-pill); min-width:18px; text-align:center; }
 .perfil-historial { padding:0 var(--space-4); display:flex; flex-direction:column; gap:10px; padding-top:12px; }
+
+/* ── Historial ──────────────────────────────────────────────── */
+.historial-filtros {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.historial-select {
+  flex: 1;
+  min-width: 130px;
+  padding: 8px var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.btn-secundario-chico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.btn-secundario-chico:hover { background: var(--color-surface-alt); }
+.btn-secundario-chico:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.historial-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.btn-pag {
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.btn-pag:hover:not(:disabled) { background: var(--color-primary-subtle); color: var(--color-primary); }
+.btn-pag:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.historial-pag-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  min-width: 60px;
+  text-align: center;
+}
+
+.estado-cancelado {
+  color: var(--color-warning, #d97706);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+.estado-pendiente {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}

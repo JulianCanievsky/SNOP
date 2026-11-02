@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import api from '../lib/apiClient.js'
 import { obtenerMensajeError } from '../lib/errores.js'
 
 export const usePerfil = () => {
-  const [perfil, setPerfil] = useState(null)
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState(null)
+  const [perfil,    setPerfil]    = useState(null)
+  const [cargando,  setCargando]  = useState(true)
+  const [error,     setError]     = useState(null)
 
-  const cargarPerfil = async () => {
+  const cargarPerfil = useCallback(async () => {
     try {
       setCargando(true)
       setError(null)
@@ -19,11 +19,12 @@ export const usePerfil = () => {
     } finally {
       setCargando(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    cargarPerfil()
-  }, [])
+    async function init() { await cargarPerfil() }
+    init()
+  }, [cargarPerfil])
 
   return { perfil, cargando, error, cargarPerfil }
 }

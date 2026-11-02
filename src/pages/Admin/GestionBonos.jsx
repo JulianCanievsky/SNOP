@@ -3,12 +3,13 @@
  * Panel de administración de bonos.
  * Acceso: /admin/socios/:id/bonos (desde DetalleSocio) o /admin/bonos/:socioId
  */
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import AdminBottomNav from '../../components/AdminBottomNav/AdminBottomNav'
 import { getSocio }                          from '../../services/adminApi'
 import { crearBono, getBonosSocio, desactivarBono } from '../../services/bonosApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
+import { hoyAR } from '../../lib/fecha.js'
 import './Admin.css'
 
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -64,7 +65,7 @@ function BarraCreditos({ usados, total }) {
 function TarjetaBono({ bono, onDesactivar, desactivando, confirmandoId, onCancelarConfirm }) {
   const [expandido, setExpandido] = useState(false)
   const tc = TIPO_COLOR[bono.tipo] ?? { bg: '#f3f4f6', color: '#6b7280' }
-  const hoy = new Date().toISOString().split('T')[0]
+  const hoy = hoyAR()
   const vencido  = bono.fecha_vencimiento < hoy
   const agotado  = bono.creditos_disponibles <= 0
   const inactivo = !bono.activo || vencido || agotado
@@ -192,7 +193,7 @@ export default function GestionBonos() {
   const [exito,       setExito]       = useState('')
   const [error,       setError]       = useState('')
 
-  const hoy = new Date().toISOString().split('T')[0]
+  const hoy = hoyAR()
 
   const [form, setForm] = useState({
     tipo:              'mensual',
@@ -209,7 +210,7 @@ export default function GestionBonos() {
     if (tipo === 'mensual')    d.setMonth(d.getMonth() + 1)
     if (tipo === 'trimestral') d.setMonth(d.getMonth() + 3)
     if (tipo === 'personalizado') return ''
-    return d.toISOString().split('T')[0]
+    return d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
   }
 
   const cargar = useCallback(async () => {
@@ -228,7 +229,10 @@ export default function GestionBonos() {
     }
   }, [socioId])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    async function init() { await cargar() }
+    init()
+  }, [cargar]) // cargar depende de socioId → se re-ejecuta cuando cambia
 
   function handleChange(e) {
     const { name, value } = e.target
