@@ -5,6 +5,9 @@ import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import responder from '../src/lib/responder.js'
 import { crearNotificacion, enviarEmail, emailSolicitudAceptada, emailSolicitudRechazada } from '../src/lib/notificaciones.js'
+import { actualizarEstadoPorId } from '../src/services/socioTurnoService.js'
+import { promoverListaEspera } from '../src/services/turnosService.js'
+import { hoyAR, toFechaAR } from '../src/lib/fecha.js'
 
 const router = express.Router()
 
@@ -24,9 +27,9 @@ router.get('/stats', async (_req, res) => {
     ])
 
     // Turnos hoy — usando hora argentina (UTC-3)
-    const hoyAR     = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-    const hoyInicio = new Date(`${hoyAR}T00:00:00-03:00`)
-    const hoyFin    = new Date(`${hoyAR}T23:59:59-03:00`)
+    const hoyStr    = hoyAR()
+    const hoyInicio = new Date(`${hoyStr}T00:00:00-03:00`)
+    const hoyFin    = new Date(`${hoyStr}T23:59:59-03:00`)
     const { count: turnosHoy } = await supabase
       .from('turnos')
       .select('id', { count: 'exact', head: true })
@@ -95,7 +98,7 @@ router.get('/socios/:id', async (req, res) => {
       .from('socio_turno')
       .select('id, estado, turnos(id, fecha_inicio, fecha_fin, sedes(nombre), mesas(numero))')
       .eq('user_id', req.params.id)
-      .order('created_at', { ascending: false })
+      .order('fecha_inscripcion', { ascending: false })
       .limit(5)
 
     responder.ok(res, { usuario, turnos: turnos ?? [] })
@@ -403,163 +406,13 @@ router.post('/juego-libre', async (req, res) => {
 router.get('/juego-libre', async (_req, res) => {
   try {
     const hoy = new Date()
-    const hoyAR = hoy.toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-    const hoyInicioDia = new Date(`${hoyAR}T00:00:00-03:00`)
-
-    const { data, error } = await supabase
-      .from('juego_libre')
-    }
-
-    const dest = destinatarios || 'todos'
-
-    const { data, error } = await supabase
-      .from('comunicados')
-      .insert({
-        titulo:        titulo.trim(),
-        mensaje:       mensaje.trim(),
-        destinatarios: dest,
-        enviado_por:   req.userId,
-        fecha:         new Date().toISOString(),
-      })
-      .select()
-      .single()
-
-    if (error) {
-      if (error.code === '42P01') {
-        console.warn('Tabla comunicados no existe aún — comunicado no persistido')
-        return res.status(201).json({ data: null, mensaje: 'Comunicado registrado (tabla pendiente de creación)' })
-      }
-      throw error
-    }
-
-    // Enviar email + notificación in-app en background (no bloquea la respuesta)
-    enviarEmailComunicado({ titulo: titulo.trim(), mensaje: mensaje.trim(), destinatarios: dest })
-      .catch(err => console.error('[comunicado] error enviando emails:', err))
-
-    res.status(201).json({ data, mensaje: 'Comunicado enviado' })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Error al enviar comunicado' })
-  }
-})
-
-// ─────────────────────────────────────────────
-// COMUNICADOS RECIENTES — GET /api/admin/comunicados
-// ─────────────────────────────────────────────
-router.get('/comunicados', async (_req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('comunicados')
-      .select('id, titulo, destinatarios, fecha, mensaje')
-      .order('fecha', { ascending: false })
-      .limit(10)
-
-    if (error) {
-      if (error.code === '42P01') return res.json({ data: [] }) // tabla aún no existe
-      throw error
-    }
-    res.json({ data: data ?? [] })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Error al obtener comunicados' })
-  }
-})
-
-// ─────────────────────────────────────────────
-// CONFIG CLUB — GET /api/admin/config
-// ─────────────────────────────────────────────
-router.get('/config', async (req, res) => {
-  try {
-    const { data: adminUser, error: errAdmin } = await supabase
-      .from('users')
-      .select('id, nombre, email, foto_url')
-      .eq('id', req.userId)
-      .single()
-
-    if (errAdmin) throw errAdmin
-
-    const { data: club, error: errClub } = await supabase
-      .from('clubes')
-      .select('id, nombre, whatsapp_link')
-      .single()
-
-    // Counts
-    const [, entresRes, sociosRes] = await Promise.all([
-      supabase.from('sedes').select('id', { count: 'exact', head: true }),
-      supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario_id', 2).eq('activo', true),
-      supabase.from('users').select('id', { count: 'exact', head: true }).eq('tipo_usuario_id', 1).eq('activo', true),
-    ])
-
-    // Sedes list para mostrar nombres
-    const { data: sedesList } = await supabase.from('sedes').select('nombre').order('nombre')
-
-    res.json({
-      data: {
-        admin: adminUser,
-        club: errClub ? null : club,
-        sedes: sedesList ?? [],
-        entrenadores_activos: entresRes.count ?? 0,
-        socios_activos:       sociosRes.count ?? 0,
-      }
-    })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: 'Error al obtener configuración' })
-  }
-})
-
-// ─────────────────────────────────────────────
-// JUEGO LIBRE — POST /api/admin/juego-libre
-// ─────────────────────────────────────────────
-router.post('/juego-libre', async (req, res) => {
-  try {
-    const { sede_id, fecha, hora_inicio, hora_fin, capacidad_maxima } = req.body
-
-    if (!sede_id || !fecha || !hora_inicio || !hora_fin) {
-      return res.status(400).json({ error: 'Sede, fecha, hora inicio y hora fin son requeridos' })
-    }
-
-    // Construir timestamps — hora_inicio/hora_fin llegan como "HH:MM"
-    // Se agrega el offset ART (-03:00) explícitamente para que el valor
-    // guardado en UTC sea correcto independientemente del TZ del servidor.
-    const fecha_inicio = new Date(`${fecha}T${hora_inicio}:00-03:00`).toISOString()
-    const fecha_fin    = new Date(`${fecha}T${hora_fin}:00-03:00`).toISOString()
-
-    const { data, error } = await supabase
-      .from('juego_libre')
-      .insert({
-        sede_id,
-        fecha_inicio,
-        fecha_fin,
-        capacidad_maxima: capacidad_maxima || 12,
-        activo: true,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Supabase error al crear juego libre:', JSON.stringify(error, null, 2))
-      throw error
-    }
-
-    res.status(201).json({ data, mensaje: 'Espacio de juego creado' })
-  } catch (err) {
-    console.error('POST /juego-libre catch:', err)
-    res.status(500).json({ error: err.message || 'Error al crear juego libre' })
-  }
-})
-
-// JUEGO LIBRE PUBLICADOS — GET /api/admin/juego-libre
-router.get('/juego-libre', async (_req, res) => {
-  try {
-    const hoy = new Date()
-    const hoyAR = hoy.toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-    const hoyInicioDia = new Date(`${hoyAR}T00:00:00-03:00`)
+    const hoyStr = toFechaAR(hoy)
+    const hoyInicioDia = new Date(`${hoyStr}T00:00:00-03:00`)
 
     const { data, error } = await supabase
       .from('juego_libre')
       .select(`
-        id, fecha_inicio, fecha_fin, capacidad_maxima, sede_id, sedes(nombre),
+        id, fecha_inicio, fecha_fin, capacidad_maxima, sede_id, niveles_habilitados, sedes(nombre),
         inscripciones_juego_libre(id, estado)
       `)
       .eq('activo', true)
@@ -887,7 +740,7 @@ router.post('/torneos', async (req, res) => {
 // GET /api/admin/torneos
 router.get('/torneos', async (_req, res) => {
   try {
-    const hoyAR2 = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoyAR2 = hoyAR()
     const hoy = new Date(`${hoyAR2}T00:00:00-03:00`)
 
     const { data, error } = await supabase
@@ -1161,8 +1014,7 @@ router.delete('/socios/:id', async (req, res) => {
 
     // 1. Cancelar todas las inscripciones futuras (socio_turno, inscripciones_juego_libre, inscripciones_torneo)
     // Turnos: marcar como cancelado_tarde las inscripciones activas con fecha futura
-    const ahoraAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-    const desdeAR = new Date(`${ahoraAR}T00:00:00-03:00`).toISOString()
+    const desdeAR = new Date(`${hoyAR()}T00:00:00-03:00`).toISOString()
 
     // Obtener inscripciones activas futuras para notificar / gestionar lista de espera
     const { data: inscripcionesFuturas } = await supabase
@@ -1172,13 +1024,10 @@ router.delete('/socios/:id', async (req, res) => {
       .eq('estado', true)
       .gte('turnos.fecha_inicio', desdeAR)
 
-    // Actualizar estado a cancelado_tarde (libera cupo)
-    if ((inscripcionesFuturas ?? []).length > 0) {
-      await supabase
-        .from('socio_turno')
-        .update({ estado: false, estado_texto: 'cancelado_tarde' })
-        .eq('user_id', socioId)
-        .eq('estado', true)
+    // Actualizar estado a cancelado_tarde (libera cupo). Solo las futuras:
+    // las pasadas quedan como historial. Vía socioTurnoService (regla del proyecto).
+    for (const insc of inscripcionesFuturas ?? []) {
+      await actualizarEstadoPorId({ socioTurnoId: insc.id, estado_texto: 'cancelado_tarde' })
     }
 
     // Cancelar inscripciones de juego libre futuras
@@ -1188,71 +1037,27 @@ router.delete('/socios/:id', async (req, res) => {
       .eq('socio_id', socioId)
       .eq('estado', 'activo')
 
-    // Cancelar inscripciones de torneos futuras
-    try {
-      await supabase
-        .from('inscripciones_torneo')
-        .update({ estado: 'cancelado' })
-        .eq('socio_id', socioId)
-        .eq('estado', 'activo')
-    } catch { /* tabla puede no existir */ }
+    // Cancelar inscripciones de torneos
+    await supabase
+      .from('inscripciones_torneo')
+      .update({ estado: 'cancelado' })
+      .eq('socio_id', socioId)
+      .eq('estado', 'activo')
 
-    // 2. Promover lista de espera para los turnos liberados
-    try {
-      for (const insc of inscripcionesFuturas ?? []) {
-        const turno = insc.turnos
-        if (!turno) continue
+    // Sacarlo de las listas de espera
+    await supabase
+      .from('lista_espera_turno')
+      .update({ estado: 'cancelado' })
+      .eq('user_id', socioId)
+      .eq('estado', 'esperando')
 
-        // Ver cuántos activos quedan
-        const { count: activosActuales } = await supabase
-          .from('socio_turno')
-          .select('id', { count: 'exact', head: true })
-          .eq('turno_id', turno.id)
-          .eq('estado', true)
-
-        const hayLugar = (activosActuales ?? 0) < (turno.capacidad_maxima ?? 0)
-        if (!hayLugar) continue
-
-        // Primer usuario en lista de espera
-        const { data: listaEspera } = await supabase
-          .from('lista_espera_turno')
-          .select('id, user_id, users!lista_espera_turno_user_id_fkey(id, nombre, email)')
-          .eq('turno_id', turno.id)
-          .eq('estado', 'esperando')
-          .order('posicion', { ascending: true })
-          .limit(1)
-
-        const primero = listaEspera?.[0]
-        if (!primero?.user_id) continue
-
-        // Inscribir al primero
-        await supabase.from('socio_turno').insert({
-          user_id:           primero.user_id,
-          turno_id:          turno.id,
-          estado:            true,
-          estado_texto:      'activo',
-          fecha_inscripcion: ahora,
-        })
-
-        // Actualizar lista de espera
-        await supabase
-          .from('lista_espera_turno')
-          .update({ estado: 'confirmado' })
-          .eq('id', primero.id)
-
-        // Notificar
-        if (primero.users?.id) {
-          await crearNotificacion({
-            user_id: primero.users.id,
-            titulo:  '¡Lugar disponible!',
-            mensaje: `Se liberó un lugar en el turno del ${new Date(turno.fecha_inicio).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Argentina/Buenos_Aires' })} en ${turno.sedes?.nombre ?? 'la sede'}. Quedaste inscripto/a.`,
-            tipo:    'lista_espera_promovido',
-            link:    '/mis-clases',
-          }).catch(() => {})
-        }
+    // 2. Cada cupo liberado pasa al primero de la lista de espera (regla 5)
+    for (const insc of inscripcionesFuturas ?? []) {
+      try {
+        await promoverListaEspera(insc.turnos)
+      } catch (listaErr) {
+        console.error('[admin/eliminar-socio] lista de espera turno', insc.turno_id, listaErr)
       }
-    } catch (listaErr) {
-      console.error('[admin/eliminar-socio] lista de espera:', listaErr)
     }
 
     // 3. Baja lógica: marcar eliminado_en y eliminado_por

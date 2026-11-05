@@ -212,6 +212,29 @@ export function emailListaEsperaPromovido({ nombre, fechaTurno, sede }) {
   }
 }
 
+/** Aviso (sin inscripción) de que se liberó un cupo: el socio tiene que anotarse. */
+export function emailLugarDisponible({ nombre, fechaTurno, sede }) {
+  const url = getFrontendUrl()
+  return {
+    subject: 'Se liberó un lugar — SNOP',
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#f8f9fc;border-radius:12px;">
+        <h2 style="color:#2563eb;margin:0 0 8px;">Se liberó un lugar</h2>
+        <p style="color:#555;margin:0 0 16px;">Hola <strong>${nombre}</strong>, se liberó un cupo en un turno que te interesaba.</p>
+        <div style="background:#eff6ff;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+          <p style="margin:0 0 4px;font-weight:700;color:#1e293b;">${fechaTurno}</p>
+          <p style="margin:0;color:#64748b;font-size:13px;">📍 ${sede}</p>
+        </div>
+        <p style="color:#555;margin:0 0 20px;">Todavía no estás inscripto/a: anotate antes de que se llene.</p>
+        <a href="${url}/mis-clases"
+           style="display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;border-radius:28px;text-decoration:none;font-weight:700;font-size:14px;">
+          Ver turnos
+        </a>
+      </div>
+    `,
+  }
+}
+
 export function emailTurnoCanceladoSemana({ nombre, fechaTurno, sede }) {
   return {
     subject: 'Turno cancelado esta semana — SNOP',

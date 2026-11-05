@@ -1,5 +1,13 @@
-import { Sun, Moon } from 'lucide-react'
+import { useState } from 'react'
+import { Sun, Moon, Inbox } from 'lucide-react'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
+import CategoriasHabilitadas from '../../components/ui/CategoriasHabilitadas/CategoriasHabilitadas'
+import Button from '../../components/ui/Button/Button'
+import Spinner from '../../components/ui/Spinner/Spinner'
+import Skeleton from '../../components/ui/Skeleton/Skeleton'
+import EmptyState from '../../components/ui/EmptyState/EmptyState'
+import ErrorState from '../../components/ui/ErrorState/ErrorState'
+import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import { useTheme } from '../../context/ThemeContext'
@@ -21,6 +29,16 @@ const PALETA = [
   { nombre: 'Texto',          varCss: '--color-text',           color: 'var(--color-text)' },
   { nombre: 'Texto muted',    varCss: '--color-text-muted',     color: 'var(--color-text-muted)' },
   { nombre: 'Borde',          varCss: '--color-border',         color: 'var(--color-border)' },
+  // Extendidos (B2)
+  { nombre: 'Texto secundario', varCss: '--color-text-secondary', color: 'var(--color-text-secondary)' },
+  { nombre: 'Superficie gris',  varCss: '--color-surface-muted',  color: 'var(--color-surface-muted)' },
+  { nombre: 'Acento',           varCss: '--color-accent',         color: 'var(--color-accent)' },
+  { nombre: 'Acento sutil',     varCss: '--color-accent-subtle',  color: 'var(--color-accent-subtle)' },
+  { nombre: 'Éxito (texto)',    varCss: '--color-success-text',   color: 'var(--color-success-text)' },
+  { nombre: 'Peligro (texto)',  varCss: '--color-danger-text',    color: 'var(--color-danger-text)' },
+  { nombre: 'Advert. (texto)',  varCss: '--color-warning-text',   color: 'var(--color-warning-text)' },
+  { nombre: 'Rating',           varCss: '--color-rating',         color: 'var(--color-rating)' },
+  { nombre: 'WhatsApp',         varCss: '--color-whatsapp',       color: 'var(--color-whatsapp)' },
 ]
 
 const TIPOGRAFIA = [
@@ -55,6 +73,7 @@ export default function DesignSystem() {
   const { dark, toggleTheme } = useTheme()
   const tema = dark ? 'dark' : 'light'
   const { toasts, showToast, removeToast } = useToast()
+  const [confirmAbierto, setConfirmAbierto] = useState(false)
 
   return (
     <div className={styles.page}>
@@ -108,16 +127,32 @@ export default function DesignSystem() {
               <span>{APTO_TODOS.nombre}</span>
             </div>
           </div>
+          <h3 className={styles.subsectionTitle}>CategoriasHabilitadas (juego libre / torneos)</h3>
+          <div className={styles.row}>
+            <CategoriasHabilitadas ids={[]} />
+            <CategoriasHabilitadas ids={[3, 4, 5]} />
+            <CategoriasHabilitadas ids={[1, 2]} abreviado />
+          </div>
         </section>
 
         {/* ── Botones ─────────────────────────────────────────────────────── */}
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Botones</h2>
+          <h3 className={styles.subsectionTitle}>Componente &lt;Button&gt;</h3>
+          <div className={styles.row}>
+            <Button>Primario</Button>
+            <Button variant="secondary">Secundario</Button>
+            <Button variant="danger">Peligro</Button>
+            <Button variant="ghost">Ghost</Button>
+            <Button loading>Guardando</Button>
+            <Button disabled>Disabled</Button>
+            <Button size="sm">Chico</Button>
+          </div>
+          <h3 className={styles.subsectionTitle}>Clases globales (legacy)</h3>
           <div className={styles.row}>
             <button className="btn-primary">Primario</button>
             <button className="btn-secondary">Secundario</button>
             <button className="btn-danger">Peligro</button>
-            <button className="btn-primary" disabled>Disabled</button>
           </div>
         </section>
 
@@ -219,10 +254,34 @@ export default function DesignSystem() {
         {/* ── Estados: spinner, vacío ─────────────────────────────────────── */}
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Estados</h2>
-          <h3 className={styles.subsectionTitle}>Cargando</h3>
-          <div className="snop-loading"><div className="snop-spinner" /></div>
-          <h3 className={styles.subsectionTitle}>Vacío</h3>
-          <div className="snop-empty">No hay actividades para mostrar.</div>
+          <h3 className={styles.subsectionTitle}>&lt;Spinner&gt; (sm · md · lg)</h3>
+          <div className={styles.row}>
+            <Spinner size="sm" />
+            <Spinner />
+            <Spinner size="lg" />
+          </div>
+          <h3 className={styles.subsectionTitle}>&lt;Skeleton&gt;</h3>
+          <Skeleton count={3} height="14px" />
+          <h3 className={styles.subsectionTitle}>&lt;EmptyState&gt;</h3>
+          <EmptyState
+            icon={<Inbox size={40} strokeWidth={1.5} />}
+            title="No hay actividades"
+            message="Cuando se publiquen van a aparecer acá."
+          />
+          <h3 className={styles.subsectionTitle}>&lt;ErrorState&gt;</h3>
+          <ErrorState message="No pudimos cargar los datos." onRetry={() => showToast('Reintentando…', 'info')} />
+          <h3 className={styles.subsectionTitle}>&lt;ConfirmDialog&gt;</h3>
+          <Button variant="danger" onClick={() => setConfirmAbierto(true)}>Abrir confirmación</Button>
+          <ConfirmDialog
+            open={confirmAbierto}
+            title="¿Cancelar la clase?"
+            message="Si faltan 24 hs o más, recibís un crédito de recupero."
+            confirmLabel="Cancelar clase"
+            cancelLabel="Volver"
+            danger
+            onConfirm={() => { setConfirmAbierto(false); showToast('Confirmado', 'success') }}
+            onCancel={() => setConfirmAbierto(false)}
+          />
         </section>
 
         {/* ── Toast (demo interactivo) ────────────────────────────────────── */}
@@ -232,9 +291,10 @@ export default function DesignSystem() {
             <button className="btn-primary" onClick={() => showToast('Acción exitosa', 'success')}>Éxito</button>
             <button className="btn-secondary" onClick={() => showToast('Algo salió mal', 'error')}>Error</button>
             <button className="btn-secondary" onClick={() => showToast('Información', 'info')}>Info</button>
+            <button className="btn-secondary" onClick={() => showToast('Atención', 'warning')}>Advertencia</button>
           </div>
           <p className={styles.note}>
-            Toast reemplaza a <code>alert()</code> en toda la app (Tarea 1.4).
+            Toast reemplaza a <code>alert()</code> en toda la app.
           </p>
         </section>
       </div>

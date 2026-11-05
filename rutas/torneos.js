@@ -6,19 +6,27 @@
  * DELETE /api/torneos/:id/cancelar
  */
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import responder from '../src/lib/responder.js'
+import { hoyAR } from '../src/lib/fecha.js'
+import { nivelHabilitado } from '../src/constants/categorias.js'
 
 const router = express.Router()
-router.use(autenticar)
+router.use(autenticar, requireRole(1))
+
+/** Categoría actual del socio (de la BD, no del JWT: puede haber cambiado). */
+async function nivelDelSocio(socioId) {
+  const { data } = await supabase.from('users').select('nivel_id').eq('id', socioId).maybeSingle()
+  return data?.nivel_id ?? null
+}
 
 // ── GET /api/torneos ──────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   const socioId = req.userId
   try {
-    const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-    const hoy = new Date(`${hoyAR}T00:00:00-03:00`)
+    const hoy = new Date(`${hoyAR()}T00:00:00-03:00`)
+    const nivelSocio = await nivelDelSocio(socioId)
 
     const { data: torneos, error } = await supabase
       .from('torneos')
@@ -66,6 +74,7 @@ router.get('/', async (req, res) => {
         nombre_sede:         t.sedes?.nombre ?? '—',
         inscriptos:          activos.length,
         ya_inscripto:        yaInscripto,
+        habilitado:          nivelHabilitado(t.niveles_habilitados, nivelSocio),
         estado:              activos.length >= t.capacidad_maxima ? 'completo' : 'abierto',
         participantes:       activos.map(i => {
           const u = usuarios.find(u => u.id === i.socio_id)
@@ -89,30 +98,43 @@ router.post('/:id/inscribir', async (req, res) => {
   try {
     const { data: torneo, error: errT } = await supabase
       .from('torneos')
-      .select('id, capacidad_maxima, activo, inscripciones_torneo(id, estado)')
+      .select('id, capacidad_maxima, activo, fecha_inicio, niveles_habilitados, inscripciones_torneo(id, estado)')
       .eq('id', torneoId)
       .single()
 
     if (errT || !torneo) return responder.noEncontrado(res, 'Torneo no encontrado')
     if (!torneo.activo)  return responder.error(res, 'El torneo no está disponible')
+    if (new Date(torneo.fecha_inicio) < new Date()) return responder.error(res, 'El torneo ya empezó')
+
+    if (!nivelHabilitado(torneo.niveles_habilitados, await nivelDelSocio(socioId))) {
+      return responder.sinPermiso(res, 'Este torneo no está habilitado para tu categoría')
+    }
 
     const activos = (torneo.inscripciones_torneo ?? []).filter(i => i.estado === 'activo')
     if (activos.length >= torneo.capacidad_maxima) {
       return responder.error(res, 'El torneo está completo')
     }
 
-    const { data: existe } = await supabase
+    // ¿Tiene una fila previa? (activa → error; cancelada → se reactiva)
+    const { data: previa } = await supabase
       .from('inscripciones_torneo')
-      .select('id')
+      .select('id, estado')
       .eq('torneo_id', torneoId)
       .eq('socio_id', socioId)
+      .order('fecha_inscripcion', { ascending: false })
+      .limit(1)
       .maybeSingle()
 
-    if (existe) return responder.conflicto(res, 'Ya estás inscripto en este torneo')
+    if (previa?.estado === 'activo') return responder.conflicto(res, 'Ya estás inscripto en este torneo')
 
-    const { error: errI } = await supabase
-      .from('inscripciones_torneo')
-      .insert({ torneo_id: torneoId, socio_id: socioId, estado: 'activo' })
+    const { error: errI } = previa
+      ? await supabase
+          .from('inscripciones_torneo')
+          .update({ estado: 'activo', fecha_inscripcion: new Date().toISOString() })
+          .eq('id', previa.id)
+      : await supabase
+          .from('inscripciones_torneo')
+          .insert({ torneo_id: torneoId, socio_id: socioId, estado: 'activo' })
 
     if (errI) {
       if (errI.code === '23505') return responder.conflicto(res, 'Ya estás inscripto en este torneo')
@@ -140,7 +162,7 @@ router.delete('/:id/cancelar', async (req, res) => {
       .eq('estado', 'activo')
 
     if (error) throw error
-    responder.ok(res, { mensaje: 'Inscripción cancelada' })
+    responder.ok(res, null)
   } catch (err) {
     console.error('DELETE /api/torneos/:id/cancelar', err)
     responder.interno(res, 'Error al cancelar inscripción')

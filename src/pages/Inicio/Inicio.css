@@ -62,7 +62,7 @@
   padding: 0 4px;
   border-radius: var(--radius-pill);
   background: var(--color-danger);
-  color: #fff;
+  color: var(--color-on-primary);
   font-size: 10px;
   font-weight: 700;
   display: flex;
@@ -130,7 +130,7 @@
 }
 /* Variantes por tipo de actividad — reemplaza los inline style hardcodeados */
 .badge-tipo-fijo   { background: var(--color-success-bg);  color: var(--color-success); }
-.badge-tipo-clase  { background: var(--color-primary-subtle, #e8f0fe); color: var(--color-primary-dark); }
+.badge-tipo-clase  { background: var(--color-primary-subtle, var(--color-primary-subtle)); color: var(--color-primary-dark); }
 .badge-tipo-juego  { background: var(--color-warning-bg);  color: var(--color-warning); }
 .badge-tipo-torneo { background: var(--color-danger-bg);   color: var(--color-danger); }
 
@@ -263,11 +263,11 @@
   align-items: center;
   gap: var(--space-2);
 }
-.jl-cupo-texto { font-size: var(--font-size-xs); color: #92400e; font-weight: 600; margin-top: 2px; }
+.jl-cupo-texto { font-size: var(--font-size-xs); color: var(--color-warning-text); font-weight: 600; margin-top: 2px; }
 
 .btn-anotarme-home {
   background: var(--color-warning);
-  color: #fff;
+  color: var(--color-on-primary);
   border: none;
   border-radius: var(--radius-pill);
   padding: var(--space-2) var(--space-4);
@@ -279,7 +279,7 @@
   font-family: var(--font-sans);
   transition: background var(--transition-fast), opacity var(--transition-fast);
 }
-.btn-anotarme-home:hover:not(:disabled) { background: #b45309; }
+.btn-anotarme-home:hover:not(:disabled) { background: var(--color-warning); }
 .btn-anotarme-home:disabled             { opacity: 0.6; cursor: not-allowed; }
 
 /* ── DARK MODE ── */
@@ -293,5 +293,5 @@
 [data-theme="dark"] .novedades-lista         { background: var(--color-surface); }
 [data-theme="dark"] .novedad-item            { border-bottom-color: var(--color-border); }
 [data-theme="dark"] .novedad-titulo          { color: var(--color-text); }
-[data-theme="dark"] .turno-jl-disponible     { background: rgba(60,45,10,0.9); border-color: #b45309; }
+[data-theme="dark"] .turno-jl-disponible     { background: rgba(60,45,10,0.9); border-color: var(--color-warning-border); }
 [data-theme="dark"] .jl-cupo-texto           { color: var(--color-warning); }

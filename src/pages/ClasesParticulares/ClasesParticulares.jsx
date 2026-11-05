@@ -4,18 +4,21 @@ import { useClasesParticulares } from '../../hooks/useClasesParticulares'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import ConfirmarClase from '../../components/TurnoCard/ConfirmarClase'
 import AppNav from '../../components/AppNav/AppNav'
+import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog'
 import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador'
 import { useRating } from '../../hooks/useRating'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import './ClasesParticulares.css'
+import ErrorState from '../../components/ui/ErrorState/ErrorState'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
 const formatearDiaHora = (fechaISO) => {
   const fecha = new Date(fechaISO)
   const dia  = fecha.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', timeZone: TZ })
-  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return `${dia} · ${hora}`
 }
 
@@ -126,6 +129,7 @@ const ClasesParticulares = () => {
   const [enviando,    setEnviando]    = useState(false)
   const [exito,       setExito]       = useState(false)
   const [fechaFiltro, setFechaFiltro] = useState('')
+  const [aLiberar,    setALiberar]    = useState(null) // solicitud a retirar/cancelar
 
   // Chequear pendientes de calificación al abrir la pantalla
   useEffect(() => {
@@ -181,6 +185,22 @@ const ClasesParticulares = () => {
     )
   }
 
+
+  /** Pendiente → se retira. Confirmada futura → se cancela (regla de 24 hs). */
+  async function handleLiberar() {
+    const sol = aLiberar
+    setALiberar(null)
+    try {
+      await liberarSolicitud(sol.id)
+      showToast(
+        sol.estado_texto === 'pendiente' ? 'Retiraste la solicitud.' : 'Clase cancelada.',
+        'success'
+      )
+    } catch (err) {
+      showToast(obtenerMensajeError(err, 'No se pudo liberar el turno'), 'error')
+    }
+  }
+
   return (
     <div className="clases-container">
       <div className="clases-header">
@@ -220,17 +240,11 @@ const ClasesParticulares = () => {
         <p className="seccion-label">ENTRENADORES DISPONIBLES</p>
 
         {cargando && (
-          <div className="estado-carga">
-            <div className="spinner" />
-            <span>Cargando entrenadores...</span>
-          </div>
+          <Spinner center label="Cargando entrenadores" />
         )}
 
         {error && (
-          <div className="estado-error">
-            <p>{error}</p>
-            <button onClick={cargarEntrenadores} className="btn-reintentar">Reintentar</button>
-          </div>
+          <ErrorState message={error} onRetry={cargarEntrenadores} />
         )}
 
         {!cargando && !error && entrenadoresFiltrados.length === 0 && (
@@ -263,11 +277,11 @@ const ClasesParticulares = () => {
                   </div>
                   <div className="solicitud-hora">
                     {s.turnos?.fecha_inicio && new Date(s.turnos.fecha_inicio).toLocaleTimeString('es-AR', {
-                      hour: '2-digit', minute: '2-digit', timeZone: TZ,
+                      hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ,
                     })}
                     {s.turnos?.fecha_fin && (
                       <> — {new Date(s.turnos.fecha_fin).toLocaleTimeString('es-AR', {
-                        hour: '2-digit', minute: '2-digit', timeZone: TZ,
+                        hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ,
                       })} hs</>
                     )}
                     {s.turnos?.duracion_min && ` · ${s.turnos.duracion_min} min`}
@@ -282,21 +296,11 @@ const ClasesParticulares = () => {
                     <span className="estado-icono">{s.estado ? '✅' : '⏳'}</span>
                     <span>{s.estado ? 'Confirmado' : 'Pendiente'}</span>
                   </div>
-                  <button
-                    className="btn-liberar"
-                    onClick={async () => {
-                      await liberarSolicitud(s.id)
-                      await cargarEntrenadores()
-                      await obtenerSolicitudes()
-                      // Si la clase ya terminó, recargar pendientes de rating
-                      const fechaFin = s.turnos?.fecha_fin
-                      if (fechaFin && new Date(fechaFin) <= new Date()) {
-                        await cargarPendientes()
-                      }
-                    }}
-                  >
-                    Liberar turno
-                  </button>
+                  {(s.estado_texto === 'pendiente' || new Date(s.turnos?.fecha_inicio) > new Date()) && (
+                    <button className="btn-liberar" onClick={() => setALiberar(s)}>
+                      {s.estado_texto === 'pendiente' ? 'Retirar solicitud' : 'Cancelar clase'}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -305,6 +309,18 @@ const ClasesParticulares = () => {
       </div>
       <AppNav />
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <ConfirmDialog
+        open={!!aLiberar}
+        title={aLiberar?.estado_texto === 'pendiente' ? '¿Retirar la solicitud?' : '¿Cancelar la clase?'}
+        message={aLiberar?.estado_texto === 'pendiente'
+          ? 'El entrenador ya no la va a ver.'
+          : 'Si faltan 24 hs o más, recibís un crédito de recupero.'}
+        confirmLabel={aLiberar?.estado_texto === 'pendiente' ? 'Retirar' : 'Cancelar clase'}
+        cancelLabel="Volver"
+        danger
+        onConfirm={handleLiberar}
+        onCancel={() => setALiberar(null)}
+      />
       {turnoActual && (
         <RatingEntrenador
           turno={turnoActual}

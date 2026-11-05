@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext'
 import AppNav from '../../components/AppNav/AppNav'
 import { getConfig } from '../../services/adminApi'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 export default function ConfigAdmin() {
   const navigate   = useNavigate()
@@ -40,7 +41,7 @@ export default function ConfigAdmin() {
 
       <div className="admin-body">
         {cargando ? (
-          <div className="estado-carga"><div className="spinner-admin" /></div>
+          <Spinner center />
         ) : (
           <>
             {/* Perfil admin */}

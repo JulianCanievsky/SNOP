@@ -13,13 +13,14 @@ import {
   quitarTurnoSocio,
 } from '../../services/adminApi'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
 function formatFechaTurno(iso) {
   const d = new Date(iso)
   const fecha = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', timeZone: TZ })
-  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return `${fecha.charAt(0).toUpperCase()}${fecha.slice(1)} · ${hora} hs`
 }
 
@@ -27,7 +28,7 @@ function formatTurnoOpcion(t) {
   const tipo = t.tipo_turno_id === 2 ? 'Clase particular' : 'Entrenamiento'
   const d    = new Date(t.fecha_inicio)
   const fecha = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ })
-  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return `${tipo} · ${fecha} ${hora} · ${t.sede} · ${t.entrenador} (${t.cupo_disponible} cupo${t.cupo_disponible !== 1 ? 's' : ''})`
 }
 
@@ -141,10 +142,10 @@ export default function DetalleSocio() {
       <div className="admin-page">
         <div className="admin-header">
           <button className="btn-volver-admin" onClick={() => navigate('/admin/socios')}>‹ Socios</button>
-          <h1>Cargando...</h1>
+          <h1>Socio</h1>
         </div>
         <div className="admin-body">
-          <div className="estado-carga"><div className="spinner-admin" /></div>
+          <Spinner center label="Cargando socio" />
         </div>
         <AppNav />
       </div>
@@ -208,7 +209,7 @@ export default function DetalleSocio() {
             </button>
             <button
               className="filtro-pill"
-              style={!cuota ? { background: '#ef4444', borderColor: '#ef4444', color: 'white' } : {}}
+              style={!cuota ? { background: 'var(--color-danger)', borderColor: 'var(--color-danger)', color: 'white' } : {}}
               onClick={() => setCuota(false)}
             >
               Con deuda
@@ -314,8 +315,8 @@ export default function DetalleSocio() {
       </div>
 
       {/* ── Zona peligrosa: eliminar socio ── */}
-      <div className="admin-card admin-card-body" style={{ border: '1.5px solid #ef4444', marginTop: 24 }}>
-        <p className="admin-label" style={{ color: '#ef4444', marginBottom: 8 }}>⚠ Zona peligrosa</p>
+      <div className="admin-card admin-card-body" style={{ border: '1.5px solid var(--color-danger)', marginTop: 24 }}>
+        <p className="admin-label" style={{ color: 'var(--color-danger)', marginBottom: 8 }}>⚠ Zona peligrosa</p>
         {!mostrarEliminar ? (
           <button
             className="btn-danger"

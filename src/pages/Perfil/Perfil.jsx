@@ -8,11 +8,13 @@ import AppNav from '../../components/AppNav/AppNav'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { Clock, MapPin, User, Sun, Moon, RefreshCw } from 'lucide-react'
 import './Perfil.css'
+import ErrorState from '../../components/ui/ErrorState/ErrorState'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
 const formatHora = (iso) =>
-  new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ })
+  new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
 
 const formatFecha = (iso) =>
   new Date(iso).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
@@ -146,7 +148,7 @@ const Perfil = () => {
             <p>{user.email}</p>
           </div>
         )}
-        <div className="estado-carga">Cargando información...</div>
+        <Spinner center label="Cargando perfil" />
         <AppNav />
       </div>
     )
@@ -159,10 +161,7 @@ const Perfil = () => {
     return (
       <div className="perfil-container">
         <div className="perfil-header"><h2>Mi perfil</h2></div>
-        <div className="estado-error">
-          No se pudo cargar el perfil.
-          <button className="btn-reintentar" onClick={cargarPerfil}>Reintentar</button>
-        </div>
+        <ErrorState message="No se pudo cargar el perfil." onRetry={cargarPerfil} />
         <AppNav />
       </div>
     )
@@ -230,7 +229,7 @@ const Perfil = () => {
             <>
               <h4 className="perfil-seccion" style={{ marginTop: '20px' }}>Bono de créditos</h4>
               {bono === null ? (
-                <div className="cuota-card" style={{ color: '#9ca3af', fontSize: 14 }}>Sin bono activo</div>
+                <div className="cuota-card" style={{ color: 'var(--color-text-subtle)', fontSize: 14 }}>Sin bono activo</div>
               ) : (
                 <div className="bono-card">
                   <div className="bono-card-header">
@@ -255,8 +254,8 @@ const Perfil = () => {
                       style={{
                         width: `${Math.min((bono.creditos_usados / bono.creditos_total) * 100, 100)}%`,
                         background: bono.creditos_disponibles === 0
-                          ? '#ef4444'
-                          : bono.creditos_disponibles <= 2 ? '#f59e0b' : '#2563eb',
+                          ? 'var(--color-danger)'
+                          : bono.creditos_disponibles <= 2 ? 'var(--color-warning)' : 'var(--color-primary)',
                       }}
                     />
                   </div>
@@ -310,12 +309,9 @@ const Perfil = () => {
 
           {/* Contenido */}
           {historial.cargando ? (
-            <div className="estado-carga" style={{ marginTop: 24 }}>Cargando historial...</div>
+            <Spinner center label="Cargando historial" />
           ) : historial.error ? (
-            <div className="estado-error">
-              {historial.error}
-              <button className="btn-reintentar" onClick={historial.recargar}>Reintentar</button>
-            </div>
+            <ErrorState message={historial.error} onRetry={historial.recargar} />
           ) : historial.items.length === 0 ? (
             <div className="turno-card sin-turnos-perfil">
               No hay actividad en el período seleccionado.

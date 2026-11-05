@@ -57,4 +57,12 @@ export default defineConfig([
       globals: globals.node,
     },
   },
+
+  // ── Tests (vitest con globals: true) ────────────────────────────────────────
+  {
+    files: ['tests/**/*.js'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.vitest },
+    },
+  },
 ])

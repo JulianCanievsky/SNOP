@@ -1,6 +1,11 @@
+/**
+ * rutas/turnos.js — Turnos de entrenamiento (socio)
+ */
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
+import { responderError } from '../src/lib/errorNegocio.js'
 import {
   obtenerTurnos,
   cancelarTurnoController,
@@ -12,29 +17,25 @@ import { solicitarTurno, getTurnosDisponibles } from '../src/services/turnosServ
 
 const router = express.Router()
 
-router.use(autenticar)
+router.use(autenticar, requireRole(1))
 
 // ── Turnos disponibles para inscribirse (filtrados por nivel del socio) ────────
 router.get('/disponibles', async (req, res) => {
   try {
-    const data = await getTurnosDisponibles(req.userId)
-    res.json({ ok: true, data })
+    responder.ok(res, await getTurnosDisponibles(req.userId))
   } catch (err) {
-    console.error('GET /turnos/disponibles', err)
-    res.status(500).json({ ok: false, mensaje: 'Error al obtener turnos disponibles' })
+    responderError(res, err, 'Error al obtener turnos disponibles')
   }
 })
 
 // ── Solicitar unirse a un turno (queda pendiente de aprobación) ───────────────
 router.post('/solicitar', async (req, res) => {
   const { turno_id } = req.body
-  if (!turno_id) return res.status(400).json({ ok: false, mensaje: 'turno_id es requerido' })
+  if (!turno_id) return responder.error(res, 'turno_id es requerido')
   try {
-    const data = await solicitarTurno(turno_id, req.userId)
-    res.status(201).json({ ok: true, data, mensaje: 'Solicitud enviada. El entrenador la revisará.' })
+    responder.creado(res, await solicitarTurno(turno_id, req.userId))
   } catch (err) {
-    const status = err.message?.includes('cupo') ? 409 : 400
-    res.status(status).json({ ok: false, mensaje: err.message })
+    responderError(res, err, 'Error al enviar la solicitud')
   }
 })
 
@@ -58,23 +59,20 @@ router.get('/:turnoId/cupo', async (req, res) => {
       .eq('id', turnoId)
       .single()
 
-    if (error || !turno) return res.status(404).json({ ok: false, mensaje: 'Turno no encontrado' })
+    if (error || !turno) return responder.noEncontrado(res, 'Turno no encontrado')
 
     const activos        = (turno.socio_turno ?? []).filter(s => s.estado === true).length
     const cupoDisponible = Math.max(0, turno.capacidad_maxima - activos)
     const estaInscripto  = (turno.socio_turno ?? []).some(s => s.user_id === socioId && s.estado === true)
     const tieneCancelado = (turno.socio_turno ?? []).some(s => s.user_id === socioId && s.estado === false)
 
-    let enListaEspera = false
-    try {
-      const { data: listaRow } = await supabase
-        .from('lista_espera_turno')
-        .select('id')
-        .eq('turno_id', turnoId)
-        .eq('user_id', socioId)
-        .maybeSingle()
-      enListaEspera = !!listaRow
-    } catch { /* tabla puede no existir aún */ }
+    const { count: enEspera } = await supabase
+      .from('lista_espera_turno')
+      .select('id', { count: 'exact', head: true })
+      .eq('turno_id', turnoId)
+      .eq('user_id', socioId)
+      .eq('estado', 'esperando')
+    const enListaEspera = (enEspera ?? 0) > 0
 
     res.json({
       ok: true,

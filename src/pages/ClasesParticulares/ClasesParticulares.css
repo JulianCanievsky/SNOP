@@ -4,17 +4,17 @@
 ============================================= */
 
 :root {
-  --viola: #6B4EE6;
-  --viola-dark: #5538cc;
-  --viola-light: #F0ECFF;
-  --viola-mid: #8B6FF0;
-  --snop-gris-bg: #F9FAFB;
-  --snop-gris-borde: #E5E7EB;
-  --snop-texto: #111827;
-  --snop-texto-muted: #6B7280;
-  --snop-blanco: #ffffff;
-  --snop-verde: #057a55;
-  --snop-verde-bg: #F3FAF7;
+  --viola: var(--color-accent);
+  --viola-dark: var(--color-accent-strong);
+  --viola-light: var(--color-accent-subtle);
+  --viola-mid: var(--color-accent);
+  --snop-gris-bg: var(--color-surface-alt);
+  --snop-gris-borde: var(--color-border);
+  --snop-texto: var(--color-text);
+  --snop-texto-muted: var(--color-text-muted);
+  --snop-blanco: var(--color-surface);
+  --snop-verde: var(--color-success);
+  --snop-verde-bg: var(--color-success-bg);
   --radio: 14px;
   --radio-sm: 8px;
   --radio-pill: 99px;
@@ -182,7 +182,7 @@
 
 .estrellas-total {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--color-text-subtle);
   margin-left: 2px;
 }
 
@@ -262,28 +262,28 @@
 /* ============ CHIPS ESTADO ============ */
 
 .chip-disponible {
-  background: #22c55e;
-  border-color: #22c55e;
+  background: var(--color-success);
+  border-color: var(--color-success);
   color: white;
 }
 
-.chip-disponible:hover { background: #16a34a; }
+.chip-disponible:hover { background: var(--color-success); }
 
 .chip-solicitado {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: white;
 }
 
-.chip-solicitado:hover { background: #1d4ed8; }
+.chip-solicitado:hover { background: var(--color-primary); }
 
 .chip-turno.chip-seleccionado.disponible {
-  background: #2BB673;
+  background: var(--color-success);
   color: white;
 }
 
 .chip-turno.chip-seleccionado.solicitado {
-  background: #2563EB;
+  background: var(--color-primary);
   color: white;
 }
 
@@ -305,8 +305,8 @@
 .btn-reservar:hover:not(:disabled) { background: var(--viola-dark); }
 .btn-reservar:active:not(:disabled) { transform: scale(0.98); }
 .btn-reservar:disabled {
-  background: #d9d9d9;
-  color: #666;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
   cursor: not-allowed;
   opacity: 0.9;
 }
@@ -336,7 +336,7 @@
 .estado-error {
   text-align: center;
   padding: 32px;
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
 .btn-reintentar {
@@ -361,7 +361,7 @@
 
 .alerta-exito {
   background: var(--snop-verde-bg);
-  border: 1px solid #A7F3D0;
+  border: 1px solid var(--color-success-border);
   border-radius: var(--radio-sm);
   padding: 12px 16px;
   font-size: 14px;
@@ -380,13 +380,13 @@
 .filtro-fecha label {
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: var(--color-text-muted);
   text-transform: uppercase;
 }
 
 .filtro-fecha input {
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
 }
 
@@ -397,8 +397,8 @@
   gap: 20px;
   align-items: center;
   padding: 12px 16px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
 }
 
@@ -408,7 +408,7 @@
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #444;
+  color: var(--color-text);
 }
 
 .leyenda-color {
@@ -417,8 +417,8 @@
   border-radius: 50%;
 }
 
-.leyenda-color.disponible { background: #22c55e; }
-.leyenda-color.solicitado { background: #2563eb; }
+.leyenda-color.disponible { background: var(--color-success); }
+.leyenda-color.solicitado { background: var(--color-primary); }
 
 /* ============ MIS SOLICITUDES ============ */
 
@@ -432,18 +432,18 @@
   background: white;
   border-radius: 14px;
   padding: 18px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   box-shadow: 0 2px 8px rgba(0,0,0,.05);
 }
 
 .solicitud-fecha {
   font-size: 17px;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .solicitud-hora {
-  color: #6b7280;
+  color: var(--color-text-muted);
   margin: 4px 0 8px;
 }
 
@@ -452,7 +452,7 @@
   flex-wrap: wrap;
   gap: 12px;
   font-size: 13px;
-  color: #374151;
+  color: var(--color-text-secondary);
   font-weight: 500;
   margin-bottom: 10px;
 }
@@ -468,15 +468,15 @@
 }
 
 .estado-solicitud.pendiente {
-  background: #FFF8E1;
-  color: #C77700;
-  border: 1px solid #FFD166;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning-border);
 }
 
 .estado-solicitud.confirmado {
-  background: #EAFBF2;
-  color: #15803D;
-  border: 1px solid #86EFAC;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-border);
 }
 
 /* ============ BOTÓN LIBERAR ============ */
@@ -485,7 +485,7 @@
   width: 100%;
   margin-top: 12px;
   border: none;
-  background: #ef4444;
+  background: var(--color-danger);
   color: white;
   border-radius: 10px;
   padding: 10px;
@@ -494,7 +494,7 @@
   transition: .2s;
 }
 
-.btn-liberar:hover { background: #dc2626; }
+.btn-liberar:hover { background: var(--color-danger); }
 
 /* ============ CONFIRMAR CLASE ============ */
 
@@ -714,19 +714,19 @@
 
 /* ── DARK MODE ── */
 [data-theme="dark"] {
-  --snop-gris-bg:    #0f1117;
-  --snop-gris-borde: #2a2d3a;
-  --snop-texto:      #e2e8f0;
-  --snop-texto-muted:#8b95a5;
-  --snop-blanco:     #1a1d27;
-  --snop-verde:      #4ade80;
-  --snop-verde-bg:   #142414;
-  --viola-light:     #1e1a40;
+  --snop-gris-bg:    var(--color-bg);
+  --snop-gris-borde: var(--color-border);
+  --snop-texto:      var(--color-text);
+  --snop-texto-muted:var(--color-text-muted);
+  --snop-blanco:     var(--color-surface);
+  --snop-verde:      var(--color-success);
+  --snop-verde-bg:   var(--color-success-bg);
+  --viola-light:     var(--color-accent-subtle);
 }
 [data-theme="dark"] .tarjeta-entrenador   { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
 [data-theme="dark"] .confirmar-perfil-card { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
 [data-theme="dark"] .turno-resumen-card   { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
-[data-theme="dark"] .chip-turno           { background: var(--viola-light); border-color: #3a2a70; color: #a78bfa; }
+[data-theme="dark"] .chip-turno           { background: var(--viola-light); border-color: var(--color-accent-border); color: var(--color-accent); }
 [data-theme="dark"] .leyenda-turnos       { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }
 [data-theme="dark"] .leyenda-item         { color: var(--snop-texto-muted); }
 [data-theme="dark"] .solicitud-card       { background: var(--snop-blanco); border-color: var(--snop-gris-borde); }

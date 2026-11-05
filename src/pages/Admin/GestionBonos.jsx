@@ -11,6 +11,7 @@ import { crearBono, getBonosSocio, desactivarBono } from '../../services/bonosAp
 import { obtenerMensajeError } from '../../lib/errores.js'
 import { hoyAR } from '../../lib/fecha.js'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -21,9 +22,9 @@ const TIPO_LABEL = {
 }
 
 const TIPO_COLOR = {
-  mensual:       { bg: '#eff6ff', color: '#2563eb' },
-  trimestral:    { bg: '#f0fdf4', color: '#16a34a' },
-  personalizado: { bg: '#fdf4ff', color: '#7c3aed' },
+  mensual:       { bg: 'var(--color-primary-subtle)', color: 'var(--color-primary)' },
+  trimestral:    { bg: 'var(--color-success-bg)', color: 'var(--color-success)' },
+  personalizado: { bg: 'var(--color-accent-subtle)', color: 'var(--color-accent)' },
 }
 
 function formatFecha(iso) {
@@ -46,15 +47,15 @@ function BarraCreditos({ usados, total }) {
         <span style={{ color: 'var(--admin-muted)' }}>{usados} usados</span>
         <span style={{
           fontWeight: 700,
-          color: agotado ? '#dc2626' : porAgotar ? '#d97706' : '#16a34a',
+          color: agotado ? 'var(--color-danger)' : porAgotar ? 'var(--color-warning)' : 'var(--color-success)',
         }}>
           {restantes} disponible{restantes !== 1 ? 's' : ''}
         </span>
       </div>
-      <div style={{ height: 6, background: '#e5e7eb', borderRadius: 999, overflow: 'hidden' }}>
+      <div style={{ height: 6, background: 'var(--color-surface-muted)', borderRadius: 999, overflow: 'hidden' }}>
         <div style={{
           height: '100%', width: `${pct}%`, borderRadius: 999, transition: 'width .3s',
-          background: agotado ? '#dc2626' : porAgotar ? '#f59e0b' : '#2563eb',
+          background: agotado ? 'var(--color-danger)' : porAgotar ? 'var(--color-warning)' : 'var(--color-primary)',
         }} />
       </div>
     </div>
@@ -64,7 +65,7 @@ function BarraCreditos({ usados, total }) {
 // Tarjeta de un bono individual
 function TarjetaBono({ bono, onDesactivar, desactivando, confirmandoId, onCancelarConfirm }) {
   const [expandido, setExpandido] = useState(false)
-  const tc = TIPO_COLOR[bono.tipo] ?? { bg: '#f3f4f6', color: '#6b7280' }
+  const tc = TIPO_COLOR[bono.tipo] ?? { bg: 'var(--color-surface-muted)', color: 'var(--color-text-muted)' }
   const hoy = hoyAR()
   const vencido  = bono.fecha_vencimiento < hoy
   const agotado  = bono.creditos_disponibles <= 0
@@ -74,7 +75,7 @@ function TarjetaBono({ bono, onDesactivar, desactivando, confirmandoId, onCancel
     <div style={{
       background: 'white',
       borderRadius: 14,
-      border: `1.5px solid ${inactivo ? '#e5e7eb' : '#dbeafe'}`,
+      border: `1.5px solid ${inactivo ? 'var(--color-border)' : 'var(--color-info-border)'}`,
       padding: '14px 16px',
       opacity: inactivo ? 0.7 : 1,
     }}>
@@ -89,22 +90,22 @@ function TarjetaBono({ bono, onDesactivar, desactivando, confirmandoId, onCancel
               {TIPO_LABEL[bono.tipo] ?? bono.tipo}
             </span>
             {vencido && (
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#fee2e2', color: '#b91c1c' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--color-danger-bg)', color: 'var(--color-danger-text)' }}>
                 Vencido
               </span>
             )}
             {agotado && !vencido && (
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#fef3c7', color: '#92400e' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--color-warning-bg)', color: 'var(--color-warning-text)' }}>
                 Sin créditos
               </span>
             )}
             {!bono.activo && !vencido && !agotado && (
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#f3f4f6', color: '#6b7280' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--color-surface-muted)', color: 'var(--color-text-muted)' }}>
                 Desactivado
               </span>
             )}
             {bono.vigente && (
-              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#dcfce7', color: '#16a34a' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--color-success-bg)', color: 'var(--color-success)' }}>
                 ✓ Vigente
               </span>
             )}
@@ -157,7 +158,7 @@ function TarjetaBono({ bono, onDesactivar, desactivando, confirmandoId, onCancel
       {/* Expandir usos */}
       {bono.usos?.length > 0 && (
         <button
-          style={{ marginTop: 8, fontSize: 12, background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+          style={{ marginTop: 8, fontSize: 12, background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', padding: 0, fontWeight: 600 }}
           onClick={() => setExpandido(e => !e)}
         >
           {expandido ? '▲ Ocultar usos' : `▼ Ver ${bono.usos.length} uso${bono.usos.length !== 1 ? 's' : ''}`}
@@ -165,11 +166,11 @@ function TarjetaBono({ bono, onDesactivar, desactivando, confirmandoId, onCancel
       )}
 
       {expandido && bono.usos?.length > 0 && (
-        <div style={{ marginTop: 8, borderTop: '1px solid #f1f5f9', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ marginTop: 8, borderTop: '1px solid var(--color-border)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {bono.usos.map(u => (
             <div key={u.id} style={{ fontSize: 12, color: 'var(--admin-muted)', display: 'flex', justifyContent: 'space-between' }}>
               <span>📅 {formatFecha(u.turnos?.fecha_inicio)} — {u.turnos?.sedes?.nombre ?? '—'}</span>
-              <span style={{ color: '#9ca3af' }}>{new Date(u.fecha_uso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', timeZone: TZ })}</span>
+              <span style={{ color: 'var(--color-text-subtle)' }}>{new Date(u.fecha_uso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', timeZone: TZ })}</span>
             </div>
           ))}
         </div>
@@ -305,7 +306,7 @@ export default function GestionBonos() {
           <h1>Bonos</h1>
         </div>
         <div className="admin-body">
-          <div className="estado-carga"><div className="spinner-admin" /></div>
+          <Spinner center />
         </div>
         <AppNav />
       </div>
@@ -331,7 +332,7 @@ export default function GestionBonos() {
             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--admin-muted)' }}>{socio?.email}</p>
           </div>
           <div style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
-            <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: bonosVigentes.length ? '#2563eb' : 'var(--admin-muted)' }}>
+            <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: bonosVigentes.length ? 'var(--color-primary)' : 'var(--admin-muted)' }}>
               {bonosVigentes.reduce((s, b) => s + b.creditos_disponibles, 0)}
             </p>
             <p style={{ margin: 0, fontSize: 11, color: 'var(--admin-muted)' }}>créditos activos</p>

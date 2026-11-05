@@ -6,7 +6,7 @@ Aplicación web fullstack para gestionar socios, turnos de entrenamiento, clases
 
 ## Requisitos previos
 
-- **Node.js 20+** (`node -v`)
+- **Node.js 20.19+ o 22.12+** (`node -v`)
 - **npm 10+** (`npm -v`)
 - Cuenta en [Supabase](https://supabase.com) con la base de datos ya creada
 - (Opcional) Cuenta en [Brevo](https://app.brevo.com) para el envío de emails transaccionales
@@ -28,10 +28,11 @@ cp .env.example .env
 | `JWT_SECRET` | ✅ | String largo y aleatorio. Generá uno con: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"` |
 | `PORT` | — | Puerto del backend (default: `3000`) |
 | `CORS_ORIGINS` | — | Orígenes permitidos separados por coma (default: `http://localhost:5173`) |
-| `VITE_API_URL` | — | URL del backend para el frontend (default: `http://localhost:3000/api`) |
+| `VITE_API_URL` | — | URL del backend para el frontend. Default `/api`: en dev el proxy de Vite lo manda a `localhost:3000`. En Vercel, URL completa de Railway |
+| `BREVO_FROM_EMAIL` / `BREVO_FROM_NAME` | — | Remitente verificado en Brevo |
 | `FRONTEND_URL` | — | URL pública del frontend, usada en links de email |
 | `BREVO_API_KEY` | — | API key de Brevo. Sin ella, los emails se loguean en consola |
-| `NODE_ENV` | — | `development` o `production` |
+| `NODE_ENV` | — | Solo en Railway: `production`. **No** setearlo en el `.env` local: con `development`, `vite build` genera React de desarrollo |
 
 > ⚠️ El servidor **no arranca** si falta `JWT_SECRET`, `SUPABASE_URL` o `SUPABASE_SERVICE_KEY`.
 
@@ -47,7 +48,7 @@ npm install
 npm run dev:all
 
 # Solo backend (Express con nodemon)
-npm run dev:server
+npm run server
 
 # Solo frontend (Vite)
 npm run dev
@@ -63,22 +64,30 @@ El frontend corre en `http://localhost:5173` y el backend en `http://localhost:3
 # Build del frontend (genera dist/)
 npm run build
 
-# Linter
+# Linter JS (frontend + backend + tests)
 npm run lint
+
+# Colores hex sueltos fuera de src/index.css (.css y estilos inline .jsx)
+npm run lint:css
+
+# Tests (vitest)
+npm test
+
+# Todo junto: lint + lint:css + tests + build (lo mismo que corre CI)
+npm run check
 ```
+
+Antes de cerrar cualquier tarea: `npm run check` sin errores. Si tocaste el backend, además levantalo (`npm run server`) y probá `GET /api/sedes`.
+
+CI: `.github/workflows/ci.yml` corre `npm run check` en cada push a `main` y en cada PR.
 
 ---
 
-## Migraciones de base de datos
+## Base de datos
 
-Las migraciones están en `migrations/`. Son scripts SQL idempotentes (seguros de correr más de una vez).
+El esquema real (tablas, columnas, decisiones) está en [`docs/esquema.md`](docs/esquema.md). Al 2026-11-05 todas las migraciones están aplicadas; el registro de cada una está al final de `docs/esquema.md`.
 
-**Cómo aplicarlas:**
-1. Abrí el [SQL Editor de Supabase](https://supabase.com/dashboard) en tu proyecto
-2. Pegá el contenido de cada archivo en orden numérico
-3. Ejecutá cada uno
-
-Ver `migrations/README.md` para instrucciones detalladas y el estado de cada migración.
+Para un cambio de esquema nuevo: SQL idempotente con ROLLBACK comentado → revisarlo → ejecutarlo en el SQL Editor de Supabase → actualizar `docs/esquema.md`.
 
 ---
 
@@ -89,7 +98,7 @@ SNOP/
 ├── rutas/               — routers Express (backend, un archivo por dominio)
 ├── src/
 │   ├── components/      — componentes React reutilizables
-│   │   └── ui/          — sistema de diseño (Toast, SearchInput, CategoriaBadge...)
+│   │   └── ui/          — sistema de diseño (Button, Spinner, EmptyState, ErrorState, ConfirmDialog, CategoriaBadge...)
 │   ├── config/db.js     — cliente Supabase único (service key)
 │   ├── constants/       — datos canónicos (8 categorías)
 │   ├── context/         — AuthContext, ThemeContext
@@ -98,7 +107,9 @@ SNOP/
 │   ├── middlewares/     — autenticar.js + requireRole
 │   ├── pages/           — páginas organizadas por rol
 │   └── services/        — capa de acceso a datos del frontend
-├── migrations/          — SQL versionado e idempotente
+├── .github/workflows/   — CI (npm run check)
+├── scripts/             — herramientas de desarrollo (lint-css.mjs)
+├── tests/               — tests vitest (lógica pura + sintaxis del backend)
 ├── docs/                — contexto del proyecto, esquema BD, spec
 ├── server.js            — entry point del backend
 └── .env.example         — plantilla de variables de entorno
@@ -126,12 +137,21 @@ Los créditos de recupero son distintos de los bonos mensuales:
 2. **Vencimiento**: el crédito vence al final del mes del turno cancelado.
 3. **Excepción fin de mes**: si la clase cae en la **última semana del mes**, el crédito se arrastra al mes siguiente.
 4. **Semántica**: `usado = true` significa que el crédito fue aplicado a otro turno. `vencido` es un campo calculado en runtime (no persiste en BD): `!usado && fecha_vencimiento < ahora`.
+5. **Cancelación del club**: si el entrenador cancela la clase o el admin suspende el turno, cada inscripto pasa a `baja_entrenador` y recibe crédito **sin importar la anticipación**.
+
+## Lista de espera
+
+Cuando se libera un cupo (cancelación del socio, quita del admin o baja de un socio), el **primero** de la lista (orden de llegada) queda **inscripto directamente** y se le avisa. Si no había nadie esperando, se avisa (sin inscribir) a quienes antes estuvieron en ese turno.
+
+## Categorías en juego libre y torneos
+
+El admin elige qué categorías pueden anotarse (ninguna = abierto a todos). El backend lo hace cumplir y el socio ve las categorías habilitadas; si no es la suya, el botón aparece deshabilitado.
 
 ---
 
 ## Deploy
 
-- **Frontend** → [Vercel](https://vercel.com). Configurar `VITE_API_URL` como variable de entorno en Vercel apuntando al backend.
+- **Frontend** → [Vercel](https://vercel.com). Configurar `VITE_API_URL` como variable de entorno en Vercel apuntando al backend. Las pantallas se cargan por partes (`React.lazy`); el CSS va en un solo archivo (`cssCodeSplit: false`) porque las hojas por página son globales.
 - **Backend** → [Railway](https://railway.app). Configurar todas las variables del `.env` en Railway. `NODE_ENV=production`.
 
 ---

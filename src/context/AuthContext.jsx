@@ -1,26 +1,25 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState } from 'react'
 import api from '../lib/apiClient.js'
 
 const AuthContext = createContext(null)
 
+/** Devuelve el usuario guardado si hay token; limpia la sesión si está corrupta. */
+function leerSesionGuardada() {
+  const storedUser  = localStorage.getItem('snop_user')
+  const storedToken = localStorage.getItem('snop_token')
+  if (!storedUser || !storedToken) return null
+  try {
+    return JSON.parse(storedUser)
+  } catch {
+    localStorage.removeItem('snop_user')
+    localStorage.removeItem('snop_token')
+    return null
+  }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const storedUser  = localStorage.getItem('snop_user')
-    const storedToken = localStorage.getItem('snop_token')
-
-    if (storedUser && storedToken) {
-      try {
-        setUser(JSON.parse(storedUser))
-      } catch {
-        localStorage.removeItem('snop_user')
-        localStorage.removeItem('snop_token')
-      }
-    }
-    setLoading(false)
-  }, [])
+  // La sesión se lee de localStorage de forma síncrona en el primer render
+  const [user, setUser] = useState(leerSesionGuardada)
 
   async function login(email, password, tipo_usuario_id) {
     const { data } = await api.post('/auth/login', {
@@ -56,7 +55,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, actualizarUser }}>
+    <AuthContext.Provider value={{ user, login, logout, actualizarUser }}>
       {children}
     </AuthContext.Provider>
   )

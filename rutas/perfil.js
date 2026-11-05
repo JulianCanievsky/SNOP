@@ -1,12 +1,12 @@
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import { parseFechaAR } from '../src/lib/fecha.js'
 
 const router = express.Router()
 
 // GET /api/perfil  — devuelve el perfil del usuario logueado
-router.get('/', autenticar, async (req, res) => {
+router.get('/', autenticar, requireRole(1), async (req, res) => {
   try {
     const usuario_id = req.userId
 
@@ -91,7 +91,7 @@ router.get('/', autenticar, async (req, res) => {
 // GET /api/perfil/historial?page=1&limit=20&mes=2026-10&tipo=turno&estado=activo
 // Historial paginado de actividades del socio (inscripciones pasadas)
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/historial', autenticar, async (req, res) => {
+router.get('/historial', autenticar, requireRole(1), async (req, res) => {
   try {
     const userId  = req.userId
     const page    = Math.max(1, parseInt(req.query.page ?? '1', 10))

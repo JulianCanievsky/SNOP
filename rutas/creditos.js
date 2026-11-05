@@ -11,11 +11,11 @@
  * Ambos son conceptos distintos: NO se marca usado=true cuando vence.
  */
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 
 const router = express.Router()
-router.use(autenticar)
+router.use(autenticar, requireRole(1))
 
 // ── GET /api/creditos ─────────────────────────────────────────────────────────
 // Devuelve resumen de créditos del socio autenticado.
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('creditos_clase')
-      .select('id, mes_periodo, usado, turno_origen_id, turno_usado_id, fecha_generado, fecha_vencimiento')
+      .select('id, mes_periodo, usado, arrastrado, turno_origen_id, turno_usado_id, fecha_generado, fecha_vencimiento')
       .eq('user_id', socioId)
       .order('fecha_vencimiento', { ascending: true })
 

@@ -79,8 +79,9 @@ export default function Inicio() {
       if (jlRes.status === 'fulfilled') {
         // El backend responde { ok, data: [...] }
         const todosJl = jlRes.value.data?.data ?? jlRes.value.data ?? []
-        // El primero que esté abierto y el socio NO esté inscripto
-        const disponible = (Array.isArray(todosJl) ? todosJl : []).find(e => !e.ya_inscripto && e.estado !== 'completo')
+        // El primero abierto, habilitado para su categoría y en el que NO esté inscripto
+        const disponible = (Array.isArray(todosJl) ? todosJl : [])
+          .find(e => !e.ya_inscripto && e.estado !== 'completo' && e.habilitado !== false)
         setJuegoLibreDisponible(disponible ?? null)
       }
     } catch (err) {
@@ -153,7 +154,7 @@ export default function Inicio() {
   }
 
   function formatHora(inicio, fin) {
-    const h = (d) => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ })
+    const h = (d) => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
     return fin ? `${h(inicio)} — ${h(fin)} hs` : `${h(inicio)} hs`
   }
 

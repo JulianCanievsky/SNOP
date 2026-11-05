@@ -10,7 +10,13 @@
  *   cancelado_tarde    → estado = false  (canceló con < N horas → sin crédito)
  *   baja_entrenador    → estado = false  (entrenador dio la baja → genera crédito)
  *
- * PROHIBIDO hacer .insert() o .update() en socio_turno fuera de este módulo.
+ * PROHIBIDO hacer .insert(), .update() o .delete() en socio_turno fuera de este módulo.
+ *
+ * Cuándo borrar vs. cambiar estado:
+ *   - Cambiar estado: cancelaciones y bajas (queda historial, afecta créditos).
+ *   - Borrar: solo correcciones que "nunca existieron" — solicitud pendiente que el
+ *     socio retira o el entrenador rechaza, quita manual del admin (devuelve el bono),
+ *     o el turno entero se elimina.
  */
 import supabase from '../config/db.js'
 
@@ -153,4 +159,38 @@ export async function bajaEntrenador({ turno_id, user_id }) {
  */
 export async function bajaEntrenadorPorId({ socioTurnoId }) {
   return actualizarEstadoPorId({ socioTurnoId, estado_texto: 'baja_entrenador' })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Borrado físico (ver criterio en el encabezado)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Borra una fila por id. Si se pasa user_id, solo la borra si le pertenece.
+ * @returns {Promise<number>} filas borradas (0 si no existía / no era suya)
+ */
+export async function eliminarInscripcionPorId({ socioTurnoId, user_id }) {
+  let query = supabase.from('socio_turno').delete().eq('id', socioTurnoId)
+  if (user_id != null) query = query.eq('user_id', user_id)
+  const { data, error } = await query.select('id')
+  if (error) throw error
+  return data?.length ?? 0
+}
+
+/** Borra todas las filas de un socio en un turno. @returns {Promise<number>} */
+export async function eliminarInscripcion({ turno_id, user_id }) {
+  const { data, error } = await supabase
+    .from('socio_turno')
+    .delete()
+    .eq('turno_id', turno_id)
+    .eq('user_id', user_id)
+    .select('id')
+  if (error) throw error
+  return data?.length ?? 0
+}
+
+/** Borra todas las inscripciones de un turno (antes de eliminar el turno). */
+export async function eliminarInscripcionesDeTurno({ turno_id }) {
+  const { error } = await supabase.from('socio_turno').delete().eq('turno_id', turno_id)
+  if (error) throw error
 }

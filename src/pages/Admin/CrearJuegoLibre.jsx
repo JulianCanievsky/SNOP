@@ -15,6 +15,7 @@ import { useToast } from '../../hooks/useToast'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const MESAS_POR_NIVEL = 4
 const TZ = 'America/Argentina/Buenos_Aires'
@@ -124,7 +125,7 @@ export default function CrearJuegoLibre() {
   function formatFechaHora(iso) {
     const d   = new Date(iso)
     const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ })
-    const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+    const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
     return `${dia} · ${hora} hs`
   }
 
@@ -226,7 +227,7 @@ export default function CrearJuegoLibre() {
             <p className="admin-label">Publicados</p>
             <div className="admin-card">
               {cargando ? (
-                <div className="estado-carga"><div className="spinner-admin" /></div>
+                <Spinner center />
               ) : (
                 publicados.map(p => {
                   const abierto = modalEventoId === p.id
@@ -239,7 +240,7 @@ export default function CrearJuegoLibre() {
                             {p.sedes?.nombre ?? 'Sede'} · {p.capacidad_maxima} lugares
                           </p>
                           {p._inscriptos !== undefined && (
-                            <p style={{ fontSize: 12, color: '#4f46e5', fontWeight: 600, margin: '2px 0 0' }}>
+                            <p style={{ fontSize: 12, color: 'var(--color-accent)', fontWeight: 600, margin: '2px 0 0' }}>
                               {p._inscriptos} anotado{p._inscriptos !== 1 ? 's' : ''}
                             </p>
                           )}
@@ -266,10 +267,7 @@ export default function CrearJuegoLibre() {
                       {abierto && (
                         <div className="inscriptos-panel">
                           {cargandoModal ? (
-                            <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                              <div className="spinner-admin" style={{ margin: '0 auto 8px' }} />
-                              <span style={{ fontSize: 13, color: '#6b7280' }}>Cargando...</span>
-                            </div>
+                            <Spinner size="sm" center label="Cargando anotados" />
                           ) : inscriptos.length === 0 ? (
                             <p className="inscriptos-vacio">Nadie se anotó todavía.</p>
                           ) : (
@@ -287,7 +285,7 @@ export default function CrearJuegoLibre() {
                                   </div>
                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                                     <CategoriaBadge nivelId={insc.nivel_id ?? null} />
-                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>
+                                    <span style={{ fontSize: 10, color: 'var(--color-text-subtle)' }}>
                                       {formatFechaInsc(insc.fecha_inscripcion)}
                                     </span>
                                   </div>

@@ -1,5 +1,5 @@
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 
 const router = express.Router()
@@ -14,7 +14,7 @@ const router = express.Router()
  *   'clase_particular'  — inscripción en socio_turno con tipo_turno_id = 2, estado = true
  *   'juego_libre'       — inscripción en inscripciones_juego_libre con estado = 'activo'
  */
-router.get('/', autenticar, async (req, res) => {
+router.get('/', autenticar, requireRole(1), async (req, res) => {
   const socioId = req.userId
   const ahora = new Date().toISOString()
 

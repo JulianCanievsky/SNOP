@@ -28,7 +28,7 @@
 .btn-cancelar-slot:hover { filter:brightness(.9); }
 .btn-cancelar-slot:disabled { opacity:.5; cursor:not-allowed; }
 /* Variante "¿Sí?" — fondo más oscuro para contrastar */
-.btn-cancelar-slot--confirmar { background:var(--color-danger); color:#fff; }
+.btn-cancelar-slot--confirmar { background:var(--color-danger); color:var(--color-on-primary); }
 
 .agregar-disp-card { background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-4); box-shadow:var(--shadow-sm); }
 .agregar-disp-card .seccion-titulo-h { margin-bottom:14px; }
@@ -58,7 +58,7 @@
 .cal-dia:hover:not(:disabled):not(.cal-dia--sel) { background:var(--color-primary-subtle); color:var(--color-primary); }
 .cal-dia--pasado { color:var(--color-border-strong); cursor:default; }
 .cal-dia--hoy    { font-weight:800; color:var(--color-primary); border:1.5px solid var(--color-primary); }
-.cal-dia--sel    { background:var(--color-primary) !important; color:#fff !important; font-weight:700; }
+.cal-dia--sel    { background:var(--color-primary) !important; color:var(--color-on-primary) !important; font-weight:700; }
 .cal-fecha-sel-label { font-size:var(--font-size-sm); font-weight:600; color:var(--color-primary); text-align:center; margin:10px 0 2px; text-transform:capitalize; }
 
 .form-input-time { width:100%; padding:11px 14px; border:1.5px solid var(--color-input-border); border-radius:var(--radius-sm); font-size:18px; font-weight:600; font-family:var(--font-sans); color:var(--color-text); background:var(--color-input-bg); appearance:none; cursor:pointer; box-sizing:border-box; outline:none; transition:border-color var(--transition-fast); }
@@ -67,7 +67,7 @@
 .dur-chips { display:flex; gap:var(--space-2); flex-wrap:wrap; }
 .dur-chip { padding:7px 14px; border:1.5px solid var(--color-border); border-radius:var(--radius-pill); background:var(--color-surface); font-size:var(--font-size-sm); font-weight:500; color:var(--color-text-muted); cursor:pointer; font-family:var(--font-sans); transition:all var(--transition-fast); }
 .dur-chip:hover { border-color:var(--color-primary); color:var(--color-primary); }
-.dur-chip--sel  { background:var(--color-primary); border-color:var(--color-primary); color:#fff; font-weight:600; }
+.dur-chip--sel  { background:var(--color-primary); border-color:var(--color-primary); color:var(--color-on-primary); font-weight:600; }
 
 .form-error { color:var(--color-danger); font-size:var(--font-size-sm); font-weight:500; margin:0 0 10px; }
 

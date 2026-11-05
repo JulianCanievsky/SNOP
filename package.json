@@ -4,6 +4,9 @@
   "description": "SNOP — Club de Tenis de Mesa (frontend React 19 + backend Express + Supabase)",
   "main": "server.js",
   "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "server": "nodemon server.js",
@@ -12,8 +15,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
+    "lint:css": "node scripts/lint-css.mjs --resumen",
     "test": "vitest run tests/",
-    "test:watch": "vitest tests/"
+    "test:watch": "vitest tests/",
+    "check": "npm run lint && npm run lint:css && npm test && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

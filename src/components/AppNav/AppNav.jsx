@@ -1,6 +1,6 @@
 /**
  * AppNav — Navegación inferior unificada para todos los roles.
- * Reemplaza BottomNav, AdminBottomNav y BottomNavEntrenador.
+ * Reemplazó a BottomNav, AdminBottomNav y BottomNavEntrenador (eliminados).
  *
  * Props:
  *   badge {number} — número de notificaciones/novedades sin leer
@@ -10,12 +10,12 @@
  *   2 = entrenador → items de entrenador
  *   3 = admin → items de admin
  *
- * Sigue usando BottomNav.module.css para mantener la apariencia.
+ * Estilos en AppNav.module.css (ex BottomNav.module.css).
  */
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Home, CalendarDays, Gamepad2, User, Users, Clock, Bell, Settings } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import styles from '../BottomNav/BottomNav.module.css'
+import styles from './AppNav.module.css'
 
 // Items por rol
 const ITEMS_SOCIO = [

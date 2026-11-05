@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { Gamepad2, Trophy, Dumbbell } from 'lucide-react'
 import AppNav from '../../components/AppNav/AppNav'
 import { getSedes, exportarExcel } from '../../services/adminApi'
-import { hoyAR } from '../../lib/fecha.js'
 import './Admin.css'
 
 const TIPOS = [
@@ -140,12 +139,12 @@ export default function ExportarActividades() {
 
         {/* Info formato */}
         <div style={{
-          background: '#eef2ff',
-          border: '1px solid #c7d2fe',
+          background: 'var(--color-accent-subtle)',
+          border: '1px solid var(--color-accent-border)',
           borderRadius: 10,
           padding: '12px 14px',
           fontSize: 13,
-          color: '#4338ca',
+          color: 'var(--color-accent-strong)',
           lineHeight: 1.5,
         }}>
           El archivo descargado tiene <strong>una fila por socio por evento</strong>,

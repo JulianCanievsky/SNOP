@@ -4,6 +4,7 @@ import autenticar from '../src/middlewares/autenticar.js'
 import { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import responder from '../src/lib/responder.js'
+import { hoyAR } from '../src/lib/fecha.js'
 
 const router = express.Router()
 
@@ -14,7 +15,7 @@ router.use(autenticar, requireRole(3))
 function parseFiltros(query) {
   const { desde, hasta, sede_id } = query
   const TZ_OFFSET = '-03:00' // America/Argentina/Buenos_Aires (no tiene DST)
-  const ahoraAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+  const ahoraAR = hoyAR()
 
   // Usar offset explícito -03:00 para que la interpretación sea siempre en ART,
   // independientemente del TZ del servidor.
@@ -62,7 +63,7 @@ function formatFecha(iso) {
 
 function formatHora(iso) {
   if (!iso) return ''
-  return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 }
 
 // ── GET /api/admin/exportar/turnos ────────────────────────────────────────────

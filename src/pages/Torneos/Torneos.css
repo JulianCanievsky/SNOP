@@ -2,8 +2,8 @@
    para diferenciar torneos visualmente — se mantiene por identidad de sección */
 .torneos-container { min-height:100svh; background:var(--color-bg); padding-bottom:88px; }
 
-.tor-header { background:#7c3aed; padding:28px var(--space-5) 24px; border-radius:0 0 24px 24px; }
-.tor-titulo    { font-size:var(--font-size-xl); font-weight:700; color:#fff; margin:0 0 2px; }
+.tor-header { background:var(--color-accent); padding:28px var(--space-5) 24px; border-radius:0 0 24px 24px; }
+.tor-titulo    { font-size:var(--font-size-xl); font-weight:700; color:var(--color-on-primary); margin:0 0 2px; }
 .tor-subtitulo { font-size:var(--font-size-sm); color:rgba(255,255,255,.82); margin:0; }
 
 .tor-contenido { padding:var(--space-5) var(--space-4); display:flex; flex-direction:column; gap:14px; }
@@ -15,34 +15,34 @@
 .tor-fecha   { font-size:12px; color:var(--color-text-muted); margin:0; }
 .tor-badge   { background:var(--color-success-bg); color:var(--color-success); font-size:var(--font-size-xs); font-weight:700; padding:3px 10px; border-radius:var(--radius-pill); white-space:nowrap; }
 .tor-badge--completo { background:var(--color-danger-bg); color:var(--color-danger); }
-.tor-modalidad { font-size:11px; color:#7c3aed; font-weight:600; text-align:right; }
+.tor-modalidad { font-size:11px; color:var(--color-accent); font-weight:600; text-align:right; }
 .tor-info { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--color-text-muted); margin-bottom:var(--space-3); }
 .tor-footer { display:flex; align-items:center; justify-content:space-between; gap:var(--space-2); }
 
 .tor-avatares { display:flex; }
-.tor-avatar { width:28px; height:28px; border-radius:50%; background:#ede9fe; color:#7c3aed; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; border:2px solid var(--color-surface); margin-left:-4px; flex-shrink:0; overflow:hidden; }
+.tor-avatar { width:28px; height:28px; border-radius:50%; background:var(--color-accent-subtle); color:var(--color-accent); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; border:2px solid var(--color-surface); margin-left:-4px; flex-shrink:0; overflow:hidden; }
 .tor-avatar:first-child { margin-left:0; }
 .tor-avatar img { width:100%; height:100%; object-fit:cover; }
 
-.tor-btn-ver     { padding:7px 14px; background:#ede9fe; color:#7c3aed; border:none; border-radius:var(--radius-pill); font-size:var(--font-size-sm); font-weight:700; cursor:pointer; font-family:var(--font-sans); transition:filter var(--transition-fast); }
+.tor-btn-ver     { padding:7px 14px; background:var(--color-accent-subtle); color:var(--color-accent); border:none; border-radius:var(--radius-pill); font-size:var(--font-size-sm); font-weight:700; cursor:pointer; font-family:var(--font-sans); transition:filter var(--transition-fast); }
 .tor-btn-ver:hover { filter:brightness(.95); }
-.tor-btn-anotarme { padding:7px 14px; background:#7c3aed; color:#fff; border:none; border-radius:var(--radius-pill); font-size:var(--font-size-sm); font-weight:700; cursor:pointer; font-family:var(--font-sans); transition:background var(--transition-fast); }
-.tor-btn-anotarme:hover { background:#6d28d9; }
+.tor-btn-anotarme { padding:7px 14px; background:var(--color-accent); color:var(--color-on-primary); border:none; border-radius:var(--radius-pill); font-size:var(--font-size-sm); font-weight:700; cursor:pointer; font-family:var(--font-sans); transition:background var(--transition-fast); }
+.tor-btn-anotarme:hover { background:var(--color-accent-strong); }
 .tor-btn-cancelar { padding:7px 14px; background:var(--color-danger-bg); color:var(--color-danger); border:none; border-radius:var(--radius-pill); font-size:var(--font-size-sm); font-weight:700; cursor:pointer; font-family:var(--font-sans); }
 
 .tor-estado { text-align:center; padding:48px var(--space-5); color:var(--color-text-muted); display:flex; flex-direction:column; align-items:center; gap:var(--space-3); }
 .tor-estado--error { color:var(--color-danger); }
-.tor-spinner { width:24px; height:24px; border:2px solid var(--color-border); border-top-color:#7c3aed; border-radius:50%; animation:torSpin .7s linear infinite; }
+.tor-spinner { width:24px; height:24px; border:2px solid var(--color-border); border-top-color:var(--color-accent); border-radius:50%; animation:torSpin .7s linear infinite; }
 @keyframes torSpin { to { transform:rotate(360deg); } }
 
-[data-theme="dark"] .tor-avatar { background:#2d1e4f; border-color:var(--color-surface); }
+[data-theme="dark"] .tor-avatar { background:var(--color-accent-subtle); border-color:var(--color-surface); }
 
 /* ── DetalleTorneo ─────────────────────────────────────────────────────────── */
 .tor-detalle-container { min-height:100svh; background:var(--color-bg); padding-bottom:88px; }
 
-.tor-detalle-header { background:#7c3aed; padding:20px var(--space-5) 24px; border-radius:0 0 24px 24px; }
-.tor-btn-volver { background:rgba(255,255,255,.18); border:none; color:#fff; font-size:13px; font-weight:600; padding:6px 14px; border-radius:var(--radius-pill); cursor:pointer; margin-bottom:12px; font-family:var(--font-sans); }
-.tor-detalle-nombre { font-size:var(--font-size-xl); font-weight:700; color:#fff; margin:0 0 4px; }
+.tor-detalle-header { background:var(--color-accent); padding:20px var(--space-5) 24px; border-radius:0 0 24px 24px; }
+.tor-btn-volver { background:rgba(255,255,255,.18); border:none; color:var(--color-on-primary); font-size:13px; font-weight:600; padding:6px 14px; border-radius:var(--radius-pill); cursor:pointer; margin-bottom:12px; font-family:var(--font-sans); }
+.tor-detalle-nombre { font-size:var(--font-size-xl); font-weight:700; color:var(--color-on-primary); margin:0 0 4px; }
 .tor-detalle-sub { font-size:var(--font-size-sm); color:rgba(255,255,255,.82); margin:0; }
 
 .tor-detalle-body { padding:var(--space-5) var(--space-4); display:flex; flex-direction:column; gap:16px; }
@@ -53,7 +53,7 @@
 .tor-detalle-val { margin:0 0 2px; font-size:var(--font-size-sm); font-weight:600; color:var(--color-text); }
 .tor-detalle-meta { margin:0; font-size:12px; color:var(--color-text-muted); }
 .tor-detalle-sep { height:1px; background:var(--color-border); margin:0; }
-.tor-detalle-aviso { background:var(--color-warning-bg,#fffbeb); border-radius:var(--radius-md); padding:10px 14px; font-size:12px; color:var(--color-warning,#b45309); }
+.tor-detalle-aviso { background:var(--color-warning-bg,var(--color-warning-bg)); border-radius:var(--radius-md); padding:10px 14px; font-size:12px; color:var(--color-warning,var(--color-warning-text)); }
 
 /* ── Lista de anotados ─────────────────────────────────────────────────────── */
 .tor-anotados { background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-4); box-shadow:var(--shadow-sm); border:1.5px solid var(--color-border); }
@@ -61,17 +61,17 @@
 .tor-anotados-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); gap:12px; }
 
 .tor-avatar-grande-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; }
-.tor-avatar-grande { width:48px; height:48px; border-radius:50%; background:#ede9fe; color:#7c3aed; font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center; overflow:hidden; border:2px solid #ede9fe; }
+.tor-avatar-grande { width:48px; height:48px; border-radius:50%; background:var(--color-accent-subtle); color:var(--color-accent); font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center; overflow:hidden; border:2px solid var(--color-accent-border); }
 .tor-avatar-grande img { width:100%; height:100%; object-fit:cover; }
 .tor-avatar-nombre { font-size:11px; color:var(--color-text-muted); text-align:center; max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 /* ── Acciones detalle ─────────────────────────────────────────────────────── */
 .tor-detalle-acciones { display:flex; flex-direction:column; gap:10px; }
-.tor-btn-confirmar { width:100%; padding:14px; background:#7c3aed; color:#fff; border:none; border-radius:var(--radius-lg); font-size:var(--font-size-md); font-weight:700; cursor:pointer; font-family:var(--font-sans); transition:background var(--transition-fast); }
-.tor-btn-confirmar:hover:not(:disabled) { background:#6d28d9; }
+.tor-btn-confirmar { width:100%; padding:14px; background:var(--color-accent); color:var(--color-on-primary); border:none; border-radius:var(--radius-lg); font-size:var(--font-size-md); font-weight:700; cursor:pointer; font-family:var(--font-sans); transition:background var(--transition-fast); }
+.tor-btn-confirmar:hover:not(:disabled) { background:var(--color-accent-strong); }
 .tor-btn-confirmar:disabled { opacity:.6; cursor:not-allowed; }
 .tor-btn-cancelar-det { width:100%; padding:14px; background:var(--color-danger-bg); color:var(--color-danger); border:none; border-radius:var(--radius-lg); font-size:var(--font-size-md); font-weight:700; cursor:pointer; font-family:var(--font-sans); }
 .tor-btn-cancelar-det:disabled { opacity:.6; cursor:not-allowed; }
 .tor-btn-lleno { width:100%; padding:14px; background:var(--color-border); color:var(--color-text-muted); border:none; border-radius:var(--radius-lg); font-size:var(--font-size-md); font-weight:700; cursor:not-allowed; font-family:var(--font-sans); }
 
-[data-theme="dark"] .tor-avatar-grande { background:#2d1e4f; border-color:#2d1e4f; }
+[data-theme="dark"] .tor-avatar-grande { background:var(--color-accent-subtle); border-color:var(--color-accent-border); }

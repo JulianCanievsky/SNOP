@@ -1,66 +1,60 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import Spinner from './components/ui/Spinner/Spinner'
+
+// Splash y Login van en el bundle inicial; el resto se carga al entrar a cada pantalla.
 
 import Splash             from './pages/Splash/Splash'
 import Login              from './pages/login/login'
-import Registro           from './pages/registro/registro'
-import ForgotPassword     from './pages/ForgotPassword/ForgotPassword'
-import ResetPassword      from './pages/ResetPassword/ResetPassword'
-import Inicio             from './pages/Inicio/Inicio'
-import MisTurnos          from './pages/MisTurnos/MisTurnos'
-import JuegoLibre         from './pages/JuegoLibre/JuegoLibre'
-import ClasesParticulares from './pages/ClasesParticulares/ClasesParticulares'
-import Perfil             from './pages/Perfil/Perfil'
-import Comunicados        from './pages/Comunicados/Comunicados'
-import MisClases          from './pages/MisClases/MisClases'
-import Torneos            from './pages/Torneos/Torneos'
-import Notificaciones     from './pages/Notificaciones/Notificaciones'
-import Entrenamientos     from './pages/Entrenamientos/Entrenamientos'
+const Registro = lazy(() => import('./pages/registro/registro'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword/ResetPassword'))
+const Inicio = lazy(() => import('./pages/Inicio/Inicio'))
+const MisTurnos = lazy(() => import('./pages/MisTurnos/MisTurnos'))
+const JuegoLibre = lazy(() => import('./pages/JuegoLibre/JuegoLibre'))
+const ClasesParticulares = lazy(() => import('./pages/ClasesParticulares/ClasesParticulares'))
+const Perfil = lazy(() => import('./pages/Perfil/Perfil'))
+const Comunicados = lazy(() => import('./pages/Comunicados/Comunicados'))
+const MisClases = lazy(() => import('./pages/MisClases/MisClases'))
+const Torneos = lazy(() => import('./pages/Torneos/Torneos'))
+const Notificaciones = lazy(() => import('./pages/Notificaciones/Notificaciones'))
+const Entrenamientos = lazy(() => import('./pages/Entrenamientos/Entrenamientos'))
 
 // Dev-only — página de showcase del sistema de diseño (no se linkea en la nav)
-import DesignSystem       from './pages/DesignSystem/DesignSystem'
+const DesignSystem = lazy(() => import('./pages/DesignSystem/DesignSystem'))
 
 // Admin
-import AdminInicio        from './pages/Admin/AdminInicio'
-import GestionSocios      from './pages/Admin/GestionSocios'
-import DetalleSocio       from './pages/Admin/DetalleSocio'
-import AgregarSocio       from './pages/Admin/AgregarSocio'
-import CrearJuegoLibre    from './pages/Admin/CrearJuegoLibre'
-import EnviarComunicado   from './pages/Admin/EnviarComunicado'
-import GestionNiveles     from './pages/Admin/GestionNiveles'
-import ConfigAdmin        from './pages/Admin/ConfigAdmin'
-import AdminActividades   from './pages/Admin/AdminActividades'
-import AdminTurnos        from './pages/Admin/AdminTurnos'
-import ExportarActividades from './pages/Admin/ExportarActividades'
-import CrearTorneo        from './pages/Admin/CrearTorneo'
-import SolicitudesIngreso  from './pages/Admin/SolicitudesIngreso'
-import GestionBonos       from './pages/Admin/GestionBonos'
+const AdminInicio = lazy(() => import('./pages/Admin/AdminInicio'))
+const GestionSocios = lazy(() => import('./pages/Admin/GestionSocios'))
+const DetalleSocio = lazy(() => import('./pages/Admin/DetalleSocio'))
+const AgregarSocio = lazy(() => import('./pages/Admin/AgregarSocio'))
+const CrearJuegoLibre = lazy(() => import('./pages/Admin/CrearJuegoLibre'))
+const EnviarComunicado = lazy(() => import('./pages/Admin/EnviarComunicado'))
+const GestionNiveles = lazy(() => import('./pages/Admin/GestionNiveles'))
+const ConfigAdmin = lazy(() => import('./pages/Admin/ConfigAdmin'))
+const AdminActividades = lazy(() => import('./pages/Admin/AdminActividades'))
+const AdminTurnos = lazy(() => import('./pages/Admin/AdminTurnos'))
+const ExportarActividades = lazy(() => import('./pages/Admin/ExportarActividades'))
+const CrearTorneo = lazy(() => import('./pages/Admin/CrearTorneo'))
+const SolicitudesIngreso = lazy(() => import('./pages/Admin/SolicitudesIngreso'))
+const GestionBonos = lazy(() => import('./pages/Admin/GestionBonos'))
 
 // Entrenador
-import InicioEntrenador        from './pages/entrenador/InicioEntrenador/InicioEntrenador'
-import MisClasesEntrenador     from './pages/entrenador/MisClasesEntrenador/MisClasesEntrenador'
-import MisAlumnosEntrenador    from './pages/entrenador/MisAlumnosEntrenador/MisAlumnosEntrenador'
-import DetalleAlumnoEntrenador from './pages/entrenador/DetalleAlumnoEntrenador/DetalleAlumnoEntrenador'
-import MisHorariosEntrenador   from './pages/entrenador/MisHorariosEntrenador/MisHorariosEntrenador'
-import SolicitudesEntrenador   from './pages/entrenador/SolicitudesEntrenador/SolicitudesEntrenador'
-import PerfilEntrenador        from './pages/entrenador/PerfilEntrenador/PerfilEntrenador'
-import PerfilPublicoEntrenador from './pages/entrenador/PerfilPublicoEntrenador/PerfilPublicoEntrenador'
+const InicioEntrenador = lazy(() => import('./pages/entrenador/InicioEntrenador/InicioEntrenador'))
+const MisClasesEntrenador = lazy(() => import('./pages/entrenador/MisClasesEntrenador/MisClasesEntrenador'))
+const MisAlumnosEntrenador = lazy(() => import('./pages/entrenador/MisAlumnosEntrenador/MisAlumnosEntrenador'))
+const DetalleAlumnoEntrenador = lazy(() => import('./pages/entrenador/DetalleAlumnoEntrenador/DetalleAlumnoEntrenador'))
+const MisHorariosEntrenador = lazy(() => import('./pages/entrenador/MisHorariosEntrenador/MisHorariosEntrenador'))
+const SolicitudesEntrenador = lazy(() => import('./pages/entrenador/SolicitudesEntrenador/SolicitudesEntrenador'))
+const PerfilEntrenador = lazy(() => import('./pages/entrenador/PerfilEntrenador/PerfilEntrenador'))
+const PerfilPublicoEntrenador = lazy(() => import('./pages/entrenador/PerfilPublicoEntrenador/PerfilPublicoEntrenador'))
 
 // Rutas protegidas: redirige al inicio correcto si no hay sesión o el rol no coincide
 function RutaProtegida({ children, rolesPermitidos }) {
-  const { user, loading } = useAuth()
+  const { user } = useAuth()
 
-  if (loading) {
-    return (
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        minHeight: '100svh', background: 'var(--color-bg)',
-      }}>
-        <div className="snop-spinner" />
-      </div>
-    )
-  }
   if (!user) return <Navigate to="/login" replace />
 
   if (rolesPermitidos && !rolesPermitidos.includes(user.tipo_usuario_id)) {
@@ -73,12 +67,10 @@ function RutaProtegida({ children, rolesPermitidos }) {
 }
 
 function AppRoutes() {
-  const { user, loading } = useAuth()
-
-  // Espera a que AuthContext restaure la sesión antes de redirigir
-  if (loading) return null
+  const { user } = useAuth()
 
   return (
+    <Suspense fallback={<PantallaCargando />}>
     <Routes>
       {/* Pantalla inicial — redirige según rol */}
       <Route
@@ -147,6 +139,16 @@ function AppRoutes() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
+  )
+}
+
+/** Mientras se descarga el código de una pantalla. */
+function PantallaCargando() {
+  return (
+    <div style={{ minHeight: '100svh', display: 'grid', placeItems: 'center', background: 'var(--color-bg)' }}>
+      <Spinner size="lg" />
+    </div>
   )
 }
 

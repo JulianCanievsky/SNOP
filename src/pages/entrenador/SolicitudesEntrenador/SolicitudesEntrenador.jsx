@@ -3,6 +3,7 @@ import { useSolicitudesEntrenador } from '../../../hooks/useEntrenador'
 import AppNav from '../../../components/AppNav/AppNav'
 import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
 import './SolicitudesEntrenador.css'
+import Spinner from '../../../components/ui/Spinner/Spinner'
 
 function iniciales(nombre = '') {
   return nombre.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -19,7 +20,7 @@ function formatFechaCorta(iso) {
 function formatHora(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ,
   })
 }
 
@@ -105,7 +106,7 @@ export default function SolicitudesEntrenador() {
         <div>
           <p className="sol-seccion-titulo">Pendientes</p>
           {cargando ? (
-            <div className="sin-solicitudes-e">Cargando...</div>
+            <Spinner center />
           ) : pendientes.length === 0 ? (
             <div className="sin-solicitudes-e">Sin solicitudes pendientes</div>
           ) : (

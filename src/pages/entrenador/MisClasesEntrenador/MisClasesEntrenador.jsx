@@ -6,6 +6,7 @@ import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog'
 
 import api from '../../../lib/apiClient.js'
 import './MisClasesEntrenador.css'
+import Spinner from '../../../components/ui/Spinner/Spinner'
 
 const DIAS_LETRA = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
 const TIPO_LABEL = { 1: 'Grupal', 2: 'Particular' }
@@ -14,7 +15,7 @@ const TZ = 'America/Argentina/Buenos_Aires'
 
 function formatHora(iso) {
   return new Date(iso).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ,
   })
 }
 
@@ -122,7 +123,7 @@ export default function MisClasesEntrenador() {
 
       <main className="mis-clases-e-contenido">
         {cargando ? (
-          <div className="sin-clases">Cargando...</div>
+          <Spinner center />
         ) : clasesFiltradas.length === 0 ? (
           <div className="sin-clases">No tenés clases para este día.</div>
         ) : (
@@ -194,10 +195,12 @@ export default function MisClasesEntrenador() {
                               disabled={accionSocio === s.id}
                               onClick={() => handleConfirmar(s.id, clase.id)}
                               className="clase-btn-confirmar"
+                              aria-label="Confirmar solicitud"
                             >✓</button>
                             <button
                               disabled={accionSocio === s.id}
                               onClick={() => handleRechazar(s.id)}
+                              aria-label="Rechazar solicitud"
                               className="clase-btn-rechazar"
                             >✕</button>
                           </div>

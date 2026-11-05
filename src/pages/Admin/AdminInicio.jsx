@@ -57,7 +57,7 @@ export default function AdminInicio() {
           {cargando ? (
             <div className="stats-grid">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="stat-card" style={{ minHeight: 72, background: '#f1f5f9' }} />
+                <div key={i} className="stat-card" style={{ minHeight: 72, background: 'var(--color-surface-muted)' }} />
               ))}
             </div>
           ) : (
@@ -75,7 +75,7 @@ export default function AdminInicio() {
                 <div className="stat-lbl">Entrenadores</div>
               </div>
               <div className="stat-card">
-                <div className="stat-num" style={{ color: '#ef4444' }}>{stats?.con_deuda ?? '—'}</div>
+                <div className="stat-num" style={{ color: 'var(--color-danger)' }}>{stats?.con_deuda ?? '—'}</div>
                 <div className="stat-lbl">Con deuda</div>
               </div>
             </div>

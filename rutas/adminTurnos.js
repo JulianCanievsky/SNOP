@@ -3,23 +3,31 @@
  * Gestión de turnos de entrenamiento por el administrador.
  *
  * Todos los endpoints requieren autenticación + rol admin (tipo_usuario_id = 3).
+ * Respuestas: { ok, data } (responder.js).
  *
- * POST   /api/admin/turnos                         — crear turno (plantilla recurrente o puntual)
- * GET    /api/admin/turnos/plantillas               — listar plantillas recurrentes activas
- * GET    /api/admin/turnos/:id                      — detalle de un turno / plantilla
- * PUT    /api/admin/turnos/:id                      — editar turno
- * DELETE /api/admin/turnos/:id                      — dar de baja DEFINITIVA (activo = false)
- * POST   /api/admin/turnos/:id/cancelar-semana      — cancelar SOLO la próxima instancia semanal
- * POST   /api/admin/turnos/:id/socios               — asignar socio
- * DELETE /api/admin/turnos/:id/socios/:socioId      — quitar socio
- * PATCH  /api/admin/turnos/:id/entrenador           — reasignar entrenador
- * GET    /api/admin/turnos/:id/lista-espera         — ver lista de espera (admin)
- * GET    /api/admin/mesas                           — listar mesas disponibles
+ * GET    /api/admin/turnos/mesas                       — mesas (selector)
+ * GET    /api/admin/turnos/plantillas                  — turnos de entrenamiento activos
+ * GET    /api/admin/turnos/disponibles                 — futuros con cupo (DetalleSocio)
+ * GET    /api/admin/turnos/todos                       — futuros (panel de actividades)
+ * POST   /api/admin/turnos/asignar/:socioId            — asignar turno a un socio (descuenta bono)
+ * DELETE /api/admin/turnos/asignar/:socioId/:stId      — quitar turno a un socio (devuelve bono)
+ * GET    /api/admin/turnos/:id                         — detalle
+ * GET    /api/admin/turnos/:id/inscriptos              — { inscriptos, total }
+ * POST   /api/admin/turnos                             — crear (recurrente o puntual)
+ * PUT    /api/admin/turnos/:id                         — editar
+ * DELETE /api/admin/turnos/:id                         — baja definitiva (estado/activo = false)
+ * POST   /api/admin/turnos/:id/cancelar-semana         — cancelar SOLO la próxima instancia
+ * POST   /api/admin/turnos/:id/socios                  — asignar socio
+ * DELETE /api/admin/turnos/:id/socios/:socioId         — quitar socio
+ * PATCH  /api/admin/turnos/:id/entrenador              — reasignar entrenador
+ * GET    /api/admin/turnos/:id/lista-espera            — lista de espera (FIFO)
+ *
+ * Quitar un socio (admin) BORRA la fila y devuelve el crédito del bono: es una
+ * corrección. Después se promueve al primero de la lista de espera (regla 5).
  */
 
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
-import { requireRole } from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import responder from '../src/lib/responder.js'
 import {
@@ -31,7 +39,14 @@ import {
   emailTurnoQuitado,
 } from '../src/lib/notificaciones.js'
 import { getBonoActivo } from './bonos.js'
-import { crearInscripcion } from '../src/services/socioTurnoService.js'
+import {
+  crearInscripcion,
+  actualizarEstadoPorId,
+  eliminarInscripcion,
+  eliminarInscripcionPorId,
+} from '../src/services/socioTurnoService.js'
+import { promoverListaEspera, darDeBajaInscriptosPorClub } from '../src/services/turnosService.js'
+import { hoyAR, toFechaAR, formatArES, formatHoraAR } from '../src/lib/fecha.js'
 
 const router = express.Router()
 
@@ -69,13 +84,65 @@ async function verificarSolapamiento({ sede_id, dia_semana, hora_inicio, hora_fi
   return null
 }
 
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
+
+/** "HH:MM" del turno: usa hora_inicio si existe; si no, la deriva de fecha_inicio en hora AR. */
+const horaDe = (hora, fechaIso) => hora?.slice(0, 5) ?? (fechaIso ? formatHoraAR(fechaIso) : null)
+
+/**
+ * Inscribe a un socio como 'activo'. Si ya tenía una fila cancelada/pendiente
+ * en el turno, la reactiva en vez de duplicarla.
+ * @returns {Promise<object|null>} la fila, o null si ya estaba activo
+ */
+async function inscribirActivo({ turno_id, user_id }) {
+  const { data: filas } = await supabase
+    .from('socio_turno')
+    .select('id, estado')
+    .eq('turno_id', turno_id)
+    .eq('user_id', user_id)
+    .order('fecha_inscripcion', { ascending: false })
+
+  if ((filas ?? []).some(f => f.estado === true)) return null
+  if (filas?.length) return actualizarEstadoPorId({ socioTurnoId: filas[0].id, estado_texto: 'activo' })
+  return crearInscripcion({ turno_id, user_id, estado_texto: 'activo' })
+}
+
+/** Devuelve 1 crédito al bono si el socio lo había consumido en este turno. */
+async function devolverCreditoBono({ turno_id, socio_id }) {
+  const { data: uso } = await supabase
+    .from('bono_turno')
+    .select('id, bono_id')
+    .eq('turno_id', turno_id)
+    .eq('socio_id', socio_id)
+    .maybeSingle()
+  if (!uso) return
+
+  await supabase.from('bono_turno').delete().eq('id', uso.id)
+  const { data: bono } = await supabase
+    .from('bonos').select('creditos_usados').eq('id', uso.bono_id).single()
+  if (bono && bono.creditos_usados > 0) {
+    await supabase.from('bonos').update({ creditos_usados: bono.creditos_usados - 1 }).eq('id', uso.bono_id)
+  }
+}
+
+/** Descuenta 1 crédito del bono activo, si tiene. @returns {{bono_id, creditos_restantes}|null} */
+async function descontarCreditoBono({ turno_id, socio_id }) {
+  const bono = await getBonoActivo(socio_id)
+  if (!bono || bono.creditos_usados >= bono.creditos_total) return null
+  await supabase.from('bono_turno').insert({
+    bono_id: bono.id, turno_id, socio_id, fecha_uso: new Date().toISOString(),
+  })
+  await supabase.from('bonos').update({ creditos_usados: bono.creditos_usados + 1 }).eq('id', bono.id)
+  return { bono_id: bono.id, creditos_restantes: bono.creditos_total - bono.creditos_usados - 1 }
+}
+
 /** Calcula la próxima fecha concreta (ISO) para un turno recurrente dado su dia_semana y hora.
  *  La hora se interpreta en hora argentina (UTC-3) usando el offset explícito. */
 function proximaFecha(dia_semana, hora_inicio) {
   // Tomamos la fecha "de hoy" en Argentina para calcular el próximo día de semana correcto.
   const ahoraAR = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }))
-  const hoyAR   = ahoraAR.getDay() // 0=Dom … 6=Sáb
-  let diff      = (dia_semana - hoyAR + 7) % 7
+  const diaHoy  = ahoraAR.getDay() // 0=Dom … 6=Sáb
+  let diff      = (dia_semana - diaHoy + 7) % 7
   if (diff === 0) diff = 7 // nunca hoy; siempre la próxima ocurrencia
 
   // Fecha del próximo día correcto en calendario argentino
@@ -99,7 +166,7 @@ router.get('/mesas', async (_req, res) => {
       .select('id, numero, sede_id, sedes(nombre)')
       .order('numero')
     if (error) throw error
-    res.json({ data: data ?? [] })
+    responder.ok(res, data ?? [])
   } catch (err) {
     console.error('GET /admin/mesas', err)
     responder.interno(res, 'Error al obtener mesas')
@@ -111,13 +178,11 @@ router.get('/mesas', async (_req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/plantillas', async (_req, res) => {
   try {
-    // Query con solo columnas que existen antes de correr la migración 002.
-    // Los campos recurrente/activo/dia_semana/hora_inicio/hora_fin se agregan
-    // dinámicamente una vez que se corra migrations/002_turnos_recurrentes.sql.
     const { data, error } = await supabase
       .from('turnos')
       .select(`
-        id, estado, fecha_inicio, fecha_fin, duracion_min,
+        id, estado, activo, recurrente, fecha_inicio, fecha_fin, duracion_min,
+        dia_semana, hora_inicio, hora_fin,
         capacidad_maxima, tipo_turno_id,
         nivel_minimo_id, nivel_maximo_id,
         sede_id, mesa_id,
@@ -138,10 +203,9 @@ router.get('/plantillas', async (_req, res) => {
 
     const resultado = (data ?? []).map(t => ({
       id:              t.id,
-      // Campos nuevos: existirán después de correr migration 002. Hasta entonces = null.
       dia_semana:      t.dia_semana   ?? null,
-      hora_inicio:     t.hora_inicio  ?? (t.fecha_inicio ? new Date(t.fecha_inicio).toTimeString().slice(0,5) : null),
-      hora_fin:        t.hora_fin     ?? (t.fecha_fin    ? new Date(t.fecha_fin).toTimeString().slice(0,5)    : null),
+      hora_inicio:     horaDe(t.hora_inicio, t.fecha_inicio),
+      hora_fin:        horaDe(t.hora_fin,    t.fecha_fin),
       duracion_min:    t.duracion_min ?? null,
       capacidad_maxima: t.capacidad_maxima,
       nivel_minimo_id: t.nivel_minimo_id,
@@ -156,7 +220,7 @@ router.get('/plantillas', async (_req, res) => {
       cupo_disponible: (t.capacidad_maxima ?? 0) - (t.socio_turno ?? []).filter(s => s.estado === true).length,
     }))
 
-    res.json({ data: resultado })
+    responder.ok(res, resultado)
   } catch (err) {
     console.error('GET /admin/turnos/plantillas', err)
     responder.interno(res, 'Error al obtener plantillas')
@@ -170,7 +234,7 @@ router.get('/plantillas', async (_req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/disponibles', async (_req, res) => {
   try {
-    const desdeAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const desdeAR = hoyAR()
     const desde   = new Date(`${desdeAR}T00:00:00-03:00`)
 
     const { data: turnos, error } = await supabase
@@ -206,7 +270,7 @@ router.get('/disponibles', async (_req, res) => {
       })
       .filter(t => t.cupo_disponible > 0)
 
-    res.json({ data: disponibles })
+    responder.ok(res, disponibles)
   } catch (err) {
     console.error('GET /admin/turnos/disponibles', err)
     responder.interno(res, 'Error al obtener turnos disponibles')
@@ -273,21 +337,9 @@ router.post('/asignar/:socioId', async (req, res) => {
       }
     }
 
-    // Verificar inscripción duplicada
-    const { data: yaInscripto } = await supabase
-      .from('socio_turno')
-      .select('id')
-      .eq('user_id', socioId)
-      .eq('turno_id', turno_id)
-      .maybeSingle()
-    if (yaInscripto) return responder.conflicto(res, 'El socio ya está inscripto en este turno')
-
-    // Insertar inscripción confirmada (vía socioTurnoService → siempre escribe estado_texto)
-    const inscripcion = await crearInscripcion({
-      user_id:      socioId,
-      turno_id,
-      estado_texto: 'activo',
-    })
+    // Inscribir (reactiva una fila cancelada si existe) vía socioTurnoService
+    const inscripcion = await inscribirActivo({ turno_id, user_id: socioId })
+    if (!inscripcion) return responder.conflicto(res, 'El socio ya está inscripto en este turno')
 
     // Recargar con joins para la respuesta
     const { data: inscripcionConJoins } = await supabase
@@ -299,23 +351,7 @@ router.post('/asignar/:socioId', async (req, res) => {
     // ── Descuento de bono: 1 crédito por turno de entrenamiento ──────────────
     let bonoInfo = null
     try {
-      const bono = await getBonoActivo(socioId)
-      if (bono && bono.creditos_usados < bono.creditos_total) {
-        await supabase.from('bono_turno').insert({
-          bono_id:  bono.id,
-          turno_id,
-          socio_id: socioId,
-          fecha_uso: new Date().toISOString(),
-        })
-        await supabase
-          .from('bonos')
-          .update({ creditos_usados: bono.creditos_usados + 1 })
-          .eq('id', bono.id)
-        bonoInfo = {
-          bono_id:            bono.id,
-          creditos_restantes: bono.creditos_total - bono.creditos_usados - 1,
-        }
-      }
+      bonoInfo = await descontarCreditoBono({ turno_id, socio_id: socioId })
     } catch (bonoErr) {
       console.error('[admin/turnos/asignar] error bono:', bonoErr)
     }
@@ -323,11 +359,7 @@ router.post('/asignar/:socioId', async (req, res) => {
     // Notificación + email al socio
     try {
       const fechaTurnoStr = inscripcionConJoins?.turnos?.fecha_inicio
-        ? new Date(inscripcionConJoins.turnos.fecha_inicio).toLocaleString('es-AR', {
-            weekday: 'long', day: 'numeric', month: 'long',
-            hour: '2-digit', minute: '2-digit',
-            timeZone: 'America/Argentina/Buenos_Aires',
-          })
+        ? formatArES(inscripcionConJoins.turnos.fecha_inicio)
         : 'próximamente'
       const sedeStr = inscripcionConJoins?.turnos?.sedes?.nombre ?? turno.sedes?.nombre ?? 'la sede'
       await crearNotificacion({
@@ -343,7 +375,7 @@ router.post('/asignar/:socioId', async (req, res) => {
       console.error('[admin/turnos/asignar] notif:', notifErr)
     }
 
-    res.status(201).json({ data: inscripcionConJoins ?? inscripcion, bonoInfo, mensaje: 'Turno asignado correctamente' })
+    responder.creado(res, { ...(inscripcionConJoins ?? inscripcion), bono: bonoInfo })
   } catch (err) {
     console.error('POST /admin/turnos/asignar/:socioId', err)
     responder.interno(res, 'Error al asignar turno')
@@ -361,41 +393,29 @@ router.delete('/asignar/:socioId/:socioTurnoId', async (req, res) => {
   try {
     const { data: insc, error: errInsc } = await supabase
       .from('socio_turno')
-      .select('id, user_id, turno_id, turnos(id, tipo_turno_id, fecha_inicio, sedes(nombre))')
+      .select('id, user_id, turno_id, turnos(id, tipo_turno_id, fecha_inicio, capacidad_maxima, dia_semana, hora_inicio, sedes(nombre))')
       .eq('id', socioTurnoId)
       .eq('user_id', socioId)
       .single()
 
     if (errInsc || !insc) return responder.noEncontrado(res, 'Inscripción no encontrada')
 
-    const { error } = await supabase.from('socio_turno').delete().eq('id', socioTurnoId)
-    if (error) throw error
+    await eliminarInscripcionPorId({ socioTurnoId: insc.id })
 
-    // ── Devolución de crédito solo si era turno de entrenamiento ─────────────
+    // Devolución de crédito solo si era turno de entrenamiento
     if (insc.turnos?.tipo_turno_id === 1) {
       try {
-        const { data: uso } = await supabase
-          .from('bono_turno')
-          .select('id, bono_id')
-          .eq('turno_id', insc.turno_id)
-          .eq('socio_id', socioId)
-          .maybeSingle()
-
-        if (uso) {
-          await supabase.from('bono_turno').delete().eq('id', uso.id)
-          // Decrementar créditos_usados con update manual (no requiere RPC)
-          const { data: bono } = await supabase
-            .from('bonos').select('creditos_usados').eq('id', uso.bono_id).single()
-          if (bono && bono.creditos_usados > 0) {
-            await supabase
-              .from('bonos')
-              .update({ creditos_usados: bono.creditos_usados - 1 })
-              .eq('id', uso.bono_id)
-          }
-        }
+        await devolverCreditoBono({ turno_id: insc.turno_id, socio_id: socioId })
       } catch (bonoErr) {
         console.error('[admin/turnos/asignar] error devolución bono:', bonoErr)
       }
+    }
+
+    // El cupo liberado pasa al primero de la lista de espera
+    try {
+      await promoverListaEspera(insc.turnos)
+    } catch (listaErr) {
+      console.error('[admin/turnos/asignar] lista de espera:', listaErr)
     }
 
     // Notificar al socio
@@ -403,13 +423,7 @@ router.delete('/asignar/:socioId/:socioTurnoId', async (req, res) => {
       const { data: socioData } = await supabase
         .from('users').select('nombre, email').eq('id', socioId).single()
       if (socioData && insc.turnos) {
-        const fechaStr = insc.turnos.fecha_inicio
-          ? new Date(insc.turnos.fecha_inicio).toLocaleString('es-AR', {
-              weekday: 'long', day: 'numeric', month: 'long',
-              hour: '2-digit', minute: '2-digit',
-              timeZone: 'America/Argentina/Buenos_Aires',
-            })
-          : 'próximamente'
+        const fechaStr = insc.turnos.fecha_inicio ? formatArES(insc.turnos.fecha_inicio) : 'próximamente'
         const sedeStr = insc.turnos.sedes?.nombre ?? 'la sede'
         await crearNotificacion({
           user_id: socioId,
@@ -425,7 +439,7 @@ router.delete('/asignar/:socioId/:socioTurnoId', async (req, res) => {
       console.error('[admin/turnos/asignar] notif quitar:', notifErr)
     }
 
-    res.json({ mensaje: 'Turno desasignado correctamente' })
+    responder.ok(res, null)
   } catch (err) {
     console.error('DELETE /admin/turnos/asignar/:socioId/:socioTurnoId', err)
     responder.interno(res, 'Error al quitar turno')
@@ -438,7 +452,7 @@ router.delete('/asignar/:socioId/:socioTurnoId', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/todos', async (_req, res) => {
   try {
-    const desdeAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const desdeAR = hoyAR()
     const desde   = new Date(`${desdeAR}T00:00:00-03:00`)
 
     const { data: turnos, error } = await supabase
@@ -469,7 +483,7 @@ router.get('/todos', async (_req, res) => {
       cupo_disponible:  (t.capacidad_maxima ?? 0) - (t.socio_turno ?? []).filter(s => s.estado === true).length,
     }))
 
-    res.json({ data: resultado })
+    responder.ok(res, resultado)
   } catch (err) {
     console.error('GET /admin/turnos/todos', err)
     responder.interno(res, 'Error al obtener turnos')
@@ -503,7 +517,7 @@ router.get('/:id/inscriptos', async (req, res) => {
       fecha_inscripcion: i.fecha_inscripcion,
     }))
 
-    res.json({ data: inscriptos, total: inscriptos.length })
+    responder.ok(res, { inscriptos, total: inscriptos.length })
   } catch (err) {
     console.error('GET /admin/turnos/:id/inscriptos', err)
     responder.interno(res, 'Error al obtener inscriptos del turno')
@@ -518,7 +532,8 @@ router.get('/:id', async (req, res) => {
     const { data, error } = await supabase
       .from('turnos')
       .select(`
-        id, estado, fecha_inicio, fecha_fin, duracion_min,
+        id, estado, activo, recurrente, fecha_inicio, fecha_fin, duracion_min,
+        dia_semana, hora_inicio, hora_fin,
         capacidad_maxima, tipo_turno_id,
         nivel_minimo_id, nivel_maximo_id,
         sede_id, mesa_id,
@@ -540,33 +555,24 @@ router.get('/:id', async (req, res) => {
       return responder.noEncontrado(res, 'Turno no encontrado')
     }
 
-    // Intentar cargar turno_excepciones por separado (tabla nueva, puede no existir aún)
-    let excepciones = []
-    try {
-      const { data: exc } = await supabase
-        .from('turno_excepciones')
-        .select('id, fecha_excepcion, motivo, estado')
-        .eq('turno_id', req.params.id)
-        .order('fecha_excepcion', { ascending: false })
-      excepciones = exc ?? []
-    } catch {
-      // tabla aún no creada — ignorar
-    }
+    // Semanas canceladas puntualmente (si falla, el detalle sale igual)
+    const { data: excepciones } = await supabase
+      .from('turno_excepciones')
+      .select('id, fecha_excepcion, motivo, estado')
+      .eq('turno_id', req.params.id)
+      .order('fecha_excepcion', { ascending: false })
 
     const inscriptos = (data.socio_turno ?? []).filter(s => s.estado === true)
-    res.json({
-      data: {
-        ...data,
-        // Campos nuevos con fallback seguro
-        dia_semana:      data.dia_semana  ?? null,
-        hora_inicio:     data.hora_inicio ?? (data.fecha_inicio ? new Date(data.fecha_inicio).toTimeString().slice(0,5) : null),
-        hora_fin:        data.hora_fin    ?? (data.fecha_fin    ? new Date(data.fecha_fin).toTimeString().slice(0,5)    : null),
-        recurrente:      data.recurrente  ?? false,
-        activo:          data.activo      ?? true,
-        turno_excepciones: excepciones,
-        inscriptos_count: inscriptos.length,
-        cupo_disponible:  (data.capacidad_maxima ?? 0) - inscriptos.length,
-      }
+    responder.ok(res, {
+      ...data,
+      dia_semana:        data.dia_semana ?? null,
+      hora_inicio:       horaDe(data.hora_inicio, data.fecha_inicio),
+      hora_fin:          horaDe(data.hora_fin,    data.fecha_fin),
+      recurrente:        data.recurrente ?? false,
+      activo:            data.activo     ?? true,
+      turno_excepciones: excepciones ?? [],
+      inscriptos_count:  inscriptos.length,
+      cupo_disponible:   (data.capacidad_maxima ?? 0) - inscriptos.length,
     })
   } catch (err) {
     console.error('GET /admin/turnos/:id', err)
@@ -582,7 +588,6 @@ router.get('/:id', async (req, res) => {
 //         duracion_min?, capacidad_maxima, nivel_minimo_id?, nivel_maximo_id?,
 //         recurrente? (default true) }
 // Cuando fecha_especifica está presente → turno puntual (recurrente=false)
-// ─────────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   const {
@@ -604,9 +609,7 @@ router.post('/', async (req, res) => {
     : (dia_semana != null ? Number(dia_semana) : null)
 
   if (!sede_id || entrenador_id == null || diaSemanaFinal == null || !hora_inicio || !hora_fin || !capacidad_maxima) {
-    return res.status(400).json({
-      error: 'sede_id, entrenador_id, fecha (o dia_semana), hora_inicio, hora_fin y capacidad_maxima son requeridos',
-    })
+    return responder.error(res, 'Sede, entrenador, fecha (o día de la semana), horario y capacidad son requeridos')
   }
 
   if (hora_inicio >= hora_fin) {
@@ -647,7 +650,7 @@ router.post('/', async (req, res) => {
     } else {
       // Turno recurrente: calcular el próximo día de semana
       primeraFecha = proximaFecha(diaSemanaFinal, hora_inicio)
-      const fechaAR = primeraFecha.toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+      const fechaAR = toFechaAR(primeraFecha)
       primeraFin = new Date(`${fechaAR}T${hora_fin}:00-03:00`)
     }
 
@@ -695,7 +698,7 @@ router.post('/', async (req, res) => {
       .single()
 
     if (error) throw error
-    res.status(201).json({ data, mensaje: 'Turno creado correctamente' })
+    responder.creado(res, data)
   } catch (err) {
     console.error('POST /admin/turnos', err)
     responder.interno(res, 'Error al crear turno')
@@ -750,10 +753,8 @@ router.put('/:id', async (req, res) => {
       const nuevaFecha = proximaFecha(campos.dia_semana, campos.hora_inicio)
       campos.fecha_inicio = nuevaFecha.toISOString()
       if (campos.hora_fin) {
-        // Construir fecha_fin con offset -03:00 explícito
-        const yyyy = nuevaFecha.toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-        const [yyyyy, mmm, ddd] = yyyy.split('-')
-        campos.fecha_fin = new Date(`${yyyyy}-${mmm}-${ddd}T${campos.hora_fin}:00-03:00`).toISOString()
+        // fecha_fin el mismo día (hora AR, offset -03:00 explícito)
+        campos.fecha_fin = new Date(`${toFechaAR(nuevaFecha)}T${campos.hora_fin}:00-03:00`).toISOString()
       }
     }
 
@@ -765,7 +766,7 @@ router.put('/:id', async (req, res) => {
       .single()
 
     if (error) throw error
-    res.json({ data, mensaje: 'Turno actualizado correctamente' })
+    responder.ok(res, data)
   } catch (err) {
     console.error('PUT /admin/turnos/:id', err)
     responder.interno(res, 'Error al actualizar turno')
@@ -780,27 +781,23 @@ router.delete('/:id', async (req, res) => {
     // Obtener datos del turno e inscriptos antes de desactivar
     const { data: turno } = await supabase
       .from('turnos')
-      .select('fecha_inicio, sedes(nombre), socio_turno(users!socio_turno_user_id_fkey(id, nombre, email))')
+      .select('id, fecha_inicio, sedes(nombre)')
       .eq('id', req.params.id)
       .single()
 
-    await supabase.from('turnos').update({ estado: false }).eq('id', req.params.id)
-    try {
-      await supabase.from('turnos').update({ activo: false }).eq('id', req.params.id)
-    } catch { /* columna aún no existe */ }
+    if (!turno) return responder.noEncontrado(res, 'Turno no encontrado')
 
-    // Notificar a todos los inscriptos activos
+    const { error } = await supabase
+      .from('turnos')
+      .update({ estado: false, activo: false })
+      .eq('id', req.params.id)
+    if (error) throw error
+
+    // Inscriptos activos → 'baja_entrenador' + crédito de recupero; después se los avisa
+    const inscriptos = await darDeBajaInscriptosPorClub(turno)
     try {
-      const inscriptos = (turno?.socio_turno ?? [])
-        .map(s => s.users).filter(Boolean)
-      const fechaStr = turno?.fecha_inicio
-        ? new Date(turno.fecha_inicio).toLocaleString('es-AR', {
-            weekday: 'long', day: 'numeric', month: 'long',
-            hour: '2-digit', minute: '2-digit',
-            timeZone: 'America/Argentina/Buenos_Aires',
-          })
-        : 'próximamente'
-      const sedeStr = turno?.sedes?.nombre ?? 'la sede'
+      const fechaStr = turno.fecha_inicio ? formatArES(turno.fecha_inicio) : 'próximamente'
+      const sedeStr  = turno.sedes?.nombre ?? 'la sede'
 
       for (const socio of inscriptos) {
         await crearNotificacion({
@@ -817,7 +814,7 @@ router.delete('/:id', async (req, res) => {
       console.error('[admin/turnos] notif baja definitiva:', notifErr)
     }
 
-    res.json({ mensaje: 'Turno dado de baja definitivamente' })
+    responder.ok(res, null)
   } catch (err) {
     console.error('DELETE /admin/turnos/:id', err)
     responder.interno(res, 'Error al dar de baja el turno')
@@ -844,7 +841,7 @@ router.post('/:id/cancelar-semana', async (req, res) => {
 
     // Calcular la fecha de la próxima instancia
     const fechaProxima = proximaFecha(turno.dia_semana, turno.hora_inicio)
-    const fechaStr = fechaProxima.toISOString().split('T')[0] // YYYY-MM-DD
+    const fechaStr = toFechaAR(fechaProxima) // YYYY-MM-DD en hora AR (toISOString daría el día UTC)
 
     // Verificar que no exista ya una excepción para esa fecha
     const { data: existente } = await supabase
@@ -877,7 +874,6 @@ router.post('/:id/cancelar-semana', async (req, res) => {
         .eq('turno_id', req.params.id)
         .eq('estado', true)
 
-      const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
       const diaStr  = DIAS[turno.dia_semana] ?? `día ${turno.dia_semana}`
       const horaStr = turno.hora_inicio?.slice(0, 5) ?? ''
 
@@ -908,11 +904,7 @@ router.post('/:id/cancelar-semana', async (req, res) => {
       console.error('[admin/turnos] notif cancelar-semana:', notifErr)
     }
 
-    res.json({
-      ok: true,
-      data: { fecha_cancelada: fechaStr },
-      mensaje: `Instancia del ${fechaStr} cancelada. El turno recurrente sigue activo para las semanas siguientes.`,
-    })
+    responder.ok(res, { fecha_cancelada: fechaStr })
   } catch (err) {
     console.error('POST /admin/turnos/:id/cancelar-semana', err)
     responder.interno(res, 'Error al cancelar la instancia semanal')
@@ -966,44 +958,20 @@ router.post('/:id/socios', async (req, res) => {
       }
     }
 
-    // Verificar inscripción duplicada
-    const { data: dup } = await supabase
-      .from('socio_turno').select('id').eq('user_id', socio_id).eq('turno_id', turnoId).maybeSingle()
-    if (dup) return responder.conflicto(res, 'El socio ya está inscripto en este turno')
+    // Inscribir (reactiva una fila cancelada si existe) vía socioTurnoService
+    const data = await inscribirActivo({ turno_id: turnoId, user_id: socio_id })
+    if (!data) return responder.conflicto(res, 'El socio ya está inscripto en este turno')
 
-    // Insertar inscripción confirmada (vía socioTurnoService → siempre escribe estado_texto)
-    const data = await crearInscripcion({
-      user_id:      socio_id,
-      turno_id:     turnoId,
-      estado_texto: 'activo',
-    })
-
-    // ── Descuento de crédito del bono activo (si tiene uno) ──────────────────
+    // Descuento de crédito del bono activo (si tiene uno)
     let bonoInfo = null
     try {
-      const bono = await getBonoActivo(socio_id)
-      if (bono && bono.creditos_usados < bono.creditos_total) {
-        await supabase.from('bono_turno').insert({
-          bono_id:  bono.id,
-          turno_id: turnoId,
-          socio_id: socio_id,
-        })
-        await supabase
-          .from('bonos')
-          .update({ creditos_usados: bono.creditos_usados + 1 })
-          .eq('id', bono.id)
-        bonoInfo = {
-          bono_id:            bono.id,
-          creditos_restantes: bono.creditos_total - bono.creditos_usados - 1,
-        }
-      }
+      bonoInfo = await descontarCreditoBono({ turno_id: turnoId, socio_id })
     } catch (bonoErr) {
       console.error('[admin/turnos/socios] error al descontar crédito:', bonoErr)
     }
 
     // Notificación al socio
     try {
-      const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
       const diaStr   = DIAS[turno.dia_semana] ?? `día ${turno.dia_semana}`
       const horaStr  = turno.hora_inicio?.slice(0, 5) ?? ''
       const fechaStr = `${diaStr}s a las ${horaStr} hs`
@@ -1022,7 +990,7 @@ router.post('/:id/socios', async (req, res) => {
       console.error('[admin/turnos] notif asignar socio:', notifErr)
     }
 
-    res.status(201).json({ data, bonoInfo, mensaje: 'Socio asignado al turno correctamente' })
+    responder.creado(res, { ...data, bono: bonoInfo })
   } catch (err) {
     console.error('POST /admin/turnos/:id/socios', err)
     responder.interno(res, 'Error al asignar socio')
@@ -1039,40 +1007,24 @@ router.delete('/:id/socios/:socioId', async (req, res) => {
     // Obtener datos del turno antes de borrar (para la notificación)
     const { data: turno } = await supabase
       .from('turnos')
-      .select('fecha_inicio, sedes(nombre)')
+      .select('id, fecha_inicio, capacidad_maxima, dia_semana, hora_inicio, sedes(nombre)')
       .eq('id', turnoId)
       .single()
 
-    const { error } = await supabase
-      .from('socio_turno')
-      .delete()
-      .eq('turno_id', turnoId)
-      .eq('user_id', socioId)
+    const borradas = await eliminarInscripcion({ turno_id: turnoId, user_id: socioId })
+    if (borradas === 0) return responder.noEncontrado(res, 'El socio no está en este turno')
 
-    if (error) throw error
-
-    // ── Devolución de crédito al bono si corresponde ─────────────────────────
     try {
-      const { data: uso } = await supabase
-        .from('bono_turno')
-        .select('id, bono_id')
-        .eq('turno_id', turnoId)
-        .eq('socio_id', socioId)
-        .maybeSingle()
-
-      if (uso) {
-        await supabase.from('bono_turno').delete().eq('id', uso.id)
-        const { data: bono } = await supabase
-          .from('bonos').select('creditos_usados').eq('id', uso.bono_id).single()
-        if (bono && bono.creditos_usados > 0) {
-          await supabase
-            .from('bonos')
-            .update({ creditos_usados: bono.creditos_usados - 1 })
-            .eq('id', uso.bono_id)
-        }
-      }
+      await devolverCreditoBono({ turno_id: turnoId, socio_id: socioId })
     } catch (bonoErr) {
       console.error('[admin/turnos/socios] error al devolver crédito:', bonoErr)
+    }
+
+    // El cupo liberado pasa al primero de la lista de espera
+    try {
+      await promoverListaEspera(turno)
+    } catch (listaErr) {
+      console.error('[admin/turnos/socios] lista de espera:', listaErr)
     }
 
     // Notificar al socio
@@ -1080,13 +1032,7 @@ router.delete('/:id/socios/:socioId', async (req, res) => {
       const { data: socioData } = await supabase
         .from('users').select('nombre, email').eq('id', socioId).single()
       if (socioData && turno) {
-        const fechaStr = turno.fecha_inicio
-          ? new Date(turno.fecha_inicio).toLocaleString('es-AR', {
-              weekday: 'long', day: 'numeric', month: 'long',
-              hour: '2-digit', minute: '2-digit',
-              timeZone: 'America/Argentina/Buenos_Aires',
-            })
-          : 'próximamente'
+        const fechaStr = turno.fecha_inicio ? formatArES(turno.fecha_inicio) : 'próximamente'
         const sedeStr = turno.sedes?.nombre ?? 'la sede'
         await crearNotificacion({
           user_id: socioId,
@@ -1102,7 +1048,7 @@ router.delete('/:id/socios/:socioId', async (req, res) => {
       console.error('[admin/turnos] notif quitar socio:', notifErr)
     }
 
-    res.json({ ok: true, mensaje: 'Socio quitado del turno correctamente' })
+    responder.ok(res, null)
   } catch (err) {
     console.error('DELETE /admin/turnos/:id/socios/:socioId', err)
     responder.interno(res, 'Error al quitar socio del turno')
@@ -1133,7 +1079,7 @@ router.patch('/:id/entrenador', async (req, res) => {
       .single()
 
     if (error) throw error
-    res.json({ ok: true, data, mensaje: `Entrenador reasignado a ${ent.nombre}` })
+    responder.ok(res, data)
   } catch (err) {
     console.error('PATCH /admin/turnos/:id/entrenador', err)
     responder.interno(res, 'Error al reasignar entrenador')
@@ -1148,26 +1094,27 @@ router.get('/:id/lista-espera', async (req, res) => {
     const { data, error } = await supabase
       .from('lista_espera_turno')
       .select(`
-        id, posicion, fecha_solicitud, estado,
+        id, created_at, estado,
         users!lista_espera_turno_user_id_fkey(id, nombre, email, nivel_id, niveles(nombre))
       `)
       .eq('turno_id', req.params.id)
       .eq('estado', 'esperando')
-      .order('posicion', { ascending: true })
+      .order('created_at', { ascending: true })   // FIFO
 
     if (error) throw error
 
-    const resultado = (data ?? []).map(e => ({
+    // posicion se calcula por orden de llegada (no se guarda en la BD)
+    const resultado = (data ?? []).map((e, idx) => ({
       id:               e.id,
-      posicion:         e.posicion,
-      fecha_solicitud:  e.fecha_solicitud,
+      posicion:         idx + 1,
+      fecha_solicitud:  e.created_at,
       nombre:           e.users?.nombre ?? '—',
       email:            e.users?.email  ?? '—',
       nivel:            e.users?.niveles?.nombre ?? 'Sin nivel',
       user_id:          e.users?.id,
     }))
 
-    res.json({ ok: true, data: resultado, total: resultado.length })
+    responder.ok(res, resultado)
   } catch (err) {
     console.error('GET /admin/turnos/:id/lista-espera', err)
     responder.interno(res, 'Error al obtener lista de espera')

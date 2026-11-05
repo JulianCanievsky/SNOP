@@ -4,6 +4,7 @@ import { useMisAlumnos, useNiveles } from '../../../hooks/useEntrenador'
 import AppNav from '../../../components/AppNav/AppNav'
 import CategoriaBadge from '../../../components/ui/CategoriaBadge/CategoriaBadge'
 import './MisAlumnosEntrenador.css'
+import Spinner from '../../../components/ui/Spinner/Spinner'
 
 function iniciales(nombre = '') {
   return nombre.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
@@ -16,7 +17,7 @@ function formatTurnoCorto(turnos = []) {
   const t = turnos[0]
   const d = new Date(t.fecha_inicio)
   const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', timeZone: TZ })
-  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ })
+  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return `${dia.charAt(0).toUpperCase() + dia.slice(1)} ${hora}`
 }
 
@@ -61,7 +62,7 @@ export default function MisAlumnosEntrenador() {
       </div>
 
       {cargando ? (
-        <div className="sin-alumnos">Cargando...</div>
+        <Spinner center />
       ) : alumnosFiltrados.length === 0 ? (
         <div className="sin-alumnos">
           {filtroId === null

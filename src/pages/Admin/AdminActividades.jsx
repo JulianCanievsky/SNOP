@@ -7,6 +7,7 @@ import { getTorneosAdmin, getInscriptosTorneo } from '../../services/torneosApi'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import api from '../../lib/apiClient.js'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -14,7 +15,7 @@ function formatFechaHora(iso) {
   if (!iso) return '—'
   const d    = new Date(iso)
   const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ })
-  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return `${dia} · ${hora} hs`
 }
 
@@ -27,9 +28,7 @@ function PanelInscriptos({ inscriptos, cargando, capacidad }) {
   if (cargando) {
     return (
       <div className="inscriptos-panel">
-        <div style={{ textAlign: 'center', padding: '12px 0' }}>
-          <div className="spinner-admin" style={{ margin: '0 auto' }} />
-        </div>
+        <Spinner size="sm" center label="Cargando anotados" />
       </div>
     )
   }
@@ -53,7 +52,7 @@ function PanelInscriptos({ inscriptos, cargando, capacidad }) {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
                 <CategoriaBadge nombre={insc.nivel} />
                 {insc.fecha_inscripcion && (
-                  <span style={{ fontSize: 10, color: '#9ca3af' }}>{formatFechaCorta(insc.fecha_inscripcion)}</span>
+                  <span style={{ fontSize: 10, color: 'var(--color-text-subtle)' }}>{formatFechaCorta(insc.fecha_inscripcion)}</span>
                 )}
               </div>
             </div>
@@ -84,7 +83,7 @@ function TarjetaActividad({ tipo, titulo, subtitulo, inscriptos, capacidad, colo
                 {tipo}
               </span>
               {completo && (
-                <span style={{ fontSize: 10, fontWeight: 700, background: '#fee2e2', color: '#b91c1c', padding: '2px 8px', borderRadius: 999 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--color-danger-bg)', color: 'var(--color-danger-text)', padding: '2px 8px', borderRadius: 999 }}>
                   Completo
                 </span>
               )}
@@ -100,8 +99,8 @@ function TarjetaActividad({ tipo, titulo, subtitulo, inscriptos, capacidad, colo
             <span>{inscriptos} inscripto{inscriptos !== 1 ? 's' : ''}</span>
             <span>{capacidad} lugares</span>
           </div>
-          <div style={{ height: 5, background: '#e5e7eb', borderRadius: 999, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${pct}%`, background: completo ? '#ef4444' : color.text, borderRadius: 999, transition: 'width .3s' }} />
+          <div style={{ height: 5, background: 'var(--color-surface-muted)', borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${pct}%`, background: completo ? 'var(--color-danger)' : color.text, borderRadius: 999, transition: 'width .3s' }} />
           </div>
         </div>
 
@@ -139,9 +138,9 @@ function TarjetaActividad({ tipo, titulo, subtitulo, inscriptos, capacidad, colo
 
 // ── Pantalla principal ───────────────────────────────────────────────────────
 const COLORES = {
-  entrenamiento: { bg: '#eef2ff', text: '#4f46e5' },
-  juego_libre:   { bg: '#fff8e1', text: '#d97706' },
-  torneo:        { bg: '#fdf4ff', text: '#7c3aed' },
+  entrenamiento: { bg: 'var(--color-accent-subtle)', text: 'var(--color-accent)' },
+  juego_libre:   { bg: 'var(--color-warning-bg)', text: 'var(--color-warning)' },
+  torneo:        { bg: 'var(--color-accent-subtle)', text: 'var(--color-accent)' },
 }
 
 export default function AdminActividades() {
@@ -192,15 +191,16 @@ export default function AdminActividades() {
 
     try {
       let lista = []
+      // Backend responde { ok, data: { inscriptos, total } }
       if (tipo === 'jl') {
         const res = await getInscriptosJuegoLibre(id)
-        lista = res?.data ?? []
+        lista = res?.data?.inscriptos ?? []
       } else if (tipo === 'tr') {
         const res = await getInscriptosTorneo(id)
-        lista = res?.data ?? []
+        lista = res?.data?.inscriptos ?? []
       } else if (tipo === 'tu') {
-        const res = await api.get(`/admin/turnos/${id}/inscriptos`).catch(() => null)
-        lista = res?.data?.data ?? []
+        const res = await api.get(`/admin/turnos/${id}/inscriptos`)
+        lista = res.data?.data?.inscriptos ?? []
       }
       setPaneles(prev => ({ ...prev, [key]: { abierto: true, cargando: false, inscriptos: lista } }))
     } catch {
@@ -262,7 +262,7 @@ export default function AdminActividades() {
 
         {/* Contenido */}
         {cargando ? (
-          <div className="estado-carga"><div className="spinner-admin" /></div>
+          <Spinner center />
         ) : (
           <>
             {/* ── Juego libre ── */}
@@ -280,7 +280,7 @@ export default function AdminActividades() {
                         key={jl.id}
                         tipo="Juego libre"
                         titulo={formatFechaHora(jl.fecha_inicio)}
-                        subtitulo={`${jl.sedes?.nombre ?? 'Sede'} · hasta ${new Date(jl.fecha_fin).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })} hs`}
+                        subtitulo={`${jl.sedes?.nombre ?? 'Sede'} · hasta ${new Date(jl.fecha_fin).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })} hs`}
                         inscriptos={insc}
                         capacidad={jl.capacidad_maxima}
                         color={COLORES.juego_libre}

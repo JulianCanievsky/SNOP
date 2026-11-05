@@ -1,4 +1,4 @@
-/* BottomNav compartido — usado por los 3 roles via CSS Module */
+/* AppNav — barra inferior compartida por los 3 roles (CSS Module) */
 .nav {
   position: fixed;
   bottom: 0;
@@ -62,7 +62,7 @@
   min-width: 16px;
   height: 16px;
   background: var(--color-danger);
-  color: #fff;
+  color: var(--color-on-primary);
   font-size: 10px;
   font-weight: 700;
   border-radius: var(--radius-pill);

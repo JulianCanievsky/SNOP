@@ -3,11 +3,14 @@ import { Clock } from 'lucide-react'
 import { useJuegoLibre } from './useJuegoLibre'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import DetalleJuegoLibre from './DetalleJuegoLibre'
+import CategoriasHabilitadas from '../../components/ui/CategoriasHabilitadas/CategoriasHabilitadas'
 import AppNav from '../../components/AppNav/AppNav'
 import { getSedesPublicas } from '../../services/adminApi'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import './JuegoLibre.css'
+import ErrorState from '../../components/ui/ErrorState/ErrorState'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -21,7 +24,7 @@ const formatearFecha = (fechaISO) => {
 
 const formatearHora = (inicio, fin) => {
   const h = (d) => new Date(d).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', timeZone: TZ,
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ,
   })
   return `${h(inicio)} — ${h(fin)} hs`
 }
@@ -79,6 +82,7 @@ const TarjetaEvento = ({ evento, onAnotarme, onCancelar }) => {
         </div>
         <div className="info-fila">
           <span>{evento.inscriptos}/{evento.capacidad_maxima} lugares</span>
+          <CategoriasHabilitadas ids={evento.niveles_habilitados} abreviado />
         </div>
       </div>
 
@@ -94,7 +98,9 @@ const TarjetaEvento = ({ evento, onAnotarme, onCancelar }) => {
           ? <button className="btn-cancelar-inscripcion" onClick={() => onCancelar(evento)}>Cancelar</button>
           : completo
             ? <button className="btn-lleno" disabled>Lleno</button>
-            : <button className="btn-anotarme" onClick={() => onAnotarme(evento)}>Anotarme</button>
+            : evento.habilitado === false
+              ? <button className="btn-lleno" disabled title="No disponible para tu categoría">Otra categoría</button>
+              : <button className="btn-anotarme" onClick={() => onAnotarme(evento)}>Anotarme</button>
         }
       </div>
     </div>
@@ -197,17 +203,11 @@ const JuegoLibre = () => {
         <p className="seccion-titulo">PRÓXIMOS ESPACIOS</p>
 
         {cargando && (
-          <div className="estado-carga">
-            <div className="spinner" />
-            <span>Cargando eventos...</span>
-          </div>
+          <Spinner center label="Cargando eventos" />
         )}
 
         {error && (
-          <div className="estado-error">
-            <p>{error}</p>
-            <button onClick={() => cargarEventos()} className="btn-reintentar">Reintentar</button>
-          </div>
+          <ErrorState message={error} onRetry={() => cargarEventos()} />
         )}
 
         {!cargando && !error && eventos.map(evento => (

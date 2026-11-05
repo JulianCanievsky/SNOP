@@ -6,6 +6,7 @@ import { ToastContainer } from '../../../components/ui/Toast'
 import { useToast } from '../../../hooks/useToast'
 import { MapPin, CalendarDays } from 'lucide-react'
 import './MisHorariosEntrenador.css'
+import Spinner from '../../../components/ui/Spinner/Spinner'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -25,7 +26,7 @@ const MESES = [
 
 function formatHora(iso) {
   return new Date(iso).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ,
   })
 }
 
@@ -150,7 +151,7 @@ export default function MisHorariosEntrenador() {
         <div>
           <p className="seccion-titulo-h">Esta semana</p>
           {cargando ? (
-            <div className="sin-horarios">Cargando...</div>
+            <Spinner center />
           ) : Object.keys(horariosPorDia).length === 0 ? (
             <div className="sin-horarios">No tenés horarios cargados esta semana.</div>
           ) : (

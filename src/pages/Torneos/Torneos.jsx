@@ -3,6 +3,7 @@ import { Clock, MapPin, Users, UserSquare2 } from 'lucide-react'
 import { getTorneos, inscribirTorneo, cancelarTorneo } from '../../services/torneosApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import DetalleTorneo from './DetalleTorneo'
+import CategoriasHabilitadas from '../../components/ui/CategoriasHabilitadas/CategoriasHabilitadas'
 import AppNav from '../../components/AppNav/AppNav'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
@@ -19,7 +20,7 @@ const formatFecha = (iso) => {
 
 const formatHora = (ini, fin) => {
   const h = d => new Date(d).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', timeZone: TZ,
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ,
   })
   return fin ? `${h(ini)} — ${h(fin)} hs` : `${h(ini)} hs`
 }
@@ -61,6 +62,7 @@ const TarjetaTorneo = ({ torneo, onVer, onCancelar }) => {
         <span><Clock size={13} strokeWidth={1.8} style={{ verticalAlign:'middle' }} /> {formatHora(torneo.fecha_inicio, torneo.fecha_fin)}</span>
         <span><MapPin size={13} strokeWidth={1.8} style={{ verticalAlign:'middle' }} /> {torneo.nombre_sede}</span>
         <span><Users size={13} strokeWidth={1.8} style={{ verticalAlign:'middle' }} /> {torneo.inscriptos}/{torneo.capacidad_maxima} inscriptos</span>
+        <CategoriasHabilitadas ids={torneo.niveles_habilitados} abreviado />
       </div>
 
       <div className="tor-footer">
@@ -73,7 +75,7 @@ const TarjetaTorneo = ({ torneo, onVer, onCancelar }) => {
           <button className="tor-btn-ver" onClick={() => onVer(torneo)}>Ver</button>
           {yaInscripto
             ? <button className="tor-btn-cancelar" onClick={() => onCancelar(torneo)}>Cancelar</button>
-            : !completo && <button className="tor-btn-anotarme" onClick={() => onVer(torneo)}>Anotarme</button>
+            : !completo && torneo.habilitado !== false && <button className="tor-btn-anotarme" onClick={() => onVer(torneo)}>Anotarme</button>
           }
         </div>
       </div>

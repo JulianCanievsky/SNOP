@@ -11,32 +11,28 @@
  */
 
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import responder from '../src/lib/responder.js'
+import { hoyAR } from '../src/lib/fecha.js'
 
 const router = express.Router()
 router.use(autenticar)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function soloAdmin(req, res, next) {
-  if (req.userTipo !== 3) {
-    return responder.sinPermiso(res, 'Acceso restringido a administradores')
-  }
-  next()
-}
+const soloAdmin = requireRole(3)
 
 /** Devuelve el bono activo y vigente de un socio, o null si no tiene. */
 async function getBonoActivo(socioId) {
-  const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+  const hoyStr = hoyAR()
   const { data, error } = await supabase
     .from('bonos')
     .select('id, tipo, creditos_total, creditos_usados, fecha_inicio, fecha_vencimiento, notas')
     .eq('socio_id', socioId)
     .eq('activo', true)
-    .lte('fecha_inicio',      hoyAR)
-    .gte('fecha_vencimiento', hoyAR)
+    .lte('fecha_inicio',      hoyStr)
+    .gte('fecha_vencimiento', hoyStr)
     .order('fecha_vencimiento', { ascending: true })
     .limit(1)
     .maybeSingle()
@@ -48,7 +44,7 @@ async function getBonoActivo(socioId) {
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/bonos/mio — el socio ve su bono activo
 // ─────────────────────────────────────────────────────────────────────────────
-router.get('/mio', async (req, res) => {
+router.get('/mio', requireRole(1), async (req, res) => {
   try {
     const bono = await getBonoActivo(req.userId)
     if (!bono) return responder.ok(res, null)
@@ -87,11 +83,11 @@ router.get('/socio/:socioId', soloAdmin, async (req, res) => {
 
     if (error) throw error
 
-    const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoyStr = hoyAR()
     const bonos = (data ?? []).map(b => ({
       ...b,
       creditos_disponibles: b.creditos_total - b.creditos_usados,
-      vigente: b.activo && b.fecha_inicio <= hoyAR && b.fecha_vencimiento >= hoyAR,
+      vigente: b.activo && b.fecha_inicio <= hoyStr && b.fecha_vencimiento >= hoyStr,
       creado_por_nombre: b.users?.nombre ?? '—',
     }))
 

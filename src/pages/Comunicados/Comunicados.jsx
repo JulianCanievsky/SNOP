@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../../lib/apiClient.js'
 import AppNav from '../../components/AppNav/AppNav'
 import './Comunicados.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 // Clave en localStorage para guardar el ID del último comunicado leído
 const STORAGE_KEY = 'snop_comunicado_leido'
@@ -72,7 +73,7 @@ export default function Comunicados() {
       {/* LISTA */}
       <main className="com-lista">
         {cargando ? (
-          <div className="com-empty">Cargando...</div>
+          <Spinner center />
         ) : comunicados.length === 0 ? (
           <div className="com-empty">
             <span className="com-empty-icon">📢</span>

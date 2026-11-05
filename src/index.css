@@ -44,6 +44,24 @@
   --color-input-border:   #dde2ef;
   --color-input-focus:    #1565C0;
 
+  /* ── Extendidos (B2): reemplazan los hex sueltos de las páginas ─ */
+  --color-text-secondary: #475569;   /* texto intermedio entre text y muted */
+  --color-surface-muted:  #f1f5f9;   /* chip / fondo gris dentro de una card */
+  --color-success-text:   #166534;   /* texto sobre success-bg */
+  --color-success-border: #86efac;
+  --color-danger-text:    #991b1b;
+  --color-danger-border:  #fca5a5;
+  --color-warning-text:   #92400e;
+  --color-warning-border: #fde68a;
+  --color-info-border:    #bfdbfe;
+  --color-accent:         #7c3aed;   /* violeta: entrenadores / clases particulares */
+  --color-accent-strong:  #6d28d9;
+  --color-accent-subtle:  #ede9fe;
+  --color-accent-border:  #c4b5fd;
+  --color-rating:         #f59e0b;   /* estrellas */
+  --color-whatsapp:       #25d366;
+  --color-whatsapp-hover: #1ebe5c;
+
   /* ── Navegación inferior (todos los roles) ──────────────────── */
   --color-nav-bg:         #ffffff;
   --color-nav-border:     #e5e7eb;
@@ -189,6 +207,23 @@
   --color-input-bg:       #22263a;
   --color-input-border:   #3a3d4e;
   --color-input-focus:    #42A5F5;
+
+  --color-text-secondary: #cbd5e1;
+  --color-surface-muted:  #22263a;
+  --color-success-text:   #86efac;
+  --color-success-border: #166534;
+  --color-danger-text:    #fca5a5;
+  --color-danger-border:  #7f1d1d;
+  --color-warning-text:   #fde68a;
+  --color-warning-border: #44340a;
+  --color-info-border:    #1e40af;
+  --color-accent:         #a78bfa;
+  --color-accent-strong:  #c4b5fd;
+  --color-accent-subtle:  #2d1e4f;
+  --color-accent-border:  #3a2a70;
+  --color-rating:         #fbbf24;
+  --color-whatsapp:       #25d366;
+  --color-whatsapp-hover: #1ebe5c;
 
   --color-nav-bg:         #1a1d27;
   --color-nav-border:     #2a2d3a;

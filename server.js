@@ -39,7 +39,7 @@ import juegoLibreRoutes         from './rutas/JuegoLibre.js'
 import turnosRoutes             from './rutas/turnos.js'
 import clasesParticularesRoutes from './rutas/clasesParticulares.js'
 import perfilRouter             from './rutas/perfil.js'
-import autenticar               from './src/middlewares/autenticar.js'
+import autenticar, { requireRole } from './src/middlewares/autenticar.js'
 import entrenadorRouter         from './rutas/entrenador.js'
 import authRouter               from './rutas/auth.js'
 import adminRouter              from './rutas/admin.js'
@@ -98,7 +98,7 @@ const limiterGlobal = rateLimit({
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Demasiadas solicitudes. Intentá de nuevo en 15 minutos.' },
+  message: { ok: false, mensaje: 'Demasiadas solicitudes. Intentá de nuevo en 15 minutos.' },
 })
 app.use(limiterGlobal)
 
@@ -108,7 +108,7 @@ export const limiterAuth = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Demasiados intentos de acceso. Esperá 15 minutos.' },
+  message: { ok: false, mensaje: 'Demasiados intentos de acceso. Esperá 15 minutos.' },
 })
 
 // ─── Rutas ────────────────────────────────────────────────────────────────────
@@ -142,20 +142,38 @@ app.get('/api/niveles', autenticar, async (_req, res) => {
     res.status(500).json({ ok: false, mensaje: 'Error al obtener niveles' })
   }
 })
+// ─── Comunicados del socio ───────────────────────────────────────────────────
+// Segmentos que ve un socio:
+//   'todos'       → siempre
+//   'con_deuda'   → solo si cuota_al_dia = false
+//   'nivel_<id>'  → su categoría
+// 'entrenadores' NO se incluye (lo sirve GET /api/entrenador/comunicados).
+// Se lee de la BD (no del JWT) para que cuota y nivel estén actualizados.
+async function segmentosDelSocio(userId) {
+  const segmentos = ['todos']
+  const { data: u } = await supabase
+    .from('users')
+    .select('nivel_id, cuota_al_dia')
+    .eq('id', userId)
+    .maybeSingle()
+  if (u?.cuota_al_dia === false) segmentos.push('con_deuda')
+  if (u?.nivel_id) segmentos.push(`nivel_${u.nivel_id}`)
+  return segmentos
+}
+
+function filtrarComunicados(lista, segmentos) {
+  return (lista ?? []).filter(c => {
+    const dest = Array.isArray(c.destinatarios) ? c.destinatarios : [c.destinatarios]
+    return segmentos.some(s => dest.includes(s))
+  })
+}
+
 // Comunicados — últimos 5 para Inicio del socio (solo los últimos 5 días)
-app.get('/api/comunicados', autenticar, async (req, res) => {
+app.get('/api/comunicados', autenticar, requireRole(1), async (req, res) => {
   try {
     const hace5Dias = new Date()
     hace5Dias.setDate(hace5Dias.getDate() - 5)
-
-    // Comunicados que el socio puede ver:
-    // - 'todos': comunicados generales para todos los socios
-    // - 'con_deuda': comunicados para socios con deuda (si el socio tiene deuda los recibe)
-    // - 'nivel_<id>': comunicados para su categoría específica
-    // NO incluir 'entrenadores' — esos son solo para entrenadores
-    const nivelId = req.user?.nivel_id ?? null
-    const filtros = ['todos', 'con_deuda']
-    if (nivelId) filtros.push(`nivel_${nivelId}`)
+    const segmentos = await segmentosDelSocio(req.userId)
 
     const { data, error } = await supabase
       .from('comunicados')
@@ -167,12 +185,7 @@ app.get('/api/comunicados', autenticar, async (req, res) => {
       if (error.code === '42P01') return res.json({ ok: true, data: [] })
       throw error
     }
-    // Filtrar en memoria: solo los comunicados dirigidos a este socio
-    const visibles = (data ?? []).filter(c => {
-      const dest = Array.isArray(c.destinatarios) ? c.destinatarios : [c.destinatarios]
-      return filtros.some(f => dest.includes(f))
-    }).slice(0, 5)
-    res.json({ ok: true, data: visibles })
+    res.json({ ok: true, data: filtrarComunicados(data, segmentos).slice(0, 5) })
   } catch (err) {
     console.error('GET /api/comunicados', err)
     res.status(500).json({ ok: false, mensaje: 'Error al obtener comunicados' })
@@ -180,12 +193,9 @@ app.get('/api/comunicados', autenticar, async (req, res) => {
 })
 
 // Todos los comunicados para socios (pantalla completa de Comunicados)
-app.get('/api/comunicados/todos', autenticar, async (req, res) => {
+app.get('/api/comunicados/todos', autenticar, requireRole(1), async (req, res) => {
   try {
-    const nivelId = req.user?.nivel_id ?? null
-    // Misma lógica que /api/comunicados: excluir 'entrenadores' para socios
-    const filtros = ['todos', 'con_deuda']
-    if (nivelId) filtros.push(`nivel_${nivelId}`)
+    const segmentos = await segmentosDelSocio(req.userId)
 
     const { data, error } = await supabase
       .from('comunicados')
@@ -195,12 +205,7 @@ app.get('/api/comunicados/todos', autenticar, async (req, res) => {
       if (error.code === '42P01') return res.json({ ok: true, data: [] })
       throw error
     }
-    // Filtrar en memoria: solo los comunicados dirigidos a este socio
-    const visibles = (data ?? []).filter(c => {
-      const dest = Array.isArray(c.destinatarios) ? c.destinatarios : [c.destinatarios]
-      return filtros.some(f => dest.includes(f))
-    })
-    res.json({ ok: true, data: visibles })
+    res.json({ ok: true, data: filtrarComunicados(data, segmentos) })
   } catch (err) {
     console.error('GET /api/comunicados/todos', err)
     res.status(500).json({ ok: false, mensaje: 'Error al obtener comunicados' })

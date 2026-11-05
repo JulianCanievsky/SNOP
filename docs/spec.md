@@ -1,5 +1,5 @@
-# SNOP — Spec actualizado
-> Última actualización: 2026-11-02 (sprint 2). Ver `docs/CONTEXT.md` para el contexto completo.
+# SNOP — Spec
+> Última actualización: 2026-11-05 (sprint 3). Contexto completo en `docs/CONTEXT.md`.
 
 ---
 
@@ -7,100 +7,58 @@
 
 | ID | Descripción |
 |----|-------------|
-| A1 | `errores.js` + `obtenerMensajeError`, interceptor 401 login corregido, ~40 catch actualizados |
-| A2 | `useJuegoLibre.js` lee `data.data`, `Inicio.jsx` corregido |
-| A3 | `socioTurnoService.js` centraliza inserts/updates de `socio_turno` |
-| A4 | `clasesParticulares.js` usa `socioTurnoService`, validaciones completas |
-| A5 | `getTurnosBySocio` separa próximos/historial por fecha ART |
-| A6 | CSS de `DetalleTorneo` agregado a `Torneos.css` |
-| A7 | Tab Historial conectado a `GET /api/perfil/historial` (paginado, filtros mes/tipo). Hook `useHistorialPerfil.js` |
-| A8 | `CrearTorneo.jsx` y `CrearJuegoLibre.jsx` usan 8 categorías desde API con `CategoriaBadge` e IDs |
-| A9 | `EnviarComunicado.jsx` checkboxes múltiples, backend deduplica, migración 004 preparada |
-| A10 | `SearchInput` creado, `GestionNiveles` y `GestionSocios` lo usan |
-| A11 | `DELETE /api/admin/socios/:id` baja lógica, confirma por nombre, libera cupos, bloquea login |
-| C1 | Todas las respuestas `{ error }` normalizadas en todos los routers |
-| C2 parcial | `fecha.js` tiene `toFechaAR()` y `formatArES()`. Reemplazados en múltiples archivos |
-| C3 | `migrations/README.md` + `docs/esquema.md` actualizado |
-| C4 | Créditos: separación semántica `vencido ≠ usado`. Lógica movida a `rutas/creditos.js`. Sin `update({ usado: true })` al vencer |
-| C5 | JWT_SECRET/SUPABASE_URL/SUPABASE_SERVICE_KEY obligatorias al arrancar. `requireRole(2,3)` en `entrenador.js`. `requireRole(3)` canónico en `adminTurnos.js` |
-| C6 | ESLint: patrón `_ref.current = fn` eliminado de todos los archivos. Imports `useRef` huérfanos removidos. Build ✓ |
-| C8 | `.gitignore` actualizado, archivos basura removidos del tracking |
-| C9 | `README.md` completo |
-| B1 | `src/index.css` tiene todos los tokens CSS (verificado) |
-| B3 parcial | Componentes `Button`, `ConfirmDialog`, `EmptyState`, `ErrorState`, `Spinner`, `Skeleton` creados en `src/components/ui/` |
-| B3 window.confirm | Todos los `window.confirm` reemplazados por `ConfirmDialog`: `MisClasesEntrenador.jsx`, `CrearJuegoLibre.jsx`, `CrearTorneo.jsx` |
-| B4 parcial | `AppNav.jsx` — BottomNav unificado por rol. Los 3 originales siguen disponibles (migración pendiente) |
+| A1–A11 | Bugs críticos del sprint 1–2 (errores, `socioTurnoService`, fechas ART, historial, categorías por ID, comunicados multi-segmento, `SearchInput`, baja lógica) |
+| C1 | Contrato `{ ok, data }` / `{ ok:false, mensaje }` en todos los routers (`adminTurnos` incluido) + `ErrorNegocio` |
+| C2 | Fechas: helpers de `fecha.js` en todo el backend; horas en 24 hs en toda la app |
+| C3 | Migraciones 001–005 aplicadas y verificadas; historial en `docs/esquema.md` |
+| C4 | Créditos: usado ≠ vencido; arrastre de fin de mes corregido; crédito por cancelación del club |
+| C5 | Seguridad: env obligatorias, `requireRole` en todas las rutas (socio, entrenador, admin), sin endpoints públicos innecesarios |
+| C6 | ESLint en 0 |
+| C7 | 75 tests (créditos, fechas, lista de espera, errores, `socioTurnoService`, categorías, sintaxis del backend) |
+| C8–C9 | `.gitignore`, README |
+| C10 | CI en GitHub Actions (`npm run check`) |
+| R5 | Regla 5: promoción automática de lista de espera |
+| R9 | Cancelación del club → `baja_entrenador` + crédito + aviso |
+| R10 | Categorías habilitadas en juego libre / torneos (backend + UI) |
+| B1 | Tokens en `src/index.css` (+16 extendidos) |
+| B2 | 0 hex sueltos en `.css` y `.jsx` (`npm run lint:css`) |
+| B3 parcial | `Button`, `ConfirmDialog`, `EmptyState`, `ErrorState`, `Spinner`, `Skeleton`, `CategoriasHabilitadas` |
+| B4 | `AppNav` único; navs viejos eliminados |
+| B7 | `Spinner` / `EmptyState` / `ErrorState` en las pantallas |
+| B8 parcial | `aria-label` en botones de solo ícono |
+| B9 | `/design-system` con tokens extendidos y todos los componentes |
+| P1 | Bundle inicial 870 → 285 kB (carga por pantalla) |
 
 ---
 
 ## ❌ Pendiente — en orden de prioridad
 
-### 1. Aplicar migraciones pendientes en Supabase
+### 1. Revisión visual (B10) — manual
+B2 cambió ~465 colores a tokens y algunos tonos se unificaron (ej. el azul `#2563eb` de varias páginas pasó a ser el primario `#1565C0`; los tres violetas, uno solo). Recorrer en **360 px y escritorio, claro y oscuro**: login, Inicio, Entrenamientos, Mis clases, Clases particulares, Juego libre, Torneos, Perfil, pantallas del entrenador, AdminTurnos, GestionBonos, DetalleSocio. Anotar lo que se vea mal y ajustar el token (no volver a hex).
 
-Aplicar en este orden desde el SQL Editor de Supabase:
-1. `migrations/002_juego_libre_niveles_habilitados.sql`
-2. `migrations/003_users_eliminado_en.sql`
-3. `migrations/004_comunicados_destinatarios_array.sql`
+### 2. Prueba de punta a punta con datos reales
+Recorrer los flujos que cambiaron de lógica:
+- Socio cancela un turno lleno con alguien en lista de espera → el primero queda inscripto y recibe aviso.
+- Entrenador cancela una clase → los inscriptos reciben aviso y crédito.
+- Admin restringe un torneo a 3ª–4ª → un socio de 6ª ve el botón deshabilitado y el backend lo rechaza.
+- Clases particulares: retirar una pendiente; cancelar una confirmada (con y sin 24 hs).
+- Socio cancela un torneo y se vuelve a anotar.
 
-Sin estas migraciones, A8, A9 y A11 no funcionan en producción.
+### 3. Agenda y semanas canceladas
+`turno_excepciones` (admin cancela una semana de un turno recurrente) no se refleja en la agenda del socio ni en Mis clases.
 
----
-
-### 2. C7 — Tests mínimos (vitest)
-
-Crear `tests/` con:
-- Contrato `GET /api/juego-libre` → `{ ok: true, data: [] }`
-- `crearInscripcion` con estado inválido → lanza error
-- `obtenerMensajeError` — prioriza `data.mensaje`, luego `data.error`, luego HTTP code
-- Crédito con exactamente 24hs → genera; 23:59 → no genera
-- Arrastre fin de mes: clase en última semana → crédito mes siguiente
-- Lista de espera FIFO
-- Filtro turnos pasados en UTC-3
-- Eliminación de socio
-
----
-
-### 3. Bloque B — Sistema de diseño (pendiente)
-
-**B2** — Eliminar hex sueltos. Peores archivos: `MisClases.css`, `ClasesParticulares.css`, `PerfilPublicoEntrenador.css`, `RatingEntrenador.css`, `Admin.css`. Agregar `npm run lint:css`.
-
-**B3 (resto)** — Componentes base pendientes:
-`Modal`, `Card`, `Badge`, `Input`, `Select`, `DatePicker`,
-`Avatar`, `AvatarGroup`, `ProgressBar`, `DayPicker`, `PageHeader`, `AppLayout`.
-
-**B4 (completar)** — Migrar todos los usos de `BottomNav`/`AdminBottomNav`/`BottomNavEntrenador` a `AppNav`. Una vez migrado, eliminar los 3 originales.
-
-**B5** — 27 hojas CSS globales → CSS Modules.
-
-**B6** — `TurnoCard` único con variantes por rol.
-
-**B7** — Usar `Spinner`, `EmptyState`, `ErrorState` en todas las pantallas de forma sistemática.
-
-**B8** — Accesibilidad: foco visible, 44px mínimo, labels, aria-label en botones ícono, foco atrapado en modales + Esc.
-
-**B9** — `/design-system` con todos los componentes, variantes, 8 categorías, ambos temas.
-
-**B10** — Revisar en 360px y escritorio: login, Entrenamientos + modal, DetalleTorneo, GestionNiveles, EnviarComunicado.
-
----
-
-## Orden de ejecución recomendado
-
-```
-1. Aplicar migraciones 002+003+004 en Supabase (acción manual del usuario)
-2. C7  — tests vitest
-3. B2  — eliminar hex sueltos + lint:css
-4. B3 (resto) — Modal, Card, Badge, Input, Select...
-5. B4 completo — migrar todos los usos a AppNav
-6. B5→B10 — resto del sistema de diseño
-```
+### 4. Sistema de diseño (resto)
+- **B5** — Hojas CSS por página → CSS Modules. Al terminar, volver a `cssCodeSplit: true` en `vite.config.js`.
+- **B6** — `TurnoCard` único con variantes por rol.
+- **B3 resto** — `Modal`, `Card`, `Badge`, `Input`, `Select`, `PageHeader`, `AppLayout`: crearlos al migrar la primera pantalla que los use, no antes.
+- **B8 resto** — foco visible, objetivos de 44 px, foco atrapado en modales.
 
 ---
 
 ## Notas para el próximo agente
 
-- El build de Vite **pasa** (verificado en sprint 2). No rompas eso.
-- Patrón useEffect correcto (ya aplicado en todos los archivos):
+- `npm run check` = lint + lint:css + tests + build. Es lo que corre CI. Build verde no alcanza para el backend: levantarlo y probar `/api/sedes`.
+- Patrón de carga en páginas (ESLint react-hooks v7):
   ```jsx
   const cargar = useCallback(async () => { /* setState aquí */ }, [deps])
   useEffect(() => {
@@ -108,8 +66,9 @@ Crear `tests/` con:
     init()
   }, [cargar])
   ```
-- `ConfirmDialog` es un bottom sheet — úsalo para cualquier confirmación destructiva (reemplaza `window.confirm`).
-- `AppNav` lee el rol desde `AuthContext` automáticamente — no requiere prop de rol.
-- Los componentes `Spinner`, `EmptyState`, `ErrorState`, `Skeleton` están en `src/components/ui/` listos para usar.
-- `rutas/creditos.js` ya maneja la semántica correcta de vencido vs usado.
-- `requireRole` es el patrón canónico para proteger rutas — no crear helpers custom como `soloAdmin`.
+- Estado inicial que sale de `localStorage`: inicializador de `useState` (ver `AuthContext`), no un effect.
+- Servicios del backend: errores para el usuario con `throw new ErrorNegocio('texto', status)`; en la ruta `responderError(res, err, 'genérico')`.
+- Colores: solo `var(--color-...)`. Si falta un tono, agregar el token en `src/index.css` (claro **y** oscuro).
+- Estados de pantalla: `<Spinner center />`, `<EmptyState />`, `<ErrorState onRetry />`. Confirmaciones destructivas: `<ConfirmDialog />`.
+- NUNCA inventar columnas: ver `docs/esquema.md`. `socio_turno` no tiene `created_at` (usar `fecha_inscripcion`).
+- Cambios de esquema: SQL idempotente → mostrárselo al usuario → él lo aplica en Supabase → actualizar `docs/esquema.md`.

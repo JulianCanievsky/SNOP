@@ -1,7 +1,7 @@
 # Esquema real de la base de datos SNOP
 
 > Fuente de verdad: consultas directas a Supabase via service key.
-> Relevamiento ejecutado el 16/10/2026.
+> Relevamiento ejecutado el 16/10/2026. Actualizado 2026-11-05: migraciones 001–005 aplicadas y verificadas contra la base.
 > Las columnas de tablas vacías (*) se infieren de errores de constraint + pruebas de insert/select.
 > `[SUPUESTO]` = columna no verificada directamente; debe confirmarse antes de usarla.
 
@@ -41,6 +41,8 @@ Usuarios del sistema (socios, entrenadores y admins).
 | `rating`         | numeric    | promedio de `ratings_entrenador` (solo entrenadores)                  |
 | `clases_dadas`   | int        | contador de clases dadas (solo entrenadores)                          |
 | `auth_id`        | uuid       | nullable; reservado para Supabase Auth si se migra                    |
+| `eliminado_en`   | timestampz | nullable; ≠ NULL = baja lógica (no puede loguearse, no aparece en listados) |
+| `eliminado_por`  | bigint (FK)| nullable → `users.id` del admin que dio la baja                       |
 | `created_at`     | timestampz |                                                                       |
 
 **Observación:** `estado_cuenta` es la fuente de verdad del estado del socio; `activo` queda como flag de soft-delete.
@@ -184,9 +186,10 @@ Inscripciones de socios a turnos.
 | `estado`           | boolean    | **true** = activo/confirmado; **false** = pendiente o cancelado     |
 | `fecha_inscripcion`| timestampz |                                                                     |
 
-**Problema confirmado:** `estado` es boolean, no enum. El código lo usa como: `true` = confirmado, `false` = pendiente/cancelado (ambiguos). `tipo_estado` existe (Confirmado/Cancelado/Pendiente) pero NO se usa aquí.
+| `estado_texto`     | text       | ✅ migración 001: `activo` · `pendiente` · `cancelado_a_tiempo` · `cancelado_tarde` · `baja_entrenador` |
 
-**SUPUESTO:** Migrar `estado` de boolean a referencia a `tipo_estado.id` o a un tipo texto con valores definidos. Esto es prerequisito para el sistema de créditos, lista de espera y lógica de cancelación.
+**Regla:** `estado` (boolean) y `estado_texto` se escriben SIEMPRE juntos y SOLO desde `src/services/socioTurnoService.js`. `estado = true` ⇔ `estado_texto = 'activo'`.
+**Ojo:** no tiene `created_at` — ordenar por `fecha_inscripcion`.
 
 ---
 
@@ -206,17 +209,18 @@ Catálogo de estados (hoy sin uso en `socio_turno`).
 
 ### `lista_espera_turno`
 
-Lista de espera por turno. **0 filas.**
+Lista de espera por turno.
 
-| Columna       | Tipo       | Notas                             |
-|---------------|------------|-----------------------------------|
-| `id`          | int (PK)   | verificado (se genera en insert)  |
-| `turno_id`    | int (FK)   | → `turnos.id`; NOT NULL           |
-| `user_id`     | int (FK)   | → `users.id`; NOT NULL [SUPUESTO] |
-| `created_at`  | timestampz | generado automáticamente          |
+| Columna         | Tipo       | Notas                                                   |
+|-----------------|------------|---------------------------------------------------------|
+| `id`            | int (PK)   |                                                         |
+| `turno_id`      | int (FK)   | → `turnos.id`; NOT NULL                                 |
+| `user_id`       | int (FK)   | → `users.id`; NOT NULL                                  |
+| `created_at`    | timestampz | default `now()`; define el orden FIFO                   |
+| `estado`        | text       | `'esperando'` (default) · `'promovido'` · `'cancelado'` |
+| `notificado_at` | timestampz | cuándo se lo promovió/avisó                             |
 
-**SUPUESTO:** No tiene columna `posicion` explícita — el orden se infiere por `created_at`. Puede necesitar añadirse para garantizar FIFO ante inserts simultáneos.
-**SUPUESTO:** No tiene columna `notificado_at` para registrar cuándo se avisó al socio.
+**Reglas:** orden FIFO = `ORDER BY created_at` (la posición se calcula al leer, no se guarda). Todo el código filtra `estado = 'esperando'`. No insertar `fecha_inscripcion` ni `posicion` (no existen). Si el socio vuelve a anotarse se reutiliza su fila (vuelve a `esperando` con `created_at = now()`).
 
 ---
 
@@ -250,10 +254,9 @@ Créditos de recupero generados al cancelar con anticipación.
 | `turno_usado_id`  | int (FK)   | nullable → `turnos.id`; turno en el que se usó el crédito         |
 | `fecha_generado`  | timestampz | cuándo se creó el crédito                                         |
 | `fecha_vencimiento`| timestampz| hasta cuándo es válido                                            |
+| `arrastrado`      | boolean    | ✅ verificado: true si la clase cayó en la última semana del mes   |
 
-**Observación:** No tiene columna `estado` (solo `usado` boolean). Para implementar `vencido` como estado se necesitaría migrar o calcularlo en runtime comparando `fecha_vencimiento` con NOW().
-
-**SUPUESTO faltante:** No hay columna para identificar si el crédito fue arrastrado al mes siguiente (`arrastrado` boolean o similar).
+**Reglas:** no hay columna `estado`; `vencido` se calcula en runtime (`!usado && fecha_vencimiento < now()`), nunca se marca `usado = true` al vencer. Un crédito por `(user_id, turno_origen_id)`. Si se arrastra, `mes_periodo` es el mes siguiente.
 
 ---
 
@@ -351,6 +354,7 @@ Espacios de juego libre (no clases particulares).
 | `fecha_inicio`     | timestampz |                                        |
 | `fecha_fin`        | timestampz |                                        |
 | `capacidad_maxima` | int        |                                        |
+| `niveles_habilitados` | int[]   | IDs de `niveles`; `{}` = apto para todos (migración 002) |
 | `activo`           | boolean    |                                        |
 | `created_at`       | timestampz |                                        |
 
@@ -379,7 +383,7 @@ Mensajes del club a socios/entrenadores.
 | `id`           | int (PK)   |                                                                |
 | `titulo`       | text       |                                                                |
 | `mensaje`      | text       |                                                                |
-| `destinatarios`| text       | `'todos'`, `'con_deuda'`, `'entrenadores'`, `'nivel_<id>'` (ej. `'nivel_3'` para 3ª categoría). Valores viejos `'nivel_rojo'`/`'nivel_azul'` en registros existentes son inactivos. |
+| `destinatarios`| text[]     | segmentos: `'todos'`, `'con_deuda'`, `'entrenadores'`, `'nivel_<id>'`. Varios a la vez (migración 004). Valores viejos `'nivel_rojo'`/`'nivel_azul'` quedaron inactivos. |
 | `enviado_por`  | int (FK)   | → `users.id` (admin)                                           |
 | `fecha`        | timestampz |                                                                |
 
@@ -416,7 +420,7 @@ Solicitudes de ingreso al club.
 | `fecha_fin`           | timestampz    |                                     |
 | `modalidad`           | text          | `'singles'`, `'dobles'`             |
 | `capacidad_maxima`    | int           |                                     |
-| `niveles_habilitados` | text[]        | array de nombres de nivel           |
+| `niveles_habilitados` | int[]         | IDs de `niveles`; `{}` = apto para todos (migración 002 convirtió los nombres) |
 | `activo`              | boolean       |                                     |
 | `creado_por`          | int (FK)      | → `users.id`                        |
 
@@ -454,72 +458,18 @@ Solicitudes de ingreso al club.
 
 ---
 
-## Verificación de hipótesis del brief
+## Decisiones de modelo (resueltas)
 
-| Hipótesis | Resultado |
-|-----------|-----------|
-| `tipo_usuario` = roles | ✅ CONFIRMADO: 1=socio, 2=entrenador, 3=admin |
-| `tipo_estado` = estados de `socio_turno` | ❌ NO se usa en `socio_turno`. Existe la tabla pero `socio_turno.estado` es boolean. Los valores tienen `\n` al final (bug de datos). |
-| `lista_espera_turno` = lista de espera | ✅ CONFIRMADO: tabla existe, FK a `turnos` y `users`, 0 filas, necesita columna `notificado_at` [SUPUESTO] |
-| `notificaciones` = avisos in-app | ✅ CONFIRMADO: `id, user_id, titulo, mensaje, tipo, leida, fecha, link` |
-| `creditos_clase` = créditos de recupero | ✅ CONFIRMADO con: `user_id, turno_origen_id, mes_periodo, usado, turno_usado_id, fecha_generado, fecha_vencimiento` |
-| `bonos/bono_turno` = paquete mensual pagado | ✅ CONFIRMADO: `bonos` = paquete (8 clases/mes), `bono_turno` = pivot de uso |
-| `turno_excepciones` = cancelaciones puntuales | ✅ PARCIAL: tiene `turno_id` y `fecha_excepcion`, estado default `'cancelado'`. Columnas opcionales no verificadas. |
-| `configuracion_club` = constantes configurables | ⚠️ EXISTE pero VACÍA y sin columnas `clave/valor`. Requiere migración. |
-| `nivel NULL = apto para todos` | ✅ PROBABLE: `nivel_minimo_id` y `nivel_maximo_id` son nullable en `turnos`. Confirmar semántica exacta. |
-| `socio_turno.estado` boolean suficiente | ❌ INSUFICIENTE: no distingue entre cancelado-a-tiempo, cancelado-tarde, pendiente, etc. Requiere migración. |
-
----
-
-## CONFLICTOS A RESOLVER ANTES DE IMPLEMENTAR
-
-### CONFLICTO 1 — Niveles: 5 filas vs. 8 categorías requeridas
-
-La tabla `niveles` tiene 5 filas (Principiante/Azul/Intermedio/Rojo/Avanzado).
-El club opera con **8 categorías**: 1ª, 2ª, 3ª, 4ª, 5ª, 6ª, 7ª y 8ª categoría.
-
-**Pregunta bloqueante antes de migrar:**
-1. ¿Es 1ª categoría la MÁS ALTA o la MÁS BAJA?
-2. ¿Cuál es la equivalencia entre las 5 filas actuales y las 8 categorías nuevas?
-
-**Propuesta de equivalencia tentativa (NO aplicar hasta confirmar):**
-
-| id actual | nombre actual | Posible equivalencia  | Orden nuevo |
-|-----------|---------------|----------------------|-------------|
-| —         | (nuevo)       | 8ª categoría         | 1           |
-| —         | (nuevo)       | 7ª categoría         | 2           |
-| —         | (nuevo)       | 6ª categoría         | 3           |
-| 1         | Principiante  | 5ª categoría         | 4           |
-| 2         | Azul          | 4ª categoría         | 5           |
-| 3         | Intermedio    | 3ª categoría         | 6           |
-| 4         | Rojo          | 2ª categoría         | 7           |
-| 5         | Avanzado      | 1ª categoría         | 8           |
-
-Esto asume: **1ª = la más alta** (como en el tenis de mesa real, donde 1ª es la élite).
-Confirmar antes de ejecutar la migración.
-
-### CONFLICTO 2 — `socio_turno.estado` boolean vs. estados ricos
-
-El campo actual (boolean) no puede expresar: `activo`, `cancelado_a_tiempo`, `cancelado_tarde`, `baja_entrenador`, `lista_espera`, `pendiente`.
-
-**SUPUESTO de migración propuesto:**
-```sql
--- 1. Agregar columna de estado texto con default que mapea el boolean actual
-ALTER TABLE socio_turno
-  ADD COLUMN IF NOT EXISTS estado_tipo text
-    GENERATED ALWAYS AS (CASE WHEN estado = true THEN 'activo' ELSE 'pendiente' END) STORED;
--- (esto es provisional; la migración real implica backfill y renombrar)
-```
-La migración definitiva debe ser idempotente y reversible. Ver spec para el plan detallado.
-
-### CONFLICTO 3 — `configuracion_club` vacía
-
-Las columnas `clave/valor` no existen. Todas las constantes de negocio están hardcodeadas en el código.
-Requiere migración antes de implementar la lógica de créditos.
-
-### CONFLICTO 4 — `turnos.fecha_inicio` sin timezone
-
-La muestra devuelve `"2026-06-23 10:00:00"` (sin offset). Si la columna es `timestamp` (sin tz), Supabase la trata como UTC. El frontend la interpreta como local y pierde 3 horas. Verificar tipo exacto de la columna en Supabase.
+| Tema | Decisión |
+|------|----------|
+| Roles | `tipo_usuario`: 1 socio · 2 entrenador · 3 admin |
+| Categorías | 8 filas en `niveles`; **1ª = élite (orden 1)**, 8ª = principiante. Los socios con niveles viejos quedaron con `nivel_id = NULL` |
+| Estado de inscripción | `socio_turno.estado_texto` (5 valores) + boolean `estado` sincronizado por `socioTurnoService`. `tipo_estado` no se usa |
+| Lista de espera | `lista_espera_turno` con `estado` y FIFO por `created_at` |
+| Créditos | `creditos_clase`; `vencido` en runtime; `arrastrado` para última semana |
+| Zona horaria | `turnos.fecha_inicio` puede venir sin offset ("2025-06-05 10:00:00"): siempre leer con `parseFechaAR()` (asume -03:00) |
+| Constantes | `configuracion_club` sin confirmar; defaults en código: 24 hs anticipación, 7 días última semana |
+| Turnos recurrentes | Una fila por turno con `dia_semana`/`hora_inicio`/`hora_fin` y `fecha_inicio` = próxima ocurrencia. Las semanas canceladas van a `turno_excepciones` |
 
 ---
 
@@ -581,29 +531,18 @@ juego_libre ────────── sedes (sede_id)
 
 ---
 
-## Cambios pendientes de aplicar (migración)
+## Historial de migraciones
 
-> Las siguientes columnas existen en el código pero **todavía no se aplicaron a Supabase**.
-> Ver `/migrations/README.md` para instrucciones.
+Todas aplicadas y verificadas contra la base el 2026-11-05. La carpeta `migrations/` se borró a pedido: la 001 está en el historial de git (commit `0efbcc5`); las 002–005 no llegaron a commitearse, así que esta tabla es su registro.
 
-### `users` — nuevas columnas (migración 003)
-| Columna         | Tipo       | Descripción                                  |
-|-----------------|------------|----------------------------------------------|
-| `eliminado_en`  | timestamptz| nullable; si != NULL el socio está dado de baja lógica |
-| `eliminado_por` | int (FK)   | → `users.id` del admin que ejecutó la baja  |
+| # | Qué hizo |
+|---|----------|
+| 001 | `socio_turno.estado_texto` + CHECK + backfill |
+| 002 | `juego_libre.niveles_habilitados int[]`; `torneos.niveles_habilitados` text[] → int[] (la vieja quedó como `niveles_habilitados_texto_old`) |
+| 003 | `users.eliminado_en` / `eliminado_por` |
+| 004 | `comunicados.destinatarios` text → text[] |
+| 005 | `lista_espera_turno.estado` / `created_at` / `notificado_at` |
 
-### `socio_turno` — columna ya aplicada (migración 001 ✅)
-| Columna         | Tipo | Descripción |
-|-----------------|------|-------------|
-| `estado_texto`  | text | NOT NULL DEFAULT 'pendiente'; CHECK (activo, pendiente, cancelado_a_tiempo, cancelado_tarde, baja_entrenador) |
+Serie anterior (octubre, `scripts/migraciones/`, borrada en `b04e3a4`): niveles 8 categorías (aplicada 2026-10-19), `creditos_clase.arrastrado` (verificada). Estado de `configuracion_club.clave/valor`: sin confirmar — el código usa defaults (24 hs / 7 días) si no hay filas.
 
-### `juego_libre` y `torneos` — nuevas columnas (migración 002)
-| Tabla         | Columna                  | Tipo   | Default |
-|---------------|--------------------------|--------|---------|
-| `juego_libre` | `niveles_habilitados`    | int[]  | `{}`    |
-| `torneos`     | `niveles_habilitados`    | int[]  | `{}`    |
-
-### `comunicados` — cambio de tipo (migración 004)
-| Columna          | Tipo anterior | Tipo nuevo | Notas |
-|------------------|---------------|------------|-------|
-| `destinatarios`  | text          | text[]     | Los valores antiguos se migran envolviendo en array |
+**Para cambios futuros de esquema:** escribir el SQL idempotente con ROLLBACK comentado, mostrárselo al usuario antes de aplicarlo en el SQL Editor de Supabase, y actualizar este archivo.

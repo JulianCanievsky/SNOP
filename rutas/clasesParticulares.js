@@ -1,17 +1,31 @@
+/**
+ * rutas/clasesParticulares.js — Clases particulares (tipo_turno_id = 2)
+ *
+ *   GET    /entrenadores               — entrenadores con horarios libres (autenticado)
+ *   GET    /entrenadores/:entrenadorId — perfil + horarios de un entrenador (autenticado)
+ *   POST   /solicitar                  — socio pide un horario (queda 'pendiente')
+ *   DELETE /liberar/:id                — pendiente → se retira · activa futura → se cancela
+ *   GET    /mis-solicitudes            — pendientes y confirmadas del socio
+ */
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import responder from '../src/lib/responder.js'
+import { responderError } from '../src/lib/errorNegocio.js'
 import { crearNotificacion, enviarEmail, emailNuevaSolicitudClase } from '../src/lib/notificaciones.js'
-import { crearInscripcion } from '../src/services/socioTurnoService.js'
+import { crearInscripcion, eliminarInscripcionPorId } from '../src/services/socioTurnoService.js'
+import { cancelarTurno } from '../src/services/turnosService.js'
+import { hoyAR } from '../src/lib/fecha.js'
 
 const router = express.Router()
+router.use(autenticar)
+const soloSocio = requireRole(1)
 
 // GET ENTRENADORES — una sola query con join, elimina N+1
 router.get('/entrenadores', async (req, res) => {
   try {
-    const hoyAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
-    const desdeHoy = new Date(`${hoyAR}T00:00:00-03:00`).toISOString()
+    const hoyStr = hoyAR()
+    const desdeHoy = new Date(`${hoyStr}T00:00:00-03:00`).toISOString()
 
     // Query única: entrenadores + turnos + ratings en paralelo
     const [entrenadoresRes, turnosRes, ratingsRes] = await Promise.all([
@@ -97,7 +111,7 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
       return responder.noEncontrado(res, 'Entrenador no encontrado')
     }
 
-    const hoyDetAR = new Date().toLocaleString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).slice(0, 10)
+    const hoyDetAR = hoyAR()
     const hoyDet   = new Date(`${hoyDetAR}T00:00:00-03:00`)
 
     const { data: turnos } = await supabase
@@ -143,7 +157,7 @@ router.get('/entrenadores/:entrenadorId', async (req, res) => {
 });
 
 // POST SOLICITAR
-router.post('/solicitar', autenticar, async (req, res) => {
+router.post('/solicitar', soloSocio, async (req, res) => {
   const socio_id = req.userId
   const { turno_id } = req.body
 
@@ -202,7 +216,7 @@ router.post('/solicitar', autenticar, async (req, res) => {
         const fechaStr = turnoData.fecha_inicio
           ? new Date(turnoData.fecha_inicio).toLocaleString('es-AR', {
               weekday: 'long', day: 'numeric', month: 'long',
-              hour: '2-digit', minute: '2-digit',
+              hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
               timeZone: 'America/Argentina/Buenos_Aires',
             })
           : 'próximamente'
@@ -238,30 +252,44 @@ router.post('/solicitar', autenticar, async (req, res) => {
 });
 
 // DELETE LIBERAR TURNO
-router.delete('/liberar/:id', autenticar, async (req, res) => {
-  const socio_id = req.userId
-  const { id } = req.params
-
+// - Solicitud pendiente: se retira (se borra, nunca fue clase).
+// - Clase confirmada futura: se cancela con las reglas normales
+//   (24 hs → crédito, lista de espera) vía turnosService.cancelarTurno.
+router.delete('/liberar/:id', soloSocio, async (req, res) => {
+  const socioId = req.userId
   try {
-
-    const { error } = await supabase
+    const { data: insc } = await supabase
       .from('socio_turno')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', socio_id);
+      .select('id, turno_id, estado, estado_texto, turnos(fecha_inicio, tipo_turno_id)')
+      .eq('id', req.params.id)
+      .eq('user_id', socioId)
+      .maybeSingle()
 
-    if (error) throw error;
+    if (!insc || insc.turnos?.tipo_turno_id !== 2) {
+      return responder.noEncontrado(res, 'Solicitud no encontrada')
+    }
 
-    res.json({ ok: true, mensaje: 'Solicitud cancelada.' })
+    if (insc.estado_texto === 'pendiente') {
+      await eliminarInscripcionPorId({ socioTurnoId: insc.id, user_id: socioId })
+      return responder.ok(res, { accion: 'retirada' })
+    }
 
-  } catch (error) {
-    console.error(error)
-    responder.interno(res, 'No se pudo liberar el turno.')
+    if (insc.estado === true) {
+      if (new Date(insc.turnos.fecha_inicio) <= new Date()) {
+        return responder.error(res, 'La clase ya empezó o terminó')
+      }
+      const cancelada = await cancelarTurno(insc.turno_id, socioId)
+      return responder.ok(res, { accion: 'cancelada', estado_texto: cancelada?.estado_texto })
+    }
+
+    return responder.error(res, 'Esta clase ya estaba cancelada')
+  } catch (err) {
+    responderError(res, err, 'No se pudo liberar el turno')
   }
-});
+})
 
 // MIS SOLICITUDES
-router.get('/mis-solicitudes', autenticar, async (req, res) => {
+router.get('/mis-solicitudes', soloSocio, async (req, res) => {
   try {
     const socio_id = req.userId
 
@@ -271,6 +299,7 @@ router.get('/mis-solicitudes', autenticar, async (req, res) => {
     id,
     turno_id,
     estado,
+    estado_texto,
     fecha_inscripcion,
     turnos!inner(
       id,
@@ -288,6 +317,7 @@ router.get('/mis-solicitudes', autenticar, async (req, res) => {
   `)
   .eq('user_id', socio_id)
   .eq('turnos.tipo_turno_id', 2) // SOLO clases particulares
+  .in('estado_texto', ['pendiente', 'activo'])
   .order('fecha_inscripcion', { ascending: false });
     if (error) throw error;
 

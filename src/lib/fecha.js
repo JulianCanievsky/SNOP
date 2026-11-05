@@ -57,6 +57,7 @@ export function formatFechaHoraAR(isoString, opciones = {}) {
     month: 'long',
     hour: '2-digit',
     minute: '2-digit',
+    hourCycle: 'h23',
     timeZone: TZ,
   }
 
@@ -73,6 +74,7 @@ export function formatHoraAR(isoString) {
   return fecha.toLocaleString('es-AR', {
     hour: '2-digit',
     minute: '2-digit',
+    hourCycle: 'h23', // "10:00", no "10:00 a. m." (depende de la versión de ICU)
     timeZone: TZ,
   })
 }
@@ -182,7 +184,7 @@ export function formatArES(isoString, opciones = {}) {
   if (!fecha || isNaN(fecha.getTime())) return '—'
   const defaults = {
     weekday: 'long', day: 'numeric', month: 'long',
-    hour: '2-digit', minute: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
     timeZone: TZ,
   }
   return fecha.toLocaleString('es-AR', { ...defaults, ...opciones })

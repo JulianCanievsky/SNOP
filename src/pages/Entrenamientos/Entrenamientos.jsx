@@ -18,6 +18,9 @@ import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import './Entrenamientos.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
+import ErrorState from '../../components/ui/ErrorState/ErrorState'
+import EmptyState from '../../components/ui/EmptyState/EmptyState'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -25,13 +28,13 @@ function formatFechaHora(iso) {
   if (!iso) return '—'
   const d = new Date(iso)
   const fecha = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
-  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  const hora  = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return { fecha: fecha.charAt(0).toUpperCase() + fecha.slice(1), hora }
 }
 
 function formatHora(iso) {
   if (!iso) return ''
-  return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
 }
 
 // Modal de confirmación de solicitud
@@ -125,7 +128,28 @@ export default function Entrenamientos() {
     }
   }
 
+  async function handleSalirLista(turno) {
+    try {
+      await api.delete(`/turnos/${turno.id}/lista-espera`)
+      showToast('Saliste de la lista de espera.', 'success')
+      await cargar()
+    } catch (err) {
+      showToast(obtenerMensajeError(err, 'No se pudo salir de la lista de espera'), 'error')
+    }
+  }
+
   const renderBoton = (turno) => {
+    if (turno.estado_socio === 'disponible' && turno.en_lista_espera) {
+      return (
+        <button
+          className="ent-btn-espera"
+          onClick={() => handleSalirLista(turno)}
+          aria-label="Salir de la lista de espera"
+        >
+          En espera · Salir
+        </button>
+      )
+    }
     switch (turno.estado_socio) {
       case 'confirmado':
         return <span className="ent-badge ent-badge--ok">✓ Confirmado</span>
@@ -163,19 +187,15 @@ export default function Entrenamientos() {
 
       <div className="ent-body">
         {cargando ? (
-          <div className="snop-loading"><div className="snop-spinner" /></div>
+          <Spinner center label="Cargando turnos" />
         ) : error ? (
-          <div className="snop-empty">
-            <p>{error}</p>
-            <button className="btn-secondary" style={{ width: 'auto', marginTop: 'var(--space-3)' }} onClick={cargar}>
-              Reintentar
-            </button>
-          </div>
+          <ErrorState message={error} onRetry={cargar} />
         ) : turnos.length === 0 ? (
-          <div className="snop-empty">
-            <Calendar size={40} style={{ opacity: .4, marginBottom: 'var(--space-3)' }} />
-            <p>No hay turnos disponibles para tu categoría.</p>
-          </div>
+          <EmptyState
+            icon={<Calendar size={40} strokeWidth={1.5} />}
+            title="No hay turnos disponibles"
+            message="Cuando haya entrenamientos para tu categoría van a aparecer acá."
+          />
         ) : (
           turnos.map(turno => {
             const { fecha, hora } = formatFechaHora(turno.fecha_inicio)

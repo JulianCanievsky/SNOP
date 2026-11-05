@@ -1,20 +1,41 @@
+/**
+ * rutas/JuegoLibre.js — Juego libre (socio)
+ *
+ *   GET    /api/juego-libre                 — eventos futuros (filtros ?sede_id&fecha=YYYY-MM-DD)
+ *   POST   /api/juego-libre/:id/inscribir   — anotarse (respeta cupo y categorías habilitadas)
+ *   DELETE /api/juego-libre/:id/cancelar    — cancelar la inscripción
+ */
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
+import responder from '../src/lib/responder.js'
+import { formatArES } from '../src/lib/fecha.js'
+import { nivelHabilitado } from '../src/constants/categorias.js'
 import { crearNotificacion, enviarEmail, emailJuegoLibreLleno } from '../src/lib/notificaciones.js'
 
 const router = express.Router()
+router.use(autenticar, requireRole(1))
 
-// Alias para compatibilidad: el middleware pone req.userId
-function adaptarSocioId(req, _res, next) {
-  req.socio_id = req.userId
-  next()
+/** Categoría actual del socio (de la BD, no del JWT: puede haber cambiado). */
+async function nivelDelSocio(socioId) {
+  const { data } = await supabase.from('users').select('nivel_id').eq('id', socioId).maybeSingle()
+  return data?.nivel_id ?? null
 }
 
-router.get('/', autenticar, adaptarSocioId, async (req, res) => {
+async function contarActivos(eventoId) {
+  const { count } = await supabase
+    .from('inscripciones_juego_libre')
+    .select('id', { count: 'exact', head: true })
+    .eq('evento_id', eventoId)
+    .eq('estado', 'activo')
+  return count ?? 0
+}
+
+// ── GET /api/juego-libre ──────────────────────────────────────────────────────
+router.get('/', async (req, res) => {
   try {
     const { sede_id, fecha } = req.query
-    const socioId = req.socio_id
+    const socioId = req.userId
 
     let query = supabase
       .from('juego_libre')
@@ -25,186 +46,180 @@ router.get('/', autenticar, adaptarSocioId, async (req, res) => {
 
     if (sede_id) query = query.eq('sede_id', sede_id)
     if (fecha) {
-      const desde = new Date(fecha)
-      const hasta = new Date(fecha)
-      hasta.setDate(hasta.getDate() + 1)
+      // fecha = día en hora argentina
+      const desde = new Date(`${fecha}T00:00:00-03:00`)
+      const hasta = new Date(desde.getTime() + 24 * 60 * 60 * 1000)
       query = query.gte('fecha_inicio', desde.toISOString()).lt('fecha_inicio', hasta.toISOString())
     }
 
-    const { data: eventos, error } = await query
+    const [{ data: eventos, error }, nivelSocio] = await Promise.all([query, nivelDelSocio(socioId)])
     if (error) throw error
 
-    const { data: inscripciones, error: errorInsc } = await supabase
-      .from('inscripciones_juego_libre')
-      .select('evento_id, socio_id')
-      .eq('estado', 'activo')
+    const eventoIds = (eventos ?? []).map(e => e.id)
+    let inscripciones = []
+    if (eventoIds.length > 0) {
+      const { data, error: errInsc } = await supabase
+        .from('inscripciones_juego_libre')
+        .select('evento_id, socio_id')
+        .eq('estado', 'activo')
+        .in('evento_id', eventoIds)
+      if (errInsc) throw errInsc
+      inscripciones = data ?? []
+    }
 
-    if (errorInsc) throw errorInsc
-
-    const socioIds = [...new Set(inscripciones.map((i) => i.socio_id))]
+    const socioIds = [...new Set(inscripciones.map(i => i.socio_id))]
     let usuarios = []
     if (socioIds.length > 0) {
-      const { data: usersData, error: errorUsers } = await supabase
+      const { data, error: errUsers } = await supabase
         .from('users')
         .select('id, nombre, foto_url')
         .in('id', socioIds)
-      if (errorUsers) throw errorUsers
-      usuarios = usersData
+      if (errUsers) throw errUsers
+      usuarios = data ?? []
     }
 
-    const resultado = eventos.map((evento) => {
-      const anotados = inscripciones.filter((i) => i.evento_id === evento.id)
-      const yaInscripto = anotados.some((i) => i.socio_id === socioId)
-
+    const resultado = (eventos ?? []).map(evento => {
+      const anotados = inscripciones.filter(i => i.evento_id === evento.id)
       return {
         ...evento,
-        inscriptos: anotados.length,
-        nombre_sede: evento.sedes?.nombre ?? `Sede ${evento.sede_id}`,
-        estado: anotados.length >= evento.capacidad_maxima ? 'completo' : 'abierto',
-        ya_inscripto: yaInscripto,
-        participantes: anotados.map((i) => {
-          const user = usuarios.find((u) => u.id === i.socio_id)
-          return { nombre: user?.nombre || '?', foto_url: user?.foto_url || null }
+        niveles_habilitados: evento.niveles_habilitados ?? [],
+        inscriptos:   anotados.length,
+        nombre_sede:  evento.sedes?.nombre ?? `Sede ${evento.sede_id}`,
+        estado:       anotados.length >= evento.capacidad_maxima ? 'completo' : 'abierto',
+        ya_inscripto: anotados.some(i => i.socio_id === socioId),
+        habilitado:   nivelHabilitado(evento.niveles_habilitados, nivelSocio),
+        participantes: anotados.map(i => {
+          const u = usuarios.find(u => u.id === i.socio_id)
+          return { nombre: u?.nombre || '?', foto_url: u?.foto_url || null }
         }),
       }
     })
 
-    res.json({ ok: true, data: resultado })
-  } catch (error) {
-    console.error('ERROR GET /api/juego-libre:', error)
-    res.status(500).json({ ok: false, mensaje: 'Error al obtener juego libre' })
+    responder.ok(res, resultado)
+  } catch (err) {
+    console.error('GET /api/juego-libre', err)
+    responder.interno(res, 'Error al obtener juego libre')
   }
 })
 
-router.post('/:id/inscribir', autenticar, adaptarSocioId, async (req, res) => {
-  try {
-    const eventoId = parseInt(req.params.id)
-    const socioId = req.socio_id
+// ── POST /api/juego-libre/:id/inscribir ───────────────────────────────────────
+router.post('/:id/inscribir', async (req, res) => {
+  const eventoId = parseInt(req.params.id, 10)
+  const socioId  = req.userId
 
-    const { data: evento, error: errorEvento } = await supabase
+  try {
+    const { data: evento, error: errEvento } = await supabase
       .from('juego_libre')
       .select('*')
       .eq('id', eventoId)
-      .single()
-
-    if (errorEvento || !evento) return res.status(404).json({ ok: false, mensaje: 'Evento no encontrado' })
-
-    // Verificar ya inscripto
-    const { data: yaInscripto } = await supabase
-      .from('inscripciones_juego_libre')
-      .select('id')
-      .eq('evento_id', eventoId)
-      .eq('socio_id', socioId)
-      .eq('estado', 'activo')
+      .eq('activo', true)
       .maybeSingle()
 
-    if (yaInscripto) return res.status(400).json({ ok: false, mensaje: 'Ya estás inscripto' })
+    if (errEvento || !evento) return responder.noEncontrado(res, 'Evento no encontrado')
+    if (new Date(evento.fecha_fin) < new Date()) return responder.error(res, 'El evento ya terminó')
 
-    // Verificar capacidad
-    const { count } = await supabase
-      .from('inscripciones_juego_libre')
-      .select('*', { count: 'exact', head: true })
-      .eq('evento_id', eventoId)
-      .eq('estado', 'activo')
-
-    if (count >= evento.capacidad_maxima)
-      return res.status(409).json({ ok: false, mensaje: 'El evento está completo' })
-
-    // Insert con manejo de unique_violation para race condition
-    const { error: errorInsc } = await supabase
-      .from('inscripciones_juego_libre')
-      .insert({ evento_id: eventoId, socio_id: socioId, estado: 'activo' })
-
-    if (errorInsc) {
-      if (errorInsc.code === '23505') {
-        return res.status(409).json({ ok: false, mensaje: 'Ya estás inscripto' })
-      }
-      throw errorInsc
+    if (!nivelHabilitado(evento.niveles_habilitados, await nivelDelSocio(socioId))) {
+      return responder.sinPermiso(res, 'Este juego libre no está habilitado para tu categoría')
     }
 
-    // Control post-insert contra race condition
-    const { count: countFinal } = await supabase
+    // ¿Tiene una fila previa? (activa → error; cancelada → se reactiva)
+    const { data: previa } = await supabase
       .from('inscripciones_juego_libre')
-      .select('*', { count: 'exact', head: true })
+      .select('id, estado')
       .eq('evento_id', eventoId)
-      .eq('estado', 'activo')
+      .eq('socio_id', socioId)
+      .order('fecha_inscripcion', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-    if (countFinal > evento.capacidad_maxima) {
+    if (previa?.estado === 'activo') return responder.conflicto(res, 'Ya estás inscripto')
+
+    if (await contarActivos(eventoId) >= evento.capacidad_maxima) {
+      return responder.conflicto(res, 'El evento está completo')
+    }
+
+    const { error: errInsc } = previa
+      ? await supabase
+          .from('inscripciones_juego_libre')
+          .update({ estado: 'activo', fecha_inscripcion: new Date().toISOString() })
+          .eq('id', previa.id)
+      : await supabase
+          .from('inscripciones_juego_libre')
+          .insert({ evento_id: eventoId, socio_id: socioId, estado: 'activo' })
+
+    if (errInsc) {
+      if (errInsc.code === '23505') return responder.conflicto(res, 'Ya estás inscripto')
+      throw errInsc
+    }
+
+    // Control post-escritura contra carreras: si nos pasamos del cupo, se revierte
+    const totalFinal = await contarActivos(eventoId)
+    if (totalFinal > evento.capacidad_maxima) {
       await supabase
         .from('inscripciones_juego_libre')
         .update({ estado: 'cancelado' })
         .eq('evento_id', eventoId)
         .eq('socio_id', socioId)
         .eq('estado', 'activo')
-      return res.status(409).json({ ok: false, mensaje: 'El evento está completo' })
+      return responder.conflicto(res, 'El evento está completo')
     }
 
-    // Si se llenó el cupo, avisar a todos los admins
-    if (countFinal >= evento.capacidad_maxima) {
-      try {
-        const { data: admins } = await supabase
-          .from('users')
-          .select('id, nombre, email')
-          .eq('tipo_usuario_id', 3)
-          .eq('activo', true)
-
-        const { data: sedeData } = await supabase
-          .from('sedes').select('nombre').eq('id', evento.sede_id).single()
-
-        const fechaStr = new Date(evento.fecha_inicio).toLocaleString('es-AR', {
-          weekday: 'long', day: 'numeric', month: 'long',
-          hour: '2-digit', minute: '2-digit',
-          timeZone: 'America/Argentina/Buenos_Aires',
-        })
-        const sedeStr = sedeData?.nombre ?? 'la sede'
-
-        for (const admin of admins ?? []) {
-          await crearNotificacion({
-            user_id: admin.id,
-            titulo:  'Juego libre completo',
-            mensaje: `El espacio del ${fechaStr} en ${sedeStr} se llenó (${evento.capacidad_maxima}/${evento.capacidad_maxima}).`,
-            tipo:    'juego_libre_lleno',
-            link:    '/admin/juego-libre',
-          })
-          const tmpl = emailJuegoLibreLleno({
-            adminNombre: admin.nombre,
-            sede:        sedeStr,
-            fechaEvento: fechaStr,
-            capacidad:   evento.capacidad_maxima,
-          })
-          await enviarEmail({ to: admin.email, ...tmpl })
-        }
-      } catch (notifErr) {
-        console.error('[juego-libre] notif lleno:', notifErr)
-      }
+    if (totalFinal === evento.capacidad_maxima) {
+      avisarAdminsEventoLleno(evento).catch(err => console.error('[juego-libre] aviso lleno:', err))
     }
 
-    res.json({ ok: true, mensaje: 'Inscripción confirmada' })
-  } catch (error) {
-    console.error('ERROR POST /api/juego-libre/:id/inscribir:', error)
-    res.status(500).json({ ok: false, mensaje: 'Error al inscribirse' })
+    responder.ok(res, null)
+  } catch (err) {
+    console.error('POST /api/juego-libre/:id/inscribir', err)
+    responder.interno(res, 'Error al inscribirse')
   }
 })
 
-router.delete('/:id/cancelar', autenticar, adaptarSocioId, async (req, res) => {
+// ── DELETE /api/juego-libre/:id/cancelar ──────────────────────────────────────
+router.delete('/:id/cancelar', async (req, res) => {
   try {
-    const eventoId = parseInt(req.params.id)
-    const socioId = req.socio_id
-
     const { error } = await supabase
       .from('inscripciones_juego_libre')
       .update({ estado: 'cancelado' })
-      .eq('evento_id', eventoId)
-      .eq('socio_id', socioId)
+      .eq('evento_id', parseInt(req.params.id, 10))
+      .eq('socio_id', req.userId)
       .eq('estado', 'activo')
 
     if (error) throw error
-
-    res.json({ ok: true, mensaje: 'Inscripción cancelada' })
-  } catch (error) {
-    console.error('ERROR DELETE /api/juego-libre/:id/cancelar:', error)
-    res.status(500).json({ ok: false, mensaje: 'Error al cancelar' })
+    responder.ok(res, null)
+  } catch (err) {
+    console.error('DELETE /api/juego-libre/:id/cancelar', err)
+    responder.interno(res, 'Error al cancelar')
   }
 })
+
+/** Notificación in-app + email a todos los admins cuando un juego libre se llena. */
+async function avisarAdminsEventoLleno(evento) {
+  const [{ data: admins }, { data: sede }] = await Promise.all([
+    supabase.from('users').select('id, nombre, email').eq('tipo_usuario_id', 3).eq('activo', true),
+    supabase.from('sedes').select('nombre').eq('id', evento.sede_id).maybeSingle(),
+  ])
+  const fechaStr = formatArES(evento.fecha_inicio)
+  const sedeStr  = sede?.nombre ?? 'la sede'
+
+  for (const admin of admins ?? []) {
+    await crearNotificacion({
+      user_id: admin.id,
+      titulo:  'Juego libre completo',
+      mensaje: `El espacio del ${fechaStr} en ${sedeStr} se llenó (${evento.capacidad_maxima}/${evento.capacidad_maxima}).`,
+      tipo:    'juego_libre_lleno',
+      link:    '/admin/juego-libre',
+    })
+    await enviarEmail({
+      to: admin.email,
+      ...emailJuegoLibreLleno({
+        adminNombre: admin.nombre,
+        sede:        sedeStr,
+        fechaEvento: fechaStr,
+        capacidad:   evento.capacidad_maxima,
+      }),
+    })
+  }
+}
 
 export default router

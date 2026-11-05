@@ -10,6 +10,8 @@ import { obtenerMensajeError } from '../../lib/errores.js'
 import AppNav from '../../components/AppNav/AppNav'
 import CreditosResumen from '../../components/CreditosResumen/CreditosResumen'
 import './MisClases.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
+import ErrorState from '../../components/ui/ErrorState/ErrorState'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -22,7 +24,7 @@ const formatFecha = (iso) => {
 
 const formatHora = (iso) => {
   if (!iso) return ''
-  return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
 }
 
 const esFutura = (iso) => iso && new Date(iso) >= new Date()
@@ -124,10 +126,10 @@ export default function MisClases() {
     return (
       <div className="mis-clases">
         <header className="mc-header">
-          <button className="mc-volver" onClick={() => navigate(-1)}>←</button>
+          <button className="mc-volver" onClick={() => navigate(-1)} aria-label="Volver">←</button>
           <h1>Mis clases</h1>
         </header>
-        <div className="mc-cargando"><div className="mc-spinner" /><p>Cargando...</p></div>
+        <Spinner center label="Cargando clases" />
         <AppNav />
       </div>
     )
@@ -137,13 +139,10 @@ export default function MisClases() {
     return (
       <div className="mis-clases">
         <header className="mc-header">
-          <button className="mc-volver" onClick={() => navigate(-1)}>←</button>
+          <button className="mc-volver" onClick={() => navigate(-1)} aria-label="Volver">←</button>
           <h1>Mis clases</h1>
         </header>
-        <div className="mc-error">
-          <p>{error}</p>
-          <button className="mc-btn-primary" onClick={cargar}>Reintentar</button>
-        </div>
+        <ErrorState message={error} onRetry={cargar} />
         <AppNav />
       </div>
     )
@@ -152,7 +151,7 @@ export default function MisClases() {
   return (
     <div className="mis-clases">
       <header className="mc-header">
-        <button className="mc-volver" onClick={() => navigate(-1)}>←</button>
+        <button className="mc-volver" onClick={() => navigate(-1)} aria-label="Volver">←</button>
         <h1>Mis clases</h1>
         <p className="mc-subtitulo">Turnos de entrenamiento inscriptos</p>
       </header>

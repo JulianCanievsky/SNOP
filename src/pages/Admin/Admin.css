@@ -154,10 +154,10 @@
   white-space: nowrap;
 }
 
-.badge-nivel.rojo        { background: #fee2e2; color: #b91c1c; }
-.badge-nivel.intermedio  { background: #fef9c3; color: #92400e; }
-.badge-nivel.azul        { background: #dbeafe; color: #1d4ed8; }
-.badge-nivel.sin-nivel   { background: #f3f4f6; color: #6b7280; }
+.badge-nivel.rojo        { background: var(--color-danger-bg); color: var(--color-danger-text); }
+.badge-nivel.intermedio  { background: var(--color-warning-bg); color: var(--color-warning-text); }
+.badge-nivel.azul        { background: var(--color-primary-subtle); color: var(--color-primary); }
+.badge-nivel.sin-nivel   { background: var(--color-surface-muted); color: var(--color-text-muted); }
 
 /* ── BADGE CUOTA ── */
 .badge-cuota {
@@ -267,7 +267,7 @@
   font-family: inherit;
 }
 
-.btn-danger:hover { background: #fecaca; }
+.btn-danger:hover { background: var(--color-danger-bg); }
 
 /* ── VOLVER ── */
 .btn-volver-admin {
@@ -357,7 +357,7 @@
 }
 
 .socio-row:last-child { border-bottom: none; }
-.socio-row:hover { background: #f9fafb; }
+.socio-row:hover { background: var(--color-surface-alt); }
 
 .socio-avatar {
   width: 38px;
@@ -448,7 +448,7 @@
 /* ── ALERTA ── */
 .alerta-exito {
   background: var(--admin-green-bg);
-  border: 1px solid #86efac;
+  border: 1px solid var(--color-success-border);
   border-radius: var(--r-s);
   padding: 12px 16px;
   font-size: 14px;
@@ -458,7 +458,7 @@
 
 .alerta-error {
   background: var(--admin-red-bg);
-  border: 1px solid #fca5a5;
+  border: 1px solid var(--color-danger-border);
   border-radius: var(--r-s);
   padding: 12px 16px;
   font-size: 14px;
@@ -545,7 +545,7 @@
 
 .btn-whatsapp {
   padding: 10px 16px;
-  background: #25d366;
+  background: var(--color-whatsapp);
   color: white;
   border: none;
   border-radius: var(--r-s);
@@ -556,7 +556,7 @@
   transition: background .15s;
 }
 
-.btn-whatsapp:hover { background: #1ebe5c; }
+.btn-whatsapp:hover { background: var(--color-whatsapp-hover); }
 
 /* ── COMUNICADO RECIENTE ── */
 .comunicado-item {
@@ -776,24 +776,24 @@
 
 /* ── DARK MODE ──────────────────────────────────────────────────────────────── */
 [data-theme="dark"] {
-  --admin-primary:   #6366f1;
-  --admin-primary-d: #4f46e5;
-  --admin-primary-l: #1e2040;
-  --admin-primary-m: #818cf8;
-  --admin-bg:        #0f1117;
-  --admin-white:     #1a1d27;
-  --admin-border:    #2a2d3a;
-  --admin-text:      #e2e8f0;
-  --admin-muted:     #8b95a5;
-  --admin-red:       #f87171;
-  --admin-red-bg:    #2d1515;
-  --admin-green:     #4ade80;
-  --admin-green-bg:  #142414;
-  --admin-yellow:    #fbbf24;
-  --admin-yellow-bg: #2a2000;
+  --admin-primary:   var(--color-accent);
+  --admin-primary-d: var(--color-accent);
+  --admin-primary-l: var(--color-accent-subtle);
+  --admin-primary-m: var(--color-accent);
+  --admin-bg:        var(--color-bg);
+  --admin-white:     var(--color-surface);
+  --admin-border:    var(--color-border);
+  --admin-text:      var(--color-text);
+  --admin-muted:     var(--color-text-muted);
+  --admin-red:       var(--color-danger);
+  --admin-red-bg:    var(--color-danger-bg);
+  --admin-green:     var(--color-success);
+  --admin-green-bg:  var(--color-success-bg);
+  --admin-yellow:    var(--color-warning);
+  --admin-yellow-bg: var(--color-warning-bg);
 }
 
-[data-theme="dark"] .socio-row:hover      { background: #22263a; }
+[data-theme="dark"] .socio-row:hover      { background: var(--color-surface-alt); }
 [data-theme="dark"] .nivel-btn           { color: var(--admin-muted); background: var(--admin-white); border-color: var(--admin-border); }
 [data-theme="dark"] .nivel-btn.sel       { background: var(--admin-primary-l); border-color: var(--admin-primary); color: var(--admin-primary); }
 [data-theme="dark"] .filtro-pill          { background: var(--admin-white); color: var(--admin-muted); border-color: var(--admin-border); }
@@ -801,6 +801,6 @@
 [data-theme="dark"] .radio-option.sel, [data-theme="dark"] .checkbox-option.sel { background: var(--admin-primary-l); color: var(--admin-primary); }
 [data-theme="dark"] .form-input,
 [data-theme="dark"] .form-select,
-[data-theme="dark"] .form-textarea        { background: #22263a; border-color: var(--admin-border); color: var(--admin-text); }
-[data-theme="dark"] .badge-nivel.sin-nivel { background: #2a2d3a; color: #8b95a5; }
+[data-theme="dark"] .form-textarea        { background: var(--color-surface-alt); border-color: var(--admin-border); color: var(--admin-text); }
+[data-theme="dark"] .badge-nivel.sin-nivel { background: var(--color-surface-muted); color: var(--color-text-muted); }
 [data-theme="dark"] .inscriptos-panel     { background: var(--admin-primary-l); }

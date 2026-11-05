@@ -4,17 +4,18 @@ import AppNav from '../../components/AppNav/AppNav'
 import { getSolicitudes, aceptarSolicitud, rechazarSolicitud } from '../../services/adminApi'
 import { obtenerMensajeError } from '../../lib/errores.js'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const ESTADO_STYLE = {
-  pendiente: { background: '#fffbeb', color: '#d97706', label: 'Pendiente' },
-  aceptada:  { background: '#f0fdf4', color: '#16a34a', label: 'Aceptada'  },
-  rechazada: { background: '#fef2f2', color: '#ef4444', label: 'Rechazada' },
+  pendiente: { background: 'var(--color-warning-bg)', color: 'var(--color-warning)', label: 'Pendiente' },
+  aceptada:  { background: 'var(--color-success-bg)', color: 'var(--color-success)', label: 'Aceptada'  },
+  rechazada: { background: 'var(--color-danger-bg)', color: 'var(--color-danger)', label: 'Rechazada' },
 }
 
 function formatFecha(iso) {
   return new Date(iso).toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   })
 }
 
@@ -110,7 +111,7 @@ export default function SolicitudesIngreso() {
                 {esPendiente && (
                   <span style={{
                     marginLeft: 6,
-                    background: '#ef4444',
+                    background: 'var(--color-danger)',
                     color: 'white',
                     borderRadius: 999,
                     fontSize: 10,
@@ -128,7 +129,7 @@ export default function SolicitudesIngreso() {
         {/* Lista */}
         <div className="admin-card">
           {cargando ? (
-            <div className="estado-carga"><div className="spinner-admin" /></div>
+            <Spinner center />
           ) : filtradas.length === 0 ? (
             <div className="estado-vacio">
               No hay solicitudes {ESTADO_STYLE[filtro].label.toLowerCase()}s.

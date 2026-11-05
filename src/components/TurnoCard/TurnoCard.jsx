@@ -47,10 +47,10 @@ export default function TurnoCard({ evento, onCancelar, horasAnticipacion = 24 }
     weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ,
   })
   const horaInicio = fechaObj.toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ,
   })
   const horaFin = new Date(evento.fecha_fin).toLocaleTimeString('es-AR', {
-    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ,
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ,
   })
 
   async function confirmarCancelacion() {

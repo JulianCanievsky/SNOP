@@ -42,3 +42,18 @@ export function getCategoria(nivelId) {
   if (nivelId == null) return APTO_TODOS
   return CATEGORIA_MAP[nivelId] ?? APTO_TODOS
 }
+
+/**
+ * ¿Puede un socio de la categoría `nivelId` anotarse a un evento (juego libre / torneo)?
+ * Regla: lista vacía o null = abierto a todas las categorías.
+ * Si el evento restringe categorías y el socio no tiene categoría asignada, no puede.
+ * Compara como números porque la BD puede devolver strings.
+ * @param {Array<number|string>|null|undefined} nivelesHabilitados
+ * @param {number|string|null|undefined} nivelId
+ * @returns {boolean}
+ */
+export function nivelHabilitado(nivelesHabilitados, nivelId) {
+  if (!Array.isArray(nivelesHabilitados) || nivelesHabilitados.length === 0) return true
+  if (nivelId == null) return false
+  return nivelesHabilitados.map(Number).includes(Number(nivelId))
+}

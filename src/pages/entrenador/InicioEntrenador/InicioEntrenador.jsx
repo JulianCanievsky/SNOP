@@ -5,6 +5,7 @@ import api from '../../../lib/apiClient.js'
 import AppNav from '../../../components/AppNav/AppNav'
 import { ClipboardList, Clock, Users, Inbox, Bell } from 'lucide-react'
 import './InicioEntrenador.css'
+import Spinner from '../../../components/ui/Spinner/Spinner'
 
 function iniciales(nombre = '') {
   return nombre
@@ -28,7 +29,7 @@ function formatHora(fechaISO) {
   return new Date(fechaISO).toLocaleTimeString('es-AR', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
+    hourCycle: 'h23',
     timeZone: TZ,
   })
 }
@@ -94,7 +95,7 @@ export default function InicioEntrenador() {
         <p className="seccion-e-titulo">Solicitudes pendientes</p>
         <div className="solicitudes-lista">
           {cargando ? (
-            <div className="sin-solicitudes">Cargando...</div>
+            <Spinner center />
           ) : solicitudesPendientes.length === 0 ? (
             <div className="sin-solicitudes">Sin solicitudes pendientes</div>
           ) : (

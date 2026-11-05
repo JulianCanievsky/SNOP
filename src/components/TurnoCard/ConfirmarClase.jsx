@@ -5,14 +5,14 @@ const TZ = 'America/Argentina/Buenos_Aires'
 const formatearFechaCompleta = (fechaISO) => {
   const fecha = new Date(fechaISO)
   const dia  = fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
-  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return `${dia.charAt(0).toUpperCase() + dia.slice(1)} · ${hora} hs`
 }
 
 const formatearDiaHora = (fechaISO) => {
   const fecha = new Date(fechaISO)
   const dia  = fecha.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', timeZone: TZ })
-  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return `${dia} - ${hora} hs`
 }
 

@@ -1,13 +1,13 @@
 .comunicados-page {
   min-height: 100vh;
-  background: #f1f5f9;
+  background: var(--color-surface-muted);
   padding-bottom: 90px;
   font-family: 'Inter', -apple-system, sans-serif;
 }
 
 /* ── HEADER ── */
 .com-header {
-  background: #2563eb;
+  background: var(--color-primary);
   color: white;
   padding: 20px 16px 20px;
   display: flex;
@@ -63,7 +63,7 @@
   justify-content: center;
   gap: 10px;
   padding: 60px 20px;
-  color: #94a3b8;
+  color: var(--color-text-subtle);
   font-size: 15px;
   font-weight: 500;
 }
@@ -85,7 +85,7 @@
 }
 
 .com-item--nuevo {
-  border-left: 3px solid #ef4444;
+  border-left: 3px solid var(--color-danger);
 }
 
 .com-item-top {
@@ -98,13 +98,13 @@
 .com-item-titulo {
   font-size: 15px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--color-text);
   flex: 1;
 }
 
 .com-badge-nuevo {
-  background: #fef2f2;
-  color: #ef4444;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
   font-size: 11px;
   font-weight: 700;
   padding: 3px 9px;
@@ -117,13 +117,13 @@
 .com-item-mensaje {
   margin: 0;
   font-size: 13px;
-  color: #475569;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
 .com-item-fecha {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--color-text-subtle);
   font-weight: 500;
   text-transform: capitalize;
 }

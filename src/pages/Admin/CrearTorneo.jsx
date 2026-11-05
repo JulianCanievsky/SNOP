@@ -9,6 +9,7 @@ import { useToast } from '../../hooks/useToast'
 import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -144,7 +145,7 @@ export default function CrearTorneo() {
   function formatFechaHora(iso) {
     const d   = new Date(iso)
     const dia  = d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: TZ })
-    const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+    const hora = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
     return `${dia} · ${hora} hs`
   }
 
@@ -265,7 +266,7 @@ export default function CrearTorneo() {
             <p className="admin-label">Publicados</p>
             <div className="admin-card">
               {cargando ? (
-                <div className="estado-carga"><div className="spinner-admin" /></div>
+                <Spinner center />
               ) : (
                 publicados.map(p => {
                   const abierto = modalId === p.id
@@ -275,7 +276,7 @@ export default function CrearTorneo() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p className="juego-libre-fecha">
                             🏆 {p.nombre}
-                            <span style={{ marginLeft: 6, fontSize: 11, background: '#eef2ff', color: '#4f46e5', padding: '2px 7px', borderRadius: 999, fontWeight: 700 }}>
+                            <span style={{ marginLeft: 6, fontSize: 11, background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', padding: '2px 7px', borderRadius: 999, fontWeight: 700 }}>
                               {p.modalidad}
                             </span>
                           </p>
@@ -308,9 +309,7 @@ export default function CrearTorneo() {
                       {abierto && (
                         <div className="inscriptos-panel">
                           {cargandoModal ? (
-                            <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                              <div className="spinner-admin" style={{ margin: '0 auto 8px' }} />
-                            </div>
+                            <Spinner size="sm" center label="Cargando inscriptos" />
                           ) : inscriptos.length === 0 ? (
                             <p className="inscriptos-vacio">Nadie se anotó todavía.</p>
                           ) : (
@@ -326,7 +325,7 @@ export default function CrearTorneo() {
                                   </div>
                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                                     <CategoriaBadge nivelId={insc.nivel_id ?? null} />
-                                    <span style={{ fontSize: 10, color: '#9ca3af' }}>{formatFechaInsc(insc.fecha_inscripcion)}</span>
+                                    <span style={{ fontSize: 10, color: 'var(--color-text-subtle)' }}>{formatFechaInsc(insc.fecha_inscripcion)}</span>
                                     <button
                                       className="btn-danger"
                                       style={{ padding: '3px 10px', fontSize: 11, marginTop: 2 }}

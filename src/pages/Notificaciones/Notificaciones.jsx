@@ -4,6 +4,8 @@ import { Calendar, XCircle, CheckCircle, AlertTriangle, Bell, Users, Megaphone, 
 import { useNotificaciones } from '../../hooks/useNotificaciones'
 import AppNav from '../../components/AppNav/AppNav'
 import './Notificaciones.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
+import EmptyState from '../../components/ui/EmptyState/EmptyState'
 
 // Mapeo tipo → ícono Lucide
 function TipoIcono({ tipo }) {
@@ -68,12 +70,13 @@ export default function Notificaciones() {
 
       <div className="notif-body">
         {cargando ? (
-          <div className="snop-loading"><div className="snop-spinner" /></div>
+          <Spinner center label="Cargando notificaciones" />
         ) : notificaciones.length === 0 ? (
-          <div className="snop-empty" style={{ paddingTop: 'var(--space-8)' }}>
-            <Bell size={44} style={{ opacity: .3, marginBottom: 'var(--space-3)' }} />
-            <p>No tenés notificaciones todavía.</p>
-          </div>
+          <EmptyState
+            icon={<Bell size={44} strokeWidth={1.5} />}
+            title="No tenés notificaciones"
+            message="Te avisamos acá cuando haya novedades de tus clases."
+          />
         ) : (
           notificaciones.map(n => (
             <div

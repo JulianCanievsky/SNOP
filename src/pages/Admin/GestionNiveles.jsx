@@ -8,6 +8,7 @@ import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 export default function GestionNiveles() {
   const navigate = useNavigate()
@@ -113,7 +114,7 @@ export default function GestionNiveles() {
           <p className="admin-label">Modificar nivel individual {sociosFiltrados.length !== socios.length && `(${sociosFiltrados.length} resultado${sociosFiltrados.length !== 1 ? 's' : ''})`}</p>
           <div className="admin-card">
             {cargando ? (
-              <div className="estado-carga"><div className="spinner-admin" /></div>
+              <Spinner center />
             ) : sociosFiltrados.length === 0 ? (
               <div className="estado-vacio">{buscar || filtroNivel ? 'Sin resultados para la búsqueda.' : 'No hay socios activos.'}</div>
             ) : (
@@ -143,8 +144,9 @@ export default function GestionNiveles() {
                         ))}
                         <button
                           className="nivel-btn"
-                          style={{ padding: '6px 8px', fontSize: 11, color: '#6b7280' }}
+                          style={{ padding: '6px 8px', fontSize: 11, color: 'var(--color-text-muted)' }}
                           onClick={() => setEditando(null)}
+                          aria-label="Cancelar cambio de categoría"
                         >
                           ✕
                         </button>
@@ -153,7 +155,7 @@ export default function GestionNiveles() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <CategoriaBadge nombre={nivelNombre} />
                         <button
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#6b7280' }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--color-text-muted)' }}
                           onClick={() => setEditando(s.id)}
                           aria-label="Editar nivel"
                         >

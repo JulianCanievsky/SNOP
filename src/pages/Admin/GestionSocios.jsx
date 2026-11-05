@@ -5,6 +5,7 @@ import CategoriaBadge from '../../components/ui/CategoriaBadge/CategoriaBadge'
 import SearchInput from '../../components/ui/SearchInput/SearchInput.jsx'
 import { getSocios } from '../../services/adminApi'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const FILTROS = [
   { key: '',           label: 'Todos' },
@@ -81,10 +82,7 @@ export default function GestionSocios() {
         {/* Lista */}
         <div className="admin-card">
           {cargando ? (
-            <div className="estado-carga">
-              <div className="spinner-admin" />
-              <span>Cargando socios...</span>
-            </div>
+            <Spinner center label="Cargando socios" />
           ) : socios.length === 0 ? (
             <div className="estado-vacio">No hay socios para mostrar.</div>
           ) : (

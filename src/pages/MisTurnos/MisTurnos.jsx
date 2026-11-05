@@ -8,6 +8,7 @@ import RatingEntrenador from '../../components/RatingEntrenador/RatingEntrenador
 import { useRating } from '../../hooks/useRating'
 import { ToastContainer } from '../../components/ui/Toast'
 import { useToast } from '../../hooks/useToast'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -126,10 +127,7 @@ export default function MisTurnos() {
 
       <main className="contenido">
         {loading ? (
-          <div className="estado-carga">
-            <div className="spinner-agenda" />
-            <p>Cargando agenda...</p>
-          </div>
+          <Spinner center label="Cargando agenda" />
         ) : eventosFiltrados.length > 0 ? (
           eventosFiltrados.map(evento => (
             <TurnoCard

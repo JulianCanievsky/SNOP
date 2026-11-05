@@ -15,6 +15,7 @@ import {
   getEntrenadores, getSedes, getNiveles, getSocios,
 } from '../../services/adminApi'
 import './Admin.css'
+import Spinner from '../../components/ui/Spinner/Spinner'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
@@ -35,14 +36,14 @@ function ModalRecurrencia({ fecha, onRecurrente, onPuntual, onCancelar }) {
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', display:'flex', alignItems:'flex-end', zIndex:400 }}>
       <div style={{ background:'white', width:'100%', borderRadius:'20px 20px 0 0', padding:'28px 20px 40px' }}>
-        <h3 style={{ margin:'0 0 8px', fontSize:18, color:'#1e293b' }}>¿Cómo crear el turno?</h3>
-        <p style={{ margin:'0 0 20px', fontSize:14, color:'#64748b' }}>
+        <h3 style={{ margin:'0 0 8px', fontSize:18, color: 'var(--color-text)' }}>¿Cómo crear el turno?</h3>
+        <p style={{ margin:'0 0 20px', fontSize:14, color: 'var(--color-text-muted)' }}>
           Elegiste el <strong>{fecha}</strong> ({dia})
         </p>
         <button
           onClick={onRecurrente}
           style={{ display:'block', width:'100%', padding:'15px 16px', marginBottom:10,
-            background:'#4f46e5', color:'white', border:'none', borderRadius:12,
+            background: 'var(--color-accent)', color:'white', border:'none', borderRadius:12,
             fontSize:15, fontWeight:700, cursor:'pointer', textAlign:'left', fontFamily:'inherit' }}
         >
           🔁 Todos los {dia}s
@@ -53,18 +54,18 @@ function ModalRecurrencia({ fecha, onRecurrente, onPuntual, onCancelar }) {
         <button
           onClick={onPuntual}
           style={{ display:'block', width:'100%', padding:'15px 16px', marginBottom:10,
-            background:'#f8fafc', color:'#1e293b', border:'2px solid #e2e8f0', borderRadius:12,
+            background: 'var(--color-surface-alt)', color: 'var(--color-text)', border: '2px solid var(--color-border)', borderRadius:12,
             fontSize:15, fontWeight:700, cursor:'pointer', textAlign:'left', fontFamily:'inherit' }}
         >
           📅 Solo el {fecha}
-          <span style={{ display:'block', fontSize:12, fontWeight:400, color:'#64748b', marginTop:2 }}>
+          <span style={{ display:'block', fontSize:12, fontWeight:400, color: 'var(--color-text-muted)', marginTop:2 }}>
             Turno único, no se repite
           </span>
         </button>
         <button
           onClick={onCancelar}
           style={{ display:'block', width:'100%', padding:'12px', marginTop:4,
-            background:'none', border:'none', color:'#94a3b8', fontSize:14, cursor:'pointer', fontFamily:'inherit' }}
+            background:'none', border:'none', color: 'var(--color-text-subtle)', fontSize:14, cursor:'pointer', fontFamily:'inherit' }}
         >
           Cancelar
         </button>
@@ -185,7 +186,7 @@ function FormTurno({ inicial, entrenadores, sedes, niveles, onGuardar, onCancela
                 required
               />
               {form.fecha && (
-                <p style={{ margin:'4px 0 0', fontSize:12, color:'#6b7280' }}>
+                <p style={{ margin:'4px 0 0', fontSize:12, color: 'var(--color-text-muted)' }}>
                   {nombreDiaDeStr(form.fecha)} — elegirás si se repite todos los {nombreDiaDeStr(form.fecha)}s al guardar
                 </p>
               )}
@@ -371,7 +372,7 @@ export default function AdminTurnos() {
     setGuardando(true); setError('')
     try {
       const res = await cancelarSemana(vistaDetalle, { motivo: motivoSemana || undefined })
-      mostrarExito(res.mensaje)
+      mostrarExito(`Clase del ${res.data?.fecha_cancelada ?? 'la próxima semana'} cancelada. Las semanas siguientes siguen activas.`)
       setConfirmarSemana(false)
       setMotivoSemana('')
       await abrirDetalle(vistaDetalle)
@@ -385,7 +386,7 @@ export default function AdminTurnos() {
     setGuardando(true); setError('')
     try {
       const res = await reasignarEntrenador(vistaDetalle, { entrenador_id: Number(nuevoEntId) })
-      mostrarExito(res.mensaje)
+      mostrarExito(`Entrenador reasignado a ${res.data?.users?.nombre ?? 'el nuevo entrenador'}`)
       await abrirDetalle(vistaDetalle)
       await cargarTurnos()
     } catch (err) {
@@ -426,7 +427,7 @@ export default function AdminTurnos() {
             <button className="btn-volver-admin" onClick={() => { setVistaDetalle(null); setDetalle(null) }}>‹ Turnos</button>
             <h1>Detalle de turno</h1>
           </div>
-          <div className="admin-body"><div className="estado-carga"><div className="spinner-admin" /></div></div>
+          <div className="admin-body"><Spinner center /></div>
           <AppNav />
         </div>
       )
@@ -588,6 +589,7 @@ export default function AdminTurnos() {
                     <p style={{ margin: 0, fontSize: 11, color: 'var(--admin-muted)' }}>{s.users?.niveles?.nombre ?? 'Sin nivel'}</p>
                   </div>
                   <button className="btn-danger" style={{ padding: '4px 10px', fontSize: 12 }}
+                    aria-label={`Quitar a ${s.users?.nombre ?? 'socio'} del turno`}
                     onClick={() => handleQuitarSocio(s.users?.id)}>✕</button>
                 </div>
               ))
@@ -611,12 +613,12 @@ export default function AdminTurnos() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button
               onClick={() => setConfirmarSemana(true)}
-              style={{ width: '100%', padding: 14, background: '#fff8e1', color: '#d97706', border: '2px solid #f59e0b', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ width: '100%', padding: 14, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '2px solid var(--color-warning)', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               📅 Cancelar solo la próxima semana
             </button>
             <button
               onClick={() => setConfirmarBaja(true)}
-              style={{ width: '100%', padding: 14, background: '#fef2f2', color: '#ef4444', border: '2px solid #fca5a5', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ width: '100%', padding: 14, background: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '2px solid var(--color-danger-border)', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               🗑️ Dar de baja definitivamente
             </button>
           </div>
@@ -626,8 +628,8 @@ export default function AdminTurnos() {
         {confirmarSemana && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'flex-end', zIndex: 300 }}>
             <div style={{ background: 'white', width: '100%', borderRadius: '20px 20px 0 0', padding: '28px 20px 36px' }}>
-              <h3 style={{ margin: '0 0 8px', color: '#d97706' }}>📅 Cancelar próxima semana</h3>
-              <p style={{ margin: '0 0 16px', fontSize: 14, color: '#555' }}>
+              <h3 style={{ margin: '0 0 8px', color: 'var(--color-warning)' }}>📅 Cancelar próxima semana</h3>
+              <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--color-text-muted)' }}>
                 Esto cancela <strong>solo la instancia del próximo {DIAS[detalle.dia_semana]}</strong>. El turno recurrente sigue activo y se retoma la semana siguiente.
               </p>
               <div className="form-group" style={{ marginBottom: 16 }}>
@@ -637,7 +639,7 @@ export default function AdminTurnos() {
               <div style={{ display: 'flex', gap: 10 }}>
                 <button className="btn-secondary" style={{ flex: 1 }} onClick={() => { setConfirmarSemana(false); setMotivoSemana('') }}>Cancelar</button>
                 <button onClick={handleCancelarSemana} disabled={guardando}
-                  style={{ flex: 1, padding: 14, background: '#f59e0b', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ flex: 1, padding: 14, background: 'var(--color-warning)', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {guardando ? '...' : 'Confirmar cancelación'}
                 </button>
               </div>
@@ -649,14 +651,14 @@ export default function AdminTurnos() {
         {confirmarBaja && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'flex-end', zIndex: 300 }}>
             <div style={{ background: 'white', width: '100%', borderRadius: '20px 20px 0 0', padding: '28px 20px 36px' }}>
-              <h3 style={{ margin: '0 0 8px', color: '#ef4444' }}>🗑️ Baja definitiva</h3>
-              <p style={{ margin: '0 0 20px', fontSize: 14, color: '#555' }}>
+              <h3 style={{ margin: '0 0 8px', color: 'var(--color-danger)' }}>🗑️ Baja definitiva</h3>
+              <p style={{ margin: '0 0 20px', fontSize: 14, color: 'var(--color-text-muted)' }}>
                 Esto <strong>desactiva el turno para siempre</strong>. No se generarán más instancias futuras. Esta acción no se puede deshacer desde la app.
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setConfirmarBaja(false)}>Cancelar</button>
                 <button onClick={handleBajaDefinitiva} disabled={guardando}
-                  style={{ flex: 1, padding: 14, background: '#ef4444', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ flex: 1, padding: 14, background: 'var(--color-danger)', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {guardando ? '...' : 'Dar de baja definitivamente'}
                 </button>
               </div>
@@ -700,7 +702,7 @@ export default function AdminTurnos() {
         )}
 
         {cargando ? (
-          <div className="estado-carga"><div className="spinner-admin" /></div>
+          <Spinner center />
         ) : turnos.length === 0 ? (
           <div className="estado-vacio">No hay turnos recurrentes creados todavía.</div>
         ) : (
@@ -735,17 +737,17 @@ export default function AdminTurnos() {
                           </div>
                           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                             {lleno && (
-                              <span style={{ fontSize: 10, fontWeight: 700, background: '#fee2e2', color: '#b91c1c', padding: '2px 8px', borderRadius: 999 }}>
+                              <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--color-danger-bg)', color: 'var(--color-danger-text)', padding: '2px 8px', borderRadius: 999 }}>
                                 Lleno
                               </span>
                             )}
-                            <span style={{ fontSize: 10, fontWeight: 700, background: '#eef2ff', color: '#4f46e5', padding: '2px 8px', borderRadius: 999 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', padding: '2px 8px', borderRadius: 999 }}>
                               {insc}/{cap}
                             </span>
                           </div>
                         </div>
-                        <div style={{ height: 4, background: '#e5e7eb', borderRadius: 999, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${pct}%`, background: lleno ? '#ef4444' : '#4f46e5', borderRadius: 999 }} />
+                        <div style={{ height: 4, background: 'var(--color-surface-muted)', borderRadius: 999, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: lleno ? 'var(--color-danger)' : 'var(--color-accent)', borderRadius: 999 }} />
                         </div>
                       </div>
                     </div>

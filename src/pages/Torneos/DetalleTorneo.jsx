@@ -1,3 +1,4 @@
+import CategoriasHabilitadas from '../../components/ui/CategoriasHabilitadas/CategoriasHabilitadas'
 import './Torneos.css'
 
 const AvatarGrande = ({ p }) => {
@@ -21,7 +22,7 @@ const formatFecha = (iso) => {
 }
 
 const formatHora = (ini, fin) => {
-  const h = d => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  const h = d => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return fin ? `${h(ini)} — ${h(fin)} hs` : `${h(ini)} hs`
 }
 
@@ -57,9 +58,9 @@ export default function DetalleTorneo({ torneo, onVolver, onInscribir, onCancela
             <span className="tor-detalle-ico">👥</span>
             <div>
               <p className="tor-detalle-val">{torneo.inscriptos} / {torneo.capacidad_maxima} inscriptos</p>
-              {torneo.niveles_habilitados?.length > 0 && (
-                <p className="tor-detalle-meta">Niveles: {torneo.niveles_habilitados.join(', ')}</p>
-              )}
+              <div className="tor-detalle-meta">
+                <CategoriasHabilitadas ids={torneo.niveles_habilitados} />
+              </div>
             </div>
           </div>
 
@@ -93,6 +94,8 @@ export default function DetalleTorneo({ torneo, onVolver, onInscribir, onCancela
             </button>
           ) : torneo.estado === 'completo' ? (
             <button className="tor-btn-lleno" disabled>Torneo completo</button>
+          ) : torneo.habilitado === false ? (
+            <button className="tor-btn-lleno" disabled>No disponible para tu categoría</button>
           ) : (
             <button
               className="tor-btn-confirmar"

@@ -11,6 +11,7 @@ import api from '../../../lib/apiClient.js'
 import { obtenerMensajeError } from '../../../lib/errores.js'
 import AppNav from '../../../components/AppNav/AppNav'
 import './PerfilPublicoEntrenador.css'
+import ErrorState from '../../../components/ui/ErrorState/ErrorState'
 
 const TZ = 'America/Argentina/Buenos_Aires'
 
@@ -26,7 +27,7 @@ function iniciales(nombre = '') {
 function formatearDiaHora(fechaISO) {
   const fecha = new Date(fechaISO)
   const dia  = fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ })
-  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+  const hora = fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: TZ })
   return { dia, hora }
 }
 
@@ -101,10 +102,7 @@ export default function PerfilPublicoEntrenador() {
           <button className="ppe-volver" onClick={() => navigate(-1)} aria-label="Volver">←</button>
           <h1>Perfil del entrenador</h1>
         </header>
-        <div className="ppe-error">
-          <p>{error || 'Entrenador no encontrado'}</p>
-          <button className="ppe-btn-secondary" onClick={cargar}>Reintentar</button>
-        </div>
+        <ErrorState message={error || 'Entrenador no encontrado'} onRetry={cargar} />
         <AppNav />
       </div>
     )

@@ -1,5 +1,6 @@
 import './JuegoLibre.css'
 import { Clock, MapPin, Users } from 'lucide-react'
+import CategoriasHabilitadas from '../../components/ui/CategoriasHabilitadas/CategoriasHabilitadas'
 
 const AvatarParticipanteGrande = ({ participante }) => {
   const iniciales = participante.nombre
@@ -75,7 +76,9 @@ const TZ = 'America/Argentina/Buenos_Aires'
             <span className="detalle-icono"><Users size={18} strokeWidth={1.8} /></span>
             <div>
               <p className="detalle-valor">{evento.inscriptos} / {evento.capacidad_maxima} lugares</p>
-              <p className="detalle-meta">Abierto para todos los niveles</p>
+              <div className="detalle-meta">
+                <CategoriasHabilitadas ids={evento.niveles_habilitados} />
+              </div>
             </div>
           </div>
 
@@ -112,13 +115,15 @@ const TZ = 'America/Argentina/Buenos_Aires'
               >
                 {procesando ? 'Cancelando...' : 'Cancelar inscripción'}
               </button>
-            : <button
-                className="btn-confirmar"
-                onClick={onConfirmar}
-                disabled={procesando}
-              >
-                {procesando ? 'Procesando...' : 'Confirmar inscripción'}
-              </button>
+            : evento.habilitado === false
+              ? <button className="btn-lleno" disabled>No disponible para tu categoría</button>
+              : <button
+                  className="btn-confirmar"
+                  onClick={onConfirmar}
+                  disabled={procesando}
+                >
+                  {procesando ? 'Procesando...' : 'Confirmar inscripción'}
+                </button>
           }
         </div>
       </div>

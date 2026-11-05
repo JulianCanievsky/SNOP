@@ -1,10 +1,14 @@
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
-import { requireRole } from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
-import { crearNotificacion, enviarEmail, emailClaseConfirmada, emailClaseRechazada } from '../src/lib/notificaciones.js'
-import { aprobarInscripcionPorId } from '../src/services/socioTurnoService.js'
-import { hoyAR, toFechaAR, formatArES } from '../src/lib/fecha.js'
+import { crearNotificacion, enviarEmail, emailClaseConfirmada, emailClaseRechazada, emailTurnoSuspendido } from '../src/lib/notificaciones.js'
+import { darDeBajaInscriptosPorClub } from '../src/services/turnosService.js'
+import {
+  aprobarInscripcionPorId,
+  eliminarInscripcionPorId,
+  eliminarInscripcionesDeTurno,
+} from '../src/services/socioTurnoService.js'
+import { hoyAR, formatArES } from '../src/lib/fecha.js'
 
 const router = express.Router()
 router.use(autenticar, requireRole(2, 3))  // solo entrenadores (2) y admins (3)
@@ -129,7 +133,7 @@ router.patch('/clases/:turnoId/cancelar', async (req, res) => {
 
     const { data: turno, error: errVerif } = await supabase
       .from('turnos')
-      .select('id, user_id')
+      .select('id, user_id, estado, fecha_inicio, sedes(nombre), users!turnos_user_id_fkey(nombre)')
       .eq('id', turnoId)
       .eq('user_id', entrenadorId)
       .single()
@@ -137,6 +141,7 @@ router.patch('/clases/:turnoId/cancelar', async (req, res) => {
     if (errVerif || !turno) {
       return res.status(403).json({ ok: false, mensaje: 'Turno no encontrado o sin permiso' })
     }
+    if (!turno.estado) return res.status(400).json({ ok: false, mensaje: 'La clase ya estaba cancelada' })
 
     const { error } = await supabase
       .from('turnos')
@@ -145,7 +150,30 @@ router.patch('/clases/:turnoId/cancelar', async (req, res) => {
 
     if (error) throw error
 
-    res.json({ ok: true, mensaje: 'Turno cancelado' })
+    // Inscriptos → 'baja_entrenador' + crédito de recupero, y aviso a cada uno
+    const afectados = await darDeBajaInscriptosPorClub(turno)
+    const fechaStr  = turno.fecha_inicio ? formatArES(turno.fecha_inicio) : 'próximamente'
+    const sedeStr   = turno.sedes?.nombre ?? 'la sede'
+    const motivo    = `${turno.users?.nombre ?? 'El entrenador'} canceló la clase. Te dimos un crédito de recupero.`
+    for (const socio of afectados) {
+      try {
+        await crearNotificacion({
+          user_id: socio.id,
+          titulo:  'Clase cancelada',
+          mensaje: `La clase del ${fechaStr} en ${sedeStr} fue cancelada. Recibiste un crédito de recupero.`,
+          tipo:    'turno_suspendido',
+          link:    '/mis-clases',
+        })
+        await enviarEmail({
+          to: socio.email,
+          ...emailTurnoSuspendido({ nombre: socio.nombre, fechaTurno: fechaStr, sede: sedeStr, motivo }),
+        })
+      } catch (notifErr) {
+        console.error('[entrenador/cancelar] aviso socio', socio.id, notifErr)
+      }
+    }
+
+    res.json({ ok: true, data: { notificados: afectados.length } })
   } catch (err) {
     console.error('PATCH /clases/:id/cancelar', err)
     res.status(500).json({ ok: false, mensaje: 'Error al cancelar turno' })
@@ -463,7 +491,7 @@ router.delete('/mis-horarios/:turnoId', async (req, res) => {
     }
 
     // Eliminar inscripciones asociadas primero
-    await supabase.from('socio_turno').delete().eq('turno_id', turnoId)
+    await eliminarInscripcionesDeTurno({ turno_id: turnoId })
 
     // Eliminar el turno
     const { error } = await supabase.from('turnos').delete().eq('id', turnoId)
@@ -607,7 +635,7 @@ router.patch('/solicitudes/:solicitudId/confirmar', async (req, res) => {
       const t         = solConDatos?.turnos
       const fechaStr  = t?.fecha_inicio
         ? formatArES(t.fecha_inicio)
-        : 'próximamente': 'próximamente'
+        : 'próximamente'
       const sedeStr   = t?.sedes?.nombre ?? 'la sede'
       const entrenStr = t?.users?.nombre ?? 'el entrenador'
 
@@ -650,7 +678,7 @@ router.patch('/solicitudes/:solicitudId/rechazar', async (req, res) => {
       .single()
 
     if (errSol || !sol) {
-      return res.status(404).json({ error: 'Solicitud no encontrada' })
+      return res.status(404).json({ ok: false, mensaje: 'Solicitud no encontrada' })
     }
 
     const { data: turno } = await supabase
@@ -662,12 +690,8 @@ router.patch('/solicitudes/:solicitudId/rechazar', async (req, res) => {
     if (!turno || turno.user_id !== entrenadorId) {
       return res.status(403).json({ ok: false, mensaje: 'Sin permiso' })
     }
-    const { error } = await supabase
-      .from('socio_turno')
-      .delete()
-      .eq('id', solicitudId)
-
-    if (error) throw error
+    // Una solicitud rechazada nunca fue clase: se borra (ver socioTurnoService)
+    await eliminarInscripcionPorId({ socioTurnoId: solicitudId })
 
     // Notificación + email al socio
     try {

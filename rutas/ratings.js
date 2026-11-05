@@ -1,5 +1,5 @@
 import express from 'express'
-import autenticar from '../src/middlewares/autenticar.js'
+import autenticar, { requireRole } from '../src/middlewares/autenticar.js'
 import supabase from '../src/config/db.js'
 import responder from '../src/lib/responder.js'
 
@@ -10,7 +10,7 @@ const router = express.Router()
 // Socio califica a un entrenador después de un turno
 // Body: { entrenador_id, turno_id, estrellas (1-5), comentario? }
 // ─────────────────────────────────────────────────────────────
-router.post('/', autenticar, async (req, res) => {
+router.post('/', autenticar, requireRole(1), async (req, res) => {
   try {
     const socioId = req.userId
     const { entrenador_id, turno_id, estrellas, comentario } = req.body
@@ -138,7 +138,7 @@ router.get('/entrenador/:id', autenticar, async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 // GET /api/ratings/pendientes
 // ─────────────────────────────────────────────────────────────
-router.get('/pendientes', autenticar, async (req, res) => {
+router.get('/pendientes', autenticar, requireRole(1), async (req, res) => {
   try {
     const socioId = req.userId
     const ahora   = new Date()
