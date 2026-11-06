@@ -57,35 +57,6 @@ router.use(autenticar, requireRole(3))
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Verifica que el entrenador no tenga otro turno RECURRENTE activo en el mismo
- * día y horario. Una sede puede tener varios turnos simultáneos (varias mesas
- * y entrenadores), así que solo se bloquea si el mismo entrenador se superpone.
- * Retorna el id del turno conflictivo o null si no hay solapamiento.
- */
-async function verificarSolapamiento({ entrenador_id, dia_semana, hora_inicio, hora_fin, excluir_id }) {
-  let query = supabase
-    .from('turnos')
-    .select('id, hora_inicio, hora_fin, dia_semana, user_id')
-    .eq('user_id', entrenador_id)
-    .eq('estado', true)
-    .eq('tipo_turno_id', 1)
-    .not('hora_inicio', 'is', null)
-
-  if (excluir_id) query = query.neq('id', excluir_id)
-
-  const { data: turnos } = await query
-
-  for (const t of turnos ?? []) {
-    if (t.dia_semana == null || t.dia_semana !== dia_semana) continue
-    // Solo considerar solapamiento si hay superposición horaria real
-    if (hora_inicio < t.hora_fin && hora_fin > t.hora_inicio) {
-      return t.id // retornar el id del conflicto (truthy)
-    }
-  }
-  return null
-}
-
 const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
 
 /** "HH:MM" del turno: usa hora_inicio si existe; si no, la deriva de fecha_inicio en hora AR. */
@@ -180,6 +151,8 @@ router.get('/mesas', async (_req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/plantillas', async (_req, res) => {
   try {
+    // Recurrentes + puntuales de hoy en adelante (los puntuales pasados no se listan)
+    const desdeHoy = new Date(`${hoyAR()}T00:00:00-03:00`).toISOString()
     const { data, error } = await supabase
       .from('turnos')
       .select(`
@@ -195,8 +168,9 @@ router.get('/plantillas', async (_req, res) => {
       `)
       .eq('estado', true)
       .eq('tipo_turno_id', 1)
-      .order('fecha_inicio', { ascending: true })
-      .limit(50)
+      .or(`recurrente.eq.true,fecha_inicio.gte.${desdeHoy}`)
+      .order('hora_inicio', { ascending: true })
+      .limit(500)
 
     if (error) {
       console.error('GET /admin/turnos/plantillas — Supabase error:', JSON.stringify(error))
@@ -206,6 +180,7 @@ router.get('/plantillas', async (_req, res) => {
     const resultado = (data ?? []).map(t => ({
       id:              t.id,
       dia_semana:      t.dia_semana   ?? null,
+      fecha_inicio:    t.fecha_inicio,
       hora_inicio:     horaDe(t.hora_inicio, t.fecha_inicio),
       hora_fin:        horaDe(t.hora_fin,    t.fecha_fin),
       duracion_min:    t.duracion_min ?? null,
@@ -633,16 +608,6 @@ router.post('/', async (req, res) => {
       return responder.error(res, 'El usuario seleccionado no es un entrenador')
     }
 
-    // Verificar solapamiento solo para turnos recurrentes
-    if (esRecurrente) {
-      const conflictoId = await verificarSolapamiento({
-        entrenador_id, dia_semana: diaSemanaFinal, hora_inicio, hora_fin,
-      })
-      if (conflictoId) {
-        return responder.conflicto(res, `${entrenador.nombre} ya tiene un turno recurrente en ese día y horario (turno id: ${conflictoId}). Elegí otro entrenador u horario.`)
-      }
-    }
-
     // ── Calcular fecha_inicio y fecha_fin ─────────────────────────────────────
     let primeraFecha, primeraFin
     if (fecha_especifica) {
@@ -711,10 +676,7 @@ router.post('/', async (req, res) => {
 // PUT /api/admin/turnos/:id — editar turno
 // ─────────────────────────────────────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
-  const {
-    entrenador_id,
-    dia_semana, hora_inicio, hora_fin,
-  } = req.body
+  const { entrenador_id, hora_inicio, hora_fin } = req.body
 
   try {
     // Si cambia entrenador, verificar que sea tipo 2
@@ -726,24 +688,8 @@ router.put('/:id', async (req, res) => {
       }
     }
 
-    // Verificar que el entrenador no quede superpuesto si cambia horario/entrenador
-    if (dia_semana != null && hora_inicio && hora_fin) {
-      if (hora_inicio >= hora_fin) {
-        return responder.error(res, 'hora_inicio debe ser anterior a hora_fin')
-      }
-      let entId = entrenador_id
-      if (entId == null) {
-        const { data: actual } = await supabase
-          .from('turnos').select('user_id').eq('id', req.params.id).single()
-        entId = actual?.user_id
-      }
-      const solapa = entId != null && await verificarSolapamiento({
-        entrenador_id: entId, dia_semana: Number(dia_semana), hora_inicio, hora_fin,
-        excluir_id: req.params.id,
-      })
-      if (solapa) {
-        return responder.conflicto(res, 'El entrenador ya tiene otro turno en ese día y horario.')
-      }
+    if (hora_inicio && hora_fin && hora_inicio >= hora_fin) {
+      return responder.error(res, 'hora_inicio debe ser anterior a hora_fin')
     }
 
     const campos = {}

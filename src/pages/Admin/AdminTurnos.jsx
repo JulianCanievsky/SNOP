@@ -30,6 +30,14 @@ function nombreDiaDeStr(fechaStr) {
   return DIAS[d.getDay()]
 }
 
+/** "lun 10/11" a partir de un ISO, en hora AR. */
+function fechaCorta(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires', weekday: 'short', day: 'numeric', month: 'numeric',
+  })
+}
+
 // ── Modal de confirmación recurrente vs puntual ───────────────────────────────
 function ModalRecurrencia({ fecha, onRecurrente, onPuntual, onCancelar }) {
   const dia = nombreDiaDeStr(fecha)
@@ -672,12 +680,58 @@ export default function AdminTurnos() {
   }
 
   // ── Vista lista de plantillas ─────────────────────────────────────────────
+  const recurrentes = turnos.filter(t => t.recurrente)
+  const puntuales   = turnos
+    .filter(t => !t.recurrente)
+    .sort((a, b) => (a.fecha_inicio ?? '').localeCompare(b.fecha_inicio ?? ''))
+
+  function tarjetaTurno(t, etiquetaFecha) {
+    const insc = t.inscriptos ?? 0
+    const cap  = t.capacidad_maxima ?? 0
+    const pct  = cap > 0 ? Math.min((insc / cap) * 100, 100) : 0
+    const lleno = insc >= cap
+    return (
+      <div
+        key={t.id}
+        className="admin-card"
+        style={{ cursor: 'pointer', marginBottom: 10 }}
+        onClick={() => abrirDetalle(t.id)}
+      >
+        <div style={{ padding: '14px 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+            <div>
+              <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: 15, color: 'var(--admin-text)' }}>
+                {etiquetaFecha && <>{etiquetaFecha} · </>}{t.hora_inicio?.slice(0,5)} – {t.hora_fin?.slice(0,5)} hs
+              </p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--admin-muted)' }}>
+                {t.sedes?.nombre ?? '—'} · {t.users?.nombre ?? '—'}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+              {lleno && (
+                <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--color-danger-bg)', color: 'var(--color-danger-text)', padding: '2px 8px', borderRadius: 999 }}>
+                  Lleno
+                </span>
+              )}
+              <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', padding: '2px 8px', borderRadius: 999 }}>
+                {insc}/{cap}
+              </span>
+            </div>
+          </div>
+          <div style={{ height: 4, background: 'var(--color-surface-muted)', borderRadius: 999, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${pct}%`, background: lleno ? 'var(--color-danger)' : 'var(--color-accent)', borderRadius: 999 }} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="admin-page">
       <div className="admin-header">
         <button className="btn-volver-admin" onClick={() => navigate('/admin/actividades')}>‹ Actividades</button>
         <h1>Turnos de entrenamiento</h1>
-        <p>Plantillas semanales recurrentes</p>
+        <p>Turnos semanales y únicos</p>
       </div>
 
       <div className="admin-body">
@@ -686,13 +740,13 @@ export default function AdminTurnos() {
 
         {!mostrarForm && (
           <button className="btn-primary" onClick={() => setMostrarForm(true)}>
-            + Nuevo turno recurrente
+            + Nuevo turno
           </button>
         )}
 
         {mostrarForm && (
           <div className="admin-card admin-card-body">
-            <p className="admin-label" style={{ marginBottom: 10 }}>Nuevo turno recurrente</p>
+            <p className="admin-label" style={{ marginBottom: 10 }}>Nuevo turno</p>
             <FormTurno
               inicial={{}}
               entrenadores={entrenadores} sedes={sedes} niveles={niveles}
@@ -704,58 +758,31 @@ export default function AdminTurnos() {
         {cargando ? (
           <Spinner center />
         ) : turnos.length === 0 ? (
-          <div className="estado-vacio">No hay turnos recurrentes creados todavía.</div>
+          <div className="estado-vacio">No hay turnos creados todavía.</div>
         ) : (
-          // Agrupar por día de la semana
-          [0,1,2,3,4,5,6].map(dia => {
-            const delDia = turnos.filter(t => t.dia_semana === dia)
-            if (!delDia.length) return null
-            return (
-              <div key={dia}>
-                <p className="admin-label">{DIAS[dia]}</p>
-                {delDia.map(t => {
-                  const insc = t.inscriptos ?? 0
-                  const cap  = t.capacidad_maxima ?? 0
-                  const pct  = cap > 0 ? Math.min((insc / cap) * 100, 100) : 0
-                  const lleno = insc >= cap
-                  return (
-                    <div
-                      key={t.id}
-                      className="admin-card"
-                      style={{ cursor: 'pointer', marginBottom: 10 }}
-                      onClick={() => abrirDetalle(t.id)}
-                    >
-                      <div style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                          <div>
-                            <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: 15, color: 'var(--admin-text)' }}>
-                              {t.hora_inicio?.slice(0,5)} – {t.hora_fin?.slice(0,5)} hs
-                            </p>
-                            <p style={{ margin: 0, fontSize: 12, color: 'var(--admin-muted)' }}>
-                              {t.sedes?.nombre ?? '—'} · {t.users?.nombre ?? '—'}
-                            </p>
-                          </div>
-                          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                            {lleno && (
-                              <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--color-danger-bg)', color: 'var(--color-danger-text)', padding: '2px 8px', borderRadius: 999 }}>
-                                Lleno
-                              </span>
-                            )}
-                            <span style={{ fontSize: 10, fontWeight: 700, background: 'var(--color-accent-subtle)', color: 'var(--color-accent)', padding: '2px 8px', borderRadius: 999 }}>
-                              {insc}/{cap}
-                            </span>
-                          </div>
-                        </div>
-                        <div style={{ height: 4, background: 'var(--color-surface-muted)', borderRadius: 999, overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${pct}%`, background: lleno ? 'var(--color-danger)' : 'var(--color-accent)', borderRadius: 999 }} />
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+          <>
+            <p className="admin-label" style={{ marginTop: 6 }}>Turnos creados ({turnos.length})</p>
+
+            {/* Recurrentes, agrupados por día de la semana */}
+            {[1, 2, 3, 4, 5, 6, 0].map(dia => {
+              const delDia = recurrentes.filter(t => t.dia_semana === dia)
+              if (!delDia.length) return null
+              return (
+                <div key={dia}>
+                  <p className="admin-label">Todos los {DIAS[dia].toLowerCase()}</p>
+                  {delDia.map(t => tarjetaTurno(t))}
+                </div>
+              )
+            })}
+
+            {/* Puntuales (fecha única), ordenados por fecha */}
+            {puntuales.length > 0 && (
+              <div>
+                <p className="admin-label">Turnos únicos</p>
+                {puntuales.map(t => tarjetaTurno(t, fechaCorta(t.fecha_inicio)))}
               </div>
-            )
-          })
+            )}
+          </>
         )}
       </div>
 
