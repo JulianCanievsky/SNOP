@@ -13,7 +13,7 @@
  * Estilos en AppNav.module.css (ex BottomNav.module.css).
  */
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Home, CalendarDays, Gamepad2, User, Users, Clock, Bell, Settings } from 'lucide-react'
+import { Home, CalendarDays, Gamepad2, User, Users, Clock, Settings } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import styles from './AppNav.module.css'
 
@@ -29,7 +29,6 @@ const ITEMS_ENTRENADOR = [
   { label: 'Inicio',    path: '/entrenador/inicio',         Icon: Home  },
   { label: 'Alumnos',   path: '/entrenador/mis-alumnos',    Icon: Users },
   { label: 'Horarios',  path: '/entrenador/mis-horarios',   Icon: Clock },
-  { label: 'Notif.',    path: '/entrenador/notificaciones', Icon: Bell, isBadge: true },
   { label: 'Perfil',    path: '/entrenador/perfil',         Icon: User  },
 ]
 
@@ -90,16 +89,14 @@ export default function AppNav({ badge = 0 }) {
     <nav className={styles.nav} role="navigation" aria-label={ariaLabel}>
       {items.map((item) => {
         const active = isItemActive(item, pathname)
-        const { Icon, label, path, isBadge } = item
+        const { Icon, label, path } = item
 
         // Badge:
         //   - socio: en /inicio (comunicados + notifs no leídas)
-        //   - entrenador: en /entrenador/notificaciones
         //   - admin: en /admin (badge prop, si se pasa)
         const showBadge =
           badge > 0 && (
             (rol === 1 && path === '/inicio') ||
-            (rol === 2 && isBadge) ||
             (rol === 3 && path === '/admin')
           )
 

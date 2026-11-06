@@ -7,8 +7,6 @@
 .saludo-sub  { font-size:var(--font-size-sm); opacity:.85; margin:0 0 2px; }
 .saludo-nombre { font-size:26px; font-weight:700; margin:0; color:var(--color-on-primary); }
 
-.btn-campana { background:rgba(255,255,255,.2); border:none; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--color-on-primary); flex-shrink:0; }
-.btn-campana svg { width:20px; height:20px; }
 
 .contadores { display:flex; gap:var(--space-3); }
 .contador-card { flex:1; background:var(--color-surface); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4); text-align:center; box-shadow:var(--shadow-sm); }

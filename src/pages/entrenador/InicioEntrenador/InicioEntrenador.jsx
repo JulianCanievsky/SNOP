@@ -3,7 +3,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { useInicioEntrenador, useComunicadosEntrenador } from '../../../hooks/useEntrenador'
 import api from '../../../lib/apiClient.js'
 import AppNav from '../../../components/AppNav/AppNav'
-import { ClipboardList, Clock, Users, Inbox, Bell } from 'lucide-react'
+import { ClipboardList, Clock, Users, Inbox } from 'lucide-react'
 import './InicioEntrenador.css'
 import Spinner from '../../../components/ui/Spinner/Spinner'
 
@@ -69,9 +69,6 @@ export default function InicioEntrenador() {
             <p className="saludo-sub">{saludo},</p>
             <h1 className="saludo-nombre">{nombre}</h1>
           </div>
-          <button className="btn-campana" aria-label="Notificaciones" onClick={() => navigate('/entrenador/notificaciones')}>
-            <Bell size={22} strokeWidth={1.8} />
-          </button>
         </div>
 
         <div className="contadores">
