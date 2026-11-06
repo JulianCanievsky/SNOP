@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Gamepad2, Trophy } from 'lucide-react'
+import { Gamepad2, Trophy, Calendar } from 'lucide-react'
 import AppNav from '../../components/AppNav/AppNav'
 import { getJuegosLibres, getInscriptosJuegoLibre } from '../../services/adminApi'
 import { getTorneosAdmin, getInscriptosTorneo } from '../../services/torneosApi'
@@ -217,6 +217,7 @@ export default function AdminActividades() {
   const accesos = [
     { titulo: 'Nuevo juego libre', Icon: Gamepad2, path: '/admin/juego-libre' },
     { titulo: 'Nuevo torneo',      Icon: Trophy,   path: '/admin/torneos' },
+    { titulo: 'Nuevo entrenamiento', Icon: Calendar, path: '/admin/turnos' },
   ]
 
   return (
@@ -228,12 +229,12 @@ export default function AdminActividades() {
 
       <div className="admin-body">
         {/* Accesos rápidos */}
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           {accesos.map(a => (
             <button
               key={a.path}
               className="btn-secondary"
-              style={{ flex: 1, padding: '10px 8px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              style={{ flex: '1 1 140px', padding: '10px 8px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               onClick={() => navigate(a.path)}
             >
               <a.Icon size={16} strokeWidth={1.8} /> {a.titulo}
