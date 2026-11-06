@@ -106,7 +106,7 @@ export default function ExportarActividades() {
               <label>Desde</label>
               <input
                 type="date"
-                className="form-input"
+                className="input-fecha"
                 value={desde}
                 onChange={e => setDesde(e.target.value)}
               />
@@ -115,7 +115,7 @@ export default function ExportarActividades() {
               <label>Hasta</label>
               <input
                 type="date"
-                className="form-input"
+                className="input-fecha"
                 value={hasta}
                 onChange={e => setHasta(e.target.value)}
               />

@@ -191,7 +191,7 @@ const JuegoLibre = () => {
           </select>
           <input
             type="date"
-            className="filtro-fecha"
+            className="input-fecha"
             value={filtroFecha}
             onChange={e => setFiltroFecha(e.target.value)}
           />

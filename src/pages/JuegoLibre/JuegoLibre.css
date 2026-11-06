@@ -27,9 +27,9 @@
   border-bottom: 1px solid var(--color-border);
 }
 .filtro-grupo { display: flex; gap: var(--space-2); flex: 1; }
+.filtro-grupo .input-fecha { flex: 1; width: auto; min-width: 0; }
 
-.filtro-select,
-.filtro-fecha {
+.filtro-select {
   flex: 1;
   padding: var(--space-2) 10px;
   border: 1px solid var(--color-border);
@@ -40,8 +40,7 @@
   outline: none;
   font-family: var(--font-sans);
 }
-.filtro-select:focus,
-.filtro-fecha:focus { border-color: var(--color-primary); }
+.filtro-select:focus { border-color: var(--color-primary); }
 
 .btn-filtrar {
   padding: var(--space-2) var(--space-4);
@@ -324,7 +323,6 @@
 /* ── DARK MODE ── */
 [data-theme="dark"] .jl-filtros           { background: var(--color-surface); border-color: var(--color-border); }
 [data-theme="dark"] .filtro-select,
-[data-theme="dark"] .filtro-fecha         { background: var(--color-surface-alt); border-color: var(--color-border-strong); color: var(--color-text); }
 [data-theme="dark"] .tarjeta-evento       { background: var(--color-surface); border-color: var(--color-border); }
 [data-theme="dark"] .barra-capacidad      { background: var(--color-border); }
 [data-theme="dark"] .btn-lleno            { background: var(--color-surface-alt); }

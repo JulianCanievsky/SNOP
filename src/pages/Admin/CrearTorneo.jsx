@@ -185,19 +185,19 @@ export default function CrearTorneo() {
 
           <div className="form-group">
             <label>Fecha</label>
-            <input name="fecha" type="date" className="form-input"
+            <input name="fecha" type="date" className="input-fecha"
               value={form.fecha} onChange={handleChange} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div className="form-group">
               <label>Inicio</label>
-              <input name="hora_inicio" type="time" className="form-input"
+              <input name="hora_inicio" type="time" className="input-fecha"
                 value={form.hora_inicio} onChange={handleChange} />
             </div>
             <div className="form-group">
               <label>Fin</label>
-              <input name="hora_fin" type="time" className="form-input"
+              <input name="hora_fin" type="time" className="input-fecha"
                 value={form.hora_fin} onChange={handleChange} />
             </div>
           </div>

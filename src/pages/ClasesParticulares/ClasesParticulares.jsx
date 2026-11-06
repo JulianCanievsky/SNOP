@@ -221,6 +221,7 @@ const ClasesParticulares = () => {
           <label>Buscar por día</label>
           <input
             type="date"
+            className="input-fecha"
             value={fechaFiltro}
             onChange={e => setFechaFiltro(e.target.value)}
           />

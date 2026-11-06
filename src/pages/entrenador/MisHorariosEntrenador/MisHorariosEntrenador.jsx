@@ -276,7 +276,7 @@ export default function MisHorariosEntrenador() {
             <label className="form-label">Hora</label>
             <input
               type="time"
-              className="form-input-time"
+              className="input-fecha"
               value={hora}
               min="06:00"
               max="23:00"

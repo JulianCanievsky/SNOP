@@ -179,7 +179,7 @@ function FormTurno({ inicial, entrenadores, sedes, niveles, onGuardar, onCancela
               <label>Fecha del turno *</label>
               <input
                 type="date"
-                className="form-input"
+                className="input-fecha"
                 value={form.fecha}
                 min={hoyAR()}
                 onChange={e => set('fecha', e.target.value)}
@@ -202,12 +202,12 @@ function FormTurno({ inicial, entrenadores, sedes, niveles, onGuardar, onCancela
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div className="form-group">
             <label>Hora inicio *</label>
-            <input type="time" className="form-input" value={form.hora_inicio}
+            <input type="time" className="input-fecha" value={form.hora_inicio}
               onChange={e => set('hora_inicio', e.target.value)} required />
           </div>
           <div className="form-group">
             <label>Hora fin *</label>
-            <input type="time" className="form-input" value={form.hora_fin}
+            <input type="time" className="input-fecha" value={form.hora_fin}
               onChange={e => set('hora_fin', e.target.value)} required />
           </div>
         </div>

@@ -463,3 +463,29 @@ p { margin: 0; }
 @keyframes snop-spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Selector de fecha / hora ─────────────────────────────────────────────
+   Estilo único para todos los <input type="date|time">. Usar className="input-fecha". */
+.input-fecha {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border: 1.5px solid var(--color-input-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-input-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+  min-height: 46px;
+  outline: none;
+  cursor: pointer;
+  color-scheme: light;
+  transition: border-color var(--transition-fast);
+}
+.input-fecha:focus { border-color: var(--color-input-focus); }
+.input-fecha:disabled { opacity: .6; cursor: not-allowed; }
+.input-fecha::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .7; }
+.input-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+[data-theme="dark"] .input-fecha { color-scheme: dark; }

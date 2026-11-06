@@ -388,7 +388,7 @@ export default function GestionBonos() {
                 <input
                   name="fecha_inicio"
                   type="date"
-                  className="form-input"
+                  className="input-fecha"
                   value={form.fecha_inicio}
                   onChange={handleChange}
                 />
@@ -398,7 +398,7 @@ export default function GestionBonos() {
                 <input
                   name="fecha_vencimiento"
                   type="date"
-                  className="form-input"
+                  className="input-fecha"
                   value={form.fecha_vencimiento}
                   onChange={handleChange}
                   min={form.fecha_inicio}

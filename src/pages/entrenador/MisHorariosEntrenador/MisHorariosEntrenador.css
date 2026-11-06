@@ -61,8 +61,6 @@
 .cal-dia--sel    { background:var(--color-primary) !important; color:var(--color-on-primary) !important; font-weight:700; }
 .cal-fecha-sel-label { font-size:var(--font-size-sm); font-weight:600; color:var(--color-primary); text-align:center; margin:10px 0 2px; text-transform:capitalize; }
 
-.form-input-time { width:100%; padding:11px 14px; border:1.5px solid var(--color-input-border); border-radius:var(--radius-sm); font-size:18px; font-weight:600; font-family:var(--font-sans); color:var(--color-text); background:var(--color-input-bg); appearance:none; cursor:pointer; box-sizing:border-box; outline:none; transition:border-color var(--transition-fast); }
-.form-input-time:focus { border-color:var(--color-primary); }
 
 .dur-chips { display:flex; gap:var(--space-2); flex-wrap:wrap; }
 .dur-chip { padding:7px 14px; border:1.5px solid var(--color-border); border-radius:var(--radius-pill); background:var(--color-surface); font-size:var(--font-size-sm); font-weight:500; color:var(--color-text-muted); cursor:pointer; font-family:var(--font-sans); transition:all var(--transition-fast); }
@@ -73,6 +71,5 @@
 
 [data-theme="dark"] .mis-horarios-e-header { background:var(--color-primary-dark); }
 [data-theme="dark"] .cal-wrap { background:var(--color-surface); }
-[data-theme="dark"] .form-input-time { background:var(--color-input-bg); border-color:var(--color-input-border); }
 [data-theme="dark"] .form-select      { background:var(--color-input-bg); border-color:var(--color-input-border); }
 [data-theme="dark"] .dur-chip         { background:var(--color-surface); border-color:var(--color-border); }
