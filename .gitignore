@@ -25,3 +25,6 @@ build_output.txt
 npm_out.txt
 lint_out.txt
 ({data
+
+# Importación de socios (datos personales: no subir)
+*.resultado.csv
