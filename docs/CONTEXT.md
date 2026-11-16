@@ -36,37 +36,46 @@ App web de un club de tenis de mesa (2 sedes: Belgrano y Palermo). Tres roles:
 
 ```
 SNOP/
-├── server.js                 — entry point: CORS, rate limit, monta routers; inline /api/sedes,
-│                               /api/niveles, /api/comunicados(/todos)
-├── rutas/                    — un router Express por dominio (ver "Mapa de la API")
-├── src/
-│   ├── App.jsx               — rutas + RutaProtegida por rol + Suspense (carga por pantalla)
-│   ├── components/
-│   │   ├── AppNav/           — barra inferior única para los 3 roles
-│   │   ├── CreditosResumen/, RatingEntrenador/, TurnoCard/
-│   │   └── ui/               — Button, CategoriaBadge, CategoriasHabilitadas, ConfirmDialog,
-│   │                           EmptyState, ErrorState, SearchInput, Skeleton, Spinner, Toast
-│   ├── config/db.js          — ÚNICO cliente Supabase (service key, backend)
-│   ├── constants/categorias.js — 8 categorías + nivelHabilitado() (compartido front/back)
-│   ├── context/              — AuthContext (sesión en localStorage), ThemeContext (claro/oscuro)
-│   ├── controllers/turnosController.js — handlers de /api/turnos
-│   ├── hooks/                — useEntrenador, usePerfil, useHistorialPerfil, useRating, useToast...
-│   ├── lib/
-│   │   ├── apiClient.js      — axios con JWT + interceptor 401 (frontend)
-│   │   ├── errores.js        — obtenerMensajeError(err) (frontend)
-│   │   ├── errorNegocio.js   — ErrorNegocio + responderError (backend)
-│   │   ├── fecha.js          — helpers ART (front y back): hoyAR, toFechaAR, parseFechaAR, formatArES...
-│   │   ├── notificaciones.js — crearNotificacion, enviarEmail, plantillas de email (backend)
-│   │   └── responder.js      — responder.ok/creado/error/... (backend)
-│   ├── middlewares/autenticar.js — JWT → req.user / req.userId + requireRole(...)
-│   ├── pages/                — socio (raíz), entrenador/, Admin/, DesignSystem/ (solo dev)
-│   └── services/
-│       ├── *Api.js           — llamadas HTTP del FRONTEND
-│       ├── turnosService.js  — lógica del BACKEND: cancelar, créditos, lista de espera, bajas del club
-│       └── socioTurnoService.js — ÚNICO módulo que escribe (insert/update/delete) en socio_turno
-├── scripts/lint-css.mjs      — detecta hex sueltos en .css y .jsx
-├── tests/                    — vitest
-├── .github/workflows/ci.yml  — CI
+├── backend/                  — API Express (package.json y .env propios)
+│   ├── server.js             — entry point: CORS, rate limit, monta routers; inline /api/sedes,
+│   │                           /api/niveles, /api/comunicados(/todos)
+│   ├── rutas/                — un router Express por dominio (ver "Mapa de la API")
+│   ├── src/
+│   │   ├── config/db.js      — ÚNICO cliente Supabase (service key)
+│   │   ├── constants/categorias.js — 8 categorías + nivelHabilitado() (COPIA de la del frontend)
+│   │   ├── controllers/turnosController.js — handlers de /api/turnos
+│   │   ├── lib/
+│   │   │   ├── errorNegocio.js   — ErrorNegocio + responderError
+│   │   │   ├── fecha.js          — helpers ART (COPIA de la del frontend)
+│   │   │   ├── notificaciones.js — crearNotificacion, enviarEmail, plantillas de email
+│   │   │   └── responder.js      — responder.ok/creado/error/...
+│   │   ├── middlewares/autenticar.js — JWT → req.user / req.userId + requireRole(...)
+│   │   └── services/
+│   │       ├── turnosService.js  — cancelar, créditos, lista de espera, bajas del club
+│   │       └── socioTurnoService.js — ÚNICO módulo que escribe (insert/update/delete) en socio_turno
+│   ├── scripts/              — importar-socios.mjs, exportar-bd.mjs (dump de la base sin pg_dump)
+│   └── tests/                — vitest (lógica de negocio + sintaxis del backend)
+├── frontend/                 — React + Vite (package.json y .env propios)
+│   ├── src/
+│   │   ├── App.jsx           — rutas + RutaProtegida por rol + Suspense (carga por pantalla)
+│   │   ├── components/
+│   │   │   ├── AppNav/       — barra inferior única para los 3 roles
+│   │   │   ├── CreditosResumen/, RatingEntrenador/, TurnoCard/
+│   │   │   └── ui/           — Button, CategoriaBadge, CategoriasHabilitadas, ConfirmDialog,
+│   │   │                       EmptyState, ErrorState, SearchInput, Skeleton, Spinner, Toast
+│   │   ├── constants/categorias.js — 8 categorías + nivelHabilitado()
+│   │   ├── context/          — AuthContext (sesión en localStorage), ThemeContext (claro/oscuro)
+│   │   ├── hooks/            — useEntrenador, usePerfil, useHistorialPerfil, useRating, useToast...
+│   │   ├── lib/
+│   │   │   ├── apiClient.js  — axios con JWT + interceptor 401
+│   │   │   ├── errores.js    — obtenerMensajeError(err)
+│   │   │   └── fecha.js      — helpers ART: hoyAR, toFechaAR, parseFechaAR, formatArES...
+│   │   ├── pages/            — socio (raíz), entrenador/, Admin/, DesignSystem/ (solo dev)
+│   │   └── services/*Api.js  — llamadas HTTP
+│   ├── scripts/lint-css.mjs  — detecta hex sueltos en .css y .jsx
+│   └── tests/                — vitest
+├── database/esquema.sql      — estructura de la base (sin datos), generada con exportar-bd.mjs
+├── .github/workflows/ci.yml  — CI (un job por carpeta)
 └── docs/
 ```
 
@@ -203,23 +212,23 @@ A1–A11 (bugs críticos), C1–C9 (contratos, fechas, créditos, seguridad, ESL
 
 | Archivo | Por qué |
 |---------|---------|
-| `src/services/socioTurnoService.js` | ÚNICO que escribe en `socio_turno` |
-| `src/services/turnosService.js` | Cancelación, créditos, lista de espera, bajas del club |
-| `src/lib/responder.js` · `src/lib/errorNegocio.js` | Contrato de respuestas del backend |
-| `src/lib/errores.js` | ÚNICO helper de mensajes de error en el frontend |
-| `src/lib/fecha.js` | Zona horaria AR (front y back) |
-| `src/config/db.js` | ÚNICO cliente Supabase |
-| `src/middlewares/autenticar.js` | JWT + `requireRole` (único patrón de autorización) |
-| `src/constants/categorias.js` | 8 categorías + `nivelHabilitado` |
-| `src/index.css` | Tokens: única fuente de colores |
-| `rutas/creditos.js` | Semántica usado ≠ vencido |
+| `backend/src/services/socioTurnoService.js` | ÚNICO que escribe en `socio_turno` |
+| `backend/src/services/turnosService.js` | Cancelación, créditos, lista de espera, bajas del club |
+| `backend/src/lib/responder.js` · `backend/src/lib/errorNegocio.js` | Contrato de respuestas del backend |
+| `frontend/src/lib/errores.js` | ÚNICO helper de mensajes de error en el frontend |
+| `{backend,frontend}/src/lib/fecha.js` | Zona horaria AR — hay una copia en cada carpeta: **cambiar las dos** |
+| `backend/src/config/db.js` | ÚNICO cliente Supabase |
+| `backend/src/middlewares/autenticar.js` | JWT + `requireRole` (único patrón de autorización) |
+| `{backend,frontend}/src/constants/categorias.js` | 8 categorías + `nivelHabilitado` — una copia en cada carpeta: **cambiar las dos** |
+| `frontend/src/index.css` | Tokens: única fuente de colores |
+| `backend/rutas/creditos.js` | Semántica usado ≠ vencido |
 
 ---
 
 ## Variables de entorno
 
 ```bash
-# Backend (obligatorias — server.js aborta si faltan)
+# backend/.env (obligatorias — server.js aborta si faltan)
 SUPABASE_URL=
 SUPABASE_SERVICE_KEY=
 JWT_SECRET=
@@ -232,23 +241,28 @@ BREVO_FROM_EMAIL=
 BREVO_FROM_NAME=
 # NODE_ENV: NO en el .env local. En Railway: production
 
-# Frontend
-VITE_API_URL=                   # vacío en dev (usa /api + proxy); en Vercel la URL de Railway
+# frontend/.env
+VITE_API_URL=/api               # /api en dev (proxy de Vite); en Vercel la URL de Railway
 ```
 
 ---
 
 ## Comandos
 
+Cada carpeta tiene sus propios scripts (correr adentro de `backend/` o `frontend/`):
+
 ```bash
-npm run dev:all     # backend (nodemon, :3000) + frontend (vite, :5173)
-npm run server      # solo backend
-npm run dev         # solo frontend
-npm test            # vitest
-npm run lint        # eslint (0 problemas)
-npm run lint:css    # hex sueltos (0)
-npm run build       # build de producción
-npm run check       # todo lo anterior junto (= CI)
+# backend/
+npm run dev         # nodemon, :3000
+npm start           # node server.js (producción)
+npm run check       # lint + tests
+DATABASE_URL="postgresql://..." node scripts/exportar-bd.mjs snop.sql   # dump de la base
+
+# frontend/
+npm run dev         # vite, :5173 (proxy /api → :3000)
+npm run check       # lint + lint:css + tests + build
 ```
 
-**Antes de cerrar cualquier tarea:** `npm run check`. Si tocaste el backend, además levantarlo y pegarle a `/api/sedes`.
+**Antes de cerrar cualquier tarea:** `npm run check` en la carpeta que tocaste. Si tocaste el backend, además levantarlo y pegarle a `/api/sedes`.
+
+**Deploy:** Vercel con *Root Directory* = `frontend`; Railway con *Root Directory* = `backend`.

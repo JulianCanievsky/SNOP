@@ -235,7 +235,7 @@ async function leerXlsx(ruta) {
 }
 
 function leerCsv(ruta) {
-  const texto = fs.readFileSync(ruta, 'utf8').replace(/^﻿/, '')
+  const texto = fs.readFileSync(ruta, 'utf8').replace(/^\uFEFF/, '')
   const lineas = texto.split(/\r?\n/)
   // Excel en español exporta con ";"; si no, ","
   const sep = (lineas[0].match(/;/g) ?? []).length > (lineas[0].match(/,/g) ?? []).length ? ';' : ','
@@ -277,7 +277,7 @@ function guardarInforme(ruta, filasResultado) {
     ['fila', 'nombre', 'email', 'estado', 'detalle'].join(';'),
     ...filasResultado.map(r => [r.fila, r.nombre, r.email, r.estado, r.detalle].map(esc).join(';')),
   ]
-  fs.writeFileSync(salida, '﻿' + lineas.join('\r\n'), 'utf8') // BOM para que Excel lea los acentos
+  fs.writeFileSync(salida, '\uFEFF' + lineas.join('\r\n'), 'utf8') // BOM para que Excel lea los acentos
   console.log(`Informe guardado en ${salida}`)
 }
 
