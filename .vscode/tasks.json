@@ -1,0 +1,42 @@
+{
+  // Tareas de VS Code: Terminal → Run Task… (o Ctrl+Shift+P → "Tasks: Run Task")
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Instalar dependencias",
+      "detail": "npm install en backend y frontend (solo la primera vez)",
+      "type": "shell",
+      "command": "npm install --prefix backend && npm install --prefix frontend",
+      "windows": {
+        "command": "npm install --prefix backend; npm install --prefix frontend"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend (puerto 3000)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "snop" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Frontend (puerto 5173)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated", "group": "snop" },
+      "problemMatcher": []
+    },
+    {
+      "label": "2. Iniciar SNOP",
+      "detail": "Levanta backend y frontend a la vez, en dos terminales",
+      "dependsOn": ["Backend (puerto 3000)", "Frontend (puerto 5173)"],
+      "dependsOrder": "parallel",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    }
+  ]
+}
